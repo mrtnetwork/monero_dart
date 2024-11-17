@@ -1,0 +1,23 @@
+name: monero_dart
+description: Comprehensive Crypto & Blockchain Toolkit, Pure Dart, Cross-Platform, Encoding, Cryptography, Addresses, Mnemonics, & More.
+version: 0.1.0
+homepage: "https://github.com/mrtnetwork/monero_dart"
+repository: "https://github.com/mrtnetwork/monero_dart"
+Author: mrhaydari.t@gmail.com
+topics:
+  - monero
+  
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  blockchain_utils: ^3.5.0
+  # blockchain_utils:
+  #   path: ../bitcoin/blockchain_utils
+
+  http: ^1.2.2
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.24.0
+  flutter_lints: ^4.0.0
