@@ -7,7 +7,11 @@ import 'package:monero_dart/src/serialization/storage_format/tools/validator.dar
 
 import 'binary_container.dart';
 
+/// Monero storage
 class MoneroStorage {
+  /// section
+  final MoneroSection section;
+  const MoneroStorage(this.section);
   factory MoneroStorage.fromJson(Map<String, dynamic> json) {
     return MoneroStorage(MoneroSection.fromJson(json));
   }
@@ -15,8 +19,8 @@ class MoneroStorage {
     return MoneroStorage(
         MoneroSection.fromJson(MoneroStorageSerializer.deserialize(bytes)));
   }
-  final MoneroSection section;
-  const MoneroStorage(this.section);
+
+  /// encode storage to bytes.
   List<int> serialize() {
     return [
       ...MoneroSerializationConst.signaturePartBAndVersionVersion,
@@ -24,12 +28,15 @@ class MoneroStorage {
     ];
   }
 
+  /// encode storage to hex string.
   String serializeHex() {
     return BytesUtils.toHexString(serialize());
   }
 }
 
+/// Monero section
 class MoneroSection {
+  /// entries of section
   final List<MoneroStorageEntry> enteries;
   MoneroSection(List<MoneroStorageEntry> enteries)
       : enteries = enteries.immutable;
@@ -40,9 +47,10 @@ class MoneroSection {
         .map((k) => MoneroStorageEntry.fromObject(name: k, value: json[k]))
         .toList());
   }
+
+  /// check section has any entries or should be serialize as empty section.
   bool get hasValue {
-    final enteries = this.enteries.where((e) => e.hasValue);
-    return enteries.isNotEmpty;
+    return enteries.every((e) => !e.hasValue);
   }
 
   List<int> serialize() {
@@ -59,9 +67,15 @@ class MoneroSection {
 }
 
 abstract class MoneroStorageEntry<T> {
+  /// the value of entery
   final T value;
+
+  /// the name of entery
   final String name;
+
+  /// the type of value
   final MoneroStorageTypes type;
+
   bool get hasValue => value != null;
   MoneroStorageEntry(
       {required this.type, required String name, required this.value})
@@ -102,6 +116,7 @@ abstract class MoneroStorageEntry<T> {
   }
 }
 
+/// Entery for null objects
 class MoneroStorageEntryNull extends MoneroStorageEntry<Null> {
   MoneroStorageEntryNull._({
     required super.name,

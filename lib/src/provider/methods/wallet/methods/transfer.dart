@@ -77,7 +77,6 @@ class WalletRequestTransfer
 
   @override
   WalletRPCTransferMoneroResponse onResonse(Map<String, dynamic> result) {
-    print("result $result");
     return WalletRPCTransferMoneroResponse.fromJson(result);
   }
 }

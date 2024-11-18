@@ -26,7 +26,6 @@ class Gamma {
   Gamma._(
       {required this.gammaDistribution,
       required this.rctOffsets,
-      // required this.begin,
       required this.end,
       required this.avarageOutsTime,
       required this.numRctOuts});

@@ -66,30 +66,26 @@ class DaemonGetInfoResponse extends DaemonBaseResponse {
     required this.rpcConnectionsCount,
     required this.stagenet,
     required this.startTime,
-    required String status,
+    required super.status,
     required this.synchronized,
     required this.target,
     required this.targetHeight,
     required this.testnet,
     required this.topBlockHash,
-    required String? topHash,
+    required super.topHash,
     required this.txCount,
     required this.txPoolSize,
-    required bool untrusted,
+    required bool super.untrusted,
     required this.updateAvailable,
     required this.version,
     required this.wasBootstrapEverUsed,
     required this.whitePeerlistSize,
     required this.wideCumulativeDifficulty,
     required this.wideDifficulty,
-    BigInt? credits,
-  }) : super(
-            credits: credits,
-            status: status,
-            topHash: topHash,
-            untrusted: untrusted);
+    super.credits,
+  });
 
-  DaemonGetInfoResponse.fromJson(Map<String, dynamic> json)
+  DaemonGetInfoResponse.fromJson(super.json)
       : adjustedTime = json['adjusted_time'],
         altBlocksCount = json['alt_blocks_count'],
         blockSizeLimit = json['block_size_limit'],
@@ -128,5 +124,5 @@ class DaemonGetInfoResponse extends DaemonBaseResponse {
         whitePeerlistSize = json['white_peerlist_size'],
         wideCumulativeDifficulty = json['wide_cumulative_difficulty'] as String,
         wideDifficulty = json['wide_difficulty'] as String,
-        super.fromJson(json);
+        super.fromJson();
 }

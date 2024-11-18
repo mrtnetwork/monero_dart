@@ -1,9 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/account/account.dart';
-import 'package:monero_dart/src/api/api.dart';
-import 'package:monero_dart/src/api/models/models.dart';
-import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
-
+import 'package:monero_dart/monero_dart.dart';
 class MoneroChainAccountTracker {
   final MoneroBaseAccountKeys _account;
   final int startHeight;
@@ -33,16 +29,14 @@ class MoneroChainAccountTracker {
   Future<void> startFetchingHeight() async {
     await updateLatestHeight();
     while (_currentHeight < _blockHeight) {
-      print("current height $_currentHeight $_blockHeight");
       final r = await provider.getBlocks(startHeight: _currentHeight);
       final txes = r.toTxes();
       final keyImages = txes
           .map((e) => e.transaction.getInputsKeyImages())
           .expand((e) => e)
           .toList();
-      print("txes ${txes.length}");
       for (final i in txes) {
-        final unlock = api.unlockSingleOutput(
+        final unlock = api.unlockSingleTxOutputs(
             transaction: i.transaction, account: _account);
         if (unlock.isNotEmpty) {
           outputs.addAll(unlock
@@ -55,13 +49,10 @@ class MoneroChainAccountTracker {
       if (outputs.isNotEmpty) {
         outputs.removeWhere((e) => keyImages.contains(e.keyImage));
       }
-      print("unlocked outs ${outputs.length}");
     }
 
-    final total = outputs.map((e) => e.output.amount).toList();
-    final txes = outputs.map((e) => e.txHash).toList();
-    print("at the end $total");
-    print(StringUtils.fromJson(txes));
+    // final total = outputs.map((e) => e.output.amount).toList();
+    // final txes = outputs.map((e) => e.txHash).toList();
   }
 }
 

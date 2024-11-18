@@ -9,8 +9,8 @@ import 'package:monero_dart/src/serialization/storage_format/tools/validator.dar
 import 'package:monero_dart/src/serialization/storage_format/types/storage_result.dart';
 import 'package:monero_dart/src/serialization/storage_format/types/types.dart';
 
-
 class MoneroStorageSerializer {
+  /// deserialize monero storage bytes to map
   static Map<String, dynamic> deserialize(List<int> bytes,
       {bool withSignature = true}) {
     bytes = bytes.asImmutableBytes;
@@ -36,6 +36,7 @@ class MoneroStorageSerializer {
     return decode.value;
   }
 
+  /// deserialize bytes to monero storage section struct as map.
   static DecodeStorageResult<Map<String, dynamic>> decodeSection(
       {required List<int> bytes, int offset = 0}) {
     int o = 0;
@@ -85,6 +86,7 @@ class MoneroStorageSerializer {
     return DecodeStorageResult(value: values, length: o);
   }
 
+  /// deserialize promitive types.
   static DecodeStorageResult _decodePromitive(
       {required List<int> bytes,
       required MoneroStorageTypes type,
@@ -110,6 +112,7 @@ class MoneroStorageSerializer {
         details: {"type": type.name});
   }
 
+  /// deserialize array.
   static DecodeStorageResult<List> _decodeArray(
       {required List<int> bytes,
       required MoneroStorageTypes childtype,
@@ -138,6 +141,7 @@ class MoneroStorageSerializer {
     return DecodeStorageResult(value: values, length: len);
   }
 
+  /// deserialize boolean.
   static DecodeStorageResult<bool> _decodeBoolean(
       {required List<int> bytes, int offset = 0}) {
     final int byte = bytes[offset];
@@ -148,6 +152,8 @@ class MoneroStorageSerializer {
     return DecodeStorageResult(value: byte == 1, length: 1);
   }
 
+  /// deserialize string. if bytes is valid utf8 this
+  /// convert to string otherwise return hex string.
   static DecodeStorageResult<String> _decodeString(
       {required List<int> bytes, int offset = 0}) {
     final decodeLength = decodeVarint(bytes: bytes, offset: offset);
@@ -160,6 +166,7 @@ class MoneroStorageSerializer {
         value: str, length: decodeLength.length + decodeLength.value);
   }
 
+  /// deserialize double.
   static DecodeStorageResult<double> _decodeDouble(
       {required List<int> bytes, int offset = 0}) {
     final value = DoubleCoder.fromBytes(bytes.sublist(offset, offset + 8),
@@ -167,6 +174,7 @@ class MoneroStorageSerializer {
     return DecodeStorageResult(value: value, length: 8);
   }
 
+  /// deserialize numeric.
   static DecodeStorageResult<BigInt> _decodeNumeric(
       {required List<int> bytes,
       required int bitLength,
@@ -180,6 +188,7 @@ class MoneroStorageSerializer {
     return DecodeStorageResult(value: value, length: byteLength);
   }
 
+  /// deserialize the length of variant in bytes.
   static int getVarintLength(int byte) {
     final int lastByte =
         byte & MoneroSerializationConst.portableRawSizeMarkMask;
@@ -193,10 +202,11 @@ class MoneroStorageSerializer {
       case MoneroSerializationConst.portableRawSizeMarkInt64:
         return 8;
       default:
-        throw const MoneroSerializationException("Invalid varint mark.");
+        throw const MoneroSerializationException("Invalid varint mask.");
     }
   }
 
+  /// decode variant and return length and value of variant.
   static DecodeStorageResult<int> decodeVarint(
       {required List<int> bytes, int offset = 0}) {
     final int length = getVarintLength(bytes[offset]);
@@ -210,6 +220,7 @@ class MoneroStorageSerializer {
         "Your environment cannot fully decode 62-bit varint.");
   }
 
+  /// decode variant and return length and value of variant as BigInteger.
   static DecodeStorageResult<BigInt> decodeVarintBig(
       {required List<int> bytes, int offset = 0}) {
     final int length = getVarintLength(bytes[offset]);
@@ -219,6 +230,7 @@ class MoneroStorageSerializer {
     return DecodeStorageResult(length: length, value: value);
   }
 
+  /// return number type information like sign, bitlength
   static Tuple<int, bool> getNumericTypesBitLength(MoneroStorageTypes type) {
     if (!type.isInteger) {
       throw MoneroSerializationException(
@@ -230,6 +242,7 @@ class MoneroStorageSerializer {
     return Tuple(bitLength, type.name.startsWith("INT"));
   }
 
+  /// encode promitive data to bytes with type flag.
   static List<int> encodePrimitive(
       {required Object value, required MoneroStorageTypes type}) {
     return [type.flag, ..._encodePrimitive(value: value, type: type)];
@@ -266,6 +279,7 @@ class MoneroStorageSerializer {
     }
   }
 
+  /// encode list to bytes with or of array and child type flag.
   static List<int> encodeList(
       {required List<Object> value, required MoneroStorageTypes childType}) {
     final List<int> bytes = [...encodeVarintInt(value.length)];
@@ -284,6 +298,7 @@ class MoneroStorageSerializer {
     return [flag, ...bytes];
   }
 
+  /// encode integer as variant bytes.
   static List<int> encodeVarintInt(int val) {
     if (val.isNegative) {
       throw MoneroSerializationException(
@@ -308,6 +323,7 @@ class MoneroStorageSerializer {
         details: {"varint": val});
   }
 
+  /// encode BigInteger as variant bytes.
   static List<int> encodeVarintBigInt(BigInt val) {
     if (val.isNegative) {
       throw MoneroSerializationException(

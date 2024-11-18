@@ -1,6 +1,6 @@
-import 'package:blockchain_utils/blockchain_utils.dart';
+import 'package:monero_dart/monero_dart.dart';
 
 /// exception related to monero crypto operations.
-class MoneroCryptoException extends BlockchainUtilsException {
+class MoneroCryptoException extends DartMoneroPluginException {
   const MoneroCryptoException(super.message, {super.details});
 }

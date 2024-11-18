@@ -3,19 +3,25 @@ import 'package:monero_dart/src/serialization/layout/layouts/variant.dart';
 import 'package:monero_dart/src/serialization/layout/layouts/variant_offset.dart';
 
 class MoneroLayoutConst {
+  /// var bigint layout. serialize BigInteger to monero var int.
   static MoneroBigIntVarInt varintBigInt({String? property}) {
     return MoneroBigIntVarInt(LayoutConst.u64(), property: property);
   }
 
+  /// var int layout. serialize Integer to monero var int.
   static MoneroIntVarInt varintInt({String? property}) {
     return MoneroIntVarInt(LayoutConst.u32(), property: property);
   }
 
+  /// var int bytes. serialize bytes with length as varint.
+  /// [...(length as varint),...data]
   static CustomLayout<Map<String, dynamic>, List<int>> variantBytes(
       {String? property}) {
     return variantVec(LayoutConst.u8(), property: property);
   }
 
+  /// like [variantBytes] but serialize and deserialize string. used utf8 to encode and decode
+  /// string to bytes.
   static Layout<String> variantString({String? property}) {
     return CustomLayout<List<int>, String>(
         layout: variantBytes(),
@@ -28,6 +34,8 @@ class MoneroLayoutConst {
         property: property);
   }
 
+  /// vector layout with specify sub layoyt.
+  /// this convert length as varint then serialize each object of list.
   static CustomLayout<Map<String, dynamic>, List<T>> variantVec<T>(
       Layout<T> elementLayout,
       {String? property}) {
@@ -41,6 +49,7 @@ class MoneroLayoutConst {
     );
   }
 
+  /// serialize key and value of map.
   static CustomLayout map(
       {required Layout keyLayout,
       required Layout valueLayout,

@@ -1,19 +1,4 @@
-part of 'package:monero_dart/src/api/tx_builder/tx_builder.dart';
-
-// class RctConfig {
-//   final RangeProofType rangeProofType;
-//   final RCTType type;
-//   const RctConfig({required this.rangeProofType, required this.type});
-//   static const RctConfig defaultConfig = RctConfig(
-//       rangeProofType: RangeProofType.rangeProofPaddedBulletproof,
-//       type: RCTType.rctTypeBulletproofPlus);
-//   bool get isSimpleRct => rangeProofType != RangeProofType.rangeProofBorromean;
-//   bool get hasViewTag => type == RCTType.rctTypeBulletproofPlus;
-//   bool get supportMultisig {
-//     return type.isClsag &&
-//         rangeProofType == RangeProofType.rangeProofPaddedBulletproof;
-//   }
-// }
+part of 'package:monero_dart/src/tx_builder/tx_builder.dart';
 
 class ComputeDestinationKeys extends MoneroSerialization {
   final List<RctKey> amountKeys;
@@ -152,7 +137,7 @@ class ComputeSourceKeys extends MoneroSerialization {
 }
 
 class MoneroMultisigSignedInfo extends MoneroSerialization {
-  final List<RctKey> l;
+  final KeyM l;
   final List<MoneroPublicKey> signingKeys;
   final KeyM totalAlphaG;
   final KeyM totalAlphaH;
@@ -172,7 +157,7 @@ class MoneroMultisigSignedInfo extends MoneroSerialization {
     final KeyV s = List.generate(sourceLength, (_) => RCT.zero());
     final KeyV c0 = List.generate(sourceLength, (_) => RCT.zero());
     return MoneroMultisigSignedInfo(
-        l: [],
+        l: List.generate(sourceLength, (_) => []),
         signingKeys: signingKeys,
         totalAlphaG: totalAlphaG,
         totalAlphaH: totalAlphaH,
@@ -193,7 +178,7 @@ class MoneroMultisigSignedInfo extends MoneroSerialization {
         s = s.toImutableList;
   factory MoneroMultisigSignedInfo.fromStruct(Map<String, dynamic> json) {
     return MoneroMultisigSignedInfo(
-        l: json.asListBytes("l")!,
+        l: json.asListOfListBytes("l")!,
         signingKeys: json
             .asListBytes("signingKeys")!
             .map((e) => MoneroPublicKey.fromBytes(e))
@@ -206,7 +191,9 @@ class MoneroMultisigSignedInfo extends MoneroSerialization {
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
-      MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(), property: "l"),
+      MoneroLayoutConst.variantVec(
+          MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32()),
+          property: "l"),
       MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
           property: "signingKeys"),
       MoneroLayoutConst.variantVec(

@@ -2,6 +2,7 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/serialization/storage_format/tools/serializer.dart';
 import 'package:monero_dart/src/serialization/storage_format/types/types.dart';
 
+/// Custom implements for encoding data
 abstract class MoneroStorageContainer {
   final MoneroStorageTypes type;
   const MoneroStorageContainer(this.type);

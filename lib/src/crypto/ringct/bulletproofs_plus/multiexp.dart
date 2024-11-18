@@ -70,14 +70,14 @@ class Multiexp {
   static List<GroupElementCached> pippengerInitCache(
       {required List<MultiexpData> data, int startOffset = 0, int? N}) {
     if (startOffset > data.length) {
-      throw Exception("Bad cache base data");
+      throw const MoneroCryptoException("Bad cache base data");
     }
     if (N == null || N == 0) {
       N = data.length - startOffset;
     }
 
     if (N > data.length - startOffset) {
-      throw Exception("Bad cache base data");
+      throw const MoneroCryptoException("Bad cache base data");
     }
     final List<GroupElementCached> cache =
         List.generate(N, (_) => GroupElementCached());
@@ -276,7 +276,6 @@ class Multiexp {
 
         if (bucket == 0) continue;
 
-        // Assuming CHECK_AND_ASSERT_THROW_MES is replaced by a simple assertion in Dart
         assert(bucket < (1 << c), "Bucket overflow");
 
         if (bucketsInit[bucket]) {

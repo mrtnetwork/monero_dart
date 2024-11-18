@@ -22,13 +22,12 @@ class WalletRequestSignTransfer extends MoneroWalletRequestParam<
   @override
   Map<String, dynamic> get params => {
         "unsigned_txset": unsignedTxSet,
-        // "export_raw": exportRaw,
-        // "get_tx_keys": getTxKey
+        "export_raw": exportRaw,
+        "get_tx_keys": getTxKey
       };
 
   @override
   WalletRPCSignTransferResponse onResonse(Map<String, dynamic> result) {
-    print(result);
     return WalletRPCSignTransferResponse.fromJson(result);
   }
 }

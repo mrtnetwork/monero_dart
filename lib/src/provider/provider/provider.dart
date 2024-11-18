@@ -2,7 +2,8 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/service/service.dart';
 import 'package:monero_dart/src/serialization/storage_format/tools/serializer.dart';
-/// Facilitates communication with the monero deamon api by making requests using a provided [MoneroProvider].
+
+/// Facilitates communication with the monero deamon or wallet api by making requests using a provided [MoneroProvider].
 class MoneroProvider {
   /// The underlying deamon service provider used for network communication.
   final MoneroServiceProvider rpc;
@@ -15,7 +16,6 @@ class MoneroProvider {
   static dynamic _parseResponse(
       {required MoneroServiceResponse response,
       required MoneroRequestDetails request}) {
-    // print(response.)
     String body = "Daemon request failed with status code ${response.status}";
     if (response.responseBytes.isNotEmpty) {
       final encode = StringUtils.tryDecode(response.responseBytes);
@@ -27,11 +27,21 @@ class MoneroProvider {
     }
 
     if (request.requestType == DemonRequestType.binary) {
-      return MoneroStorageSerializer.deserialize(response.responseBytes);
+      try {
+        return MoneroStorageSerializer.deserialize(response.responseBytes);
+      } catch (e) {
+        throw RPCError(
+            message: "Monero storage deserialization failed.",
+            errorCode: null,
+            details: {"error": e.toString(), "method": request.method});
+      }
     }
     final Map<String, dynamic>? bodyJson = StringUtils.tryToJson(body);
     if (bodyJson == null) {
-      throw RPCError(message: body, errorCode: null);
+      throw RPCError(
+          message: "response convertion to json failed.",
+          errorCode: null,
+          details: {"method": request.method});
     }
     if (request.requestType == DemonRequestType.jsonRPC) {
       final error = bodyJson["error"];
@@ -51,11 +61,17 @@ class MoneroProvider {
   ///
   /// The [timeout] parameter, if provided, sets the maximum duration for the request.
   /// Whatever is received will be returned
-  Future<dynamic> requestDynamic(MoneroDaemonRequestParam request,
-      [Duration? timeout]) async {
+  Future<dynamic> requestDynamic(
+    MoneroDaemonRequestParam request, {
+    Duration? timeout,
+
+    /// if false the [MoneroServiceResponse] returned.
+    bool parseResponse = true,
+  }) async {
     final id = ++_id;
     final params = request.toRequest(id);
-    final data = await rpc.post(params, timeout);
+    final data = await rpc.post(params, timeout: timeout);
+    if (!parseResponse) return data;
     return _parseResponse(response: data, request: params);
   }
 
@@ -63,8 +79,8 @@ class MoneroProvider {
   ///
   /// The [timeout] parameter, if provided, sets the maximum duration for the request.
   Future<T> request<T, E>(MoneroDaemonRequestParam<T, E> request,
-      [Duration? timeout]) async {
-    final data = await requestDynamic(request, timeout);
+      {Duration? timeout}) async {
+    final data = await requestDynamic(request, timeout: timeout);
     if (data is Map && data.containsKey("status")) {
       if (data["status"] != "OK") {
         throw RPCError(

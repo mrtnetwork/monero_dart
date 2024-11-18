@@ -2,10 +2,7 @@ import 'package:blockchain_utils/bip/address/xmr_addr.dart';
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/address/address/address.dart';
 import 'package:monero_dart/src/api/models/models.dart';
-import 'package:monero_dart/src/crypto/multisig/account/account.dart';
-import 'package:monero_dart/src/crypto/multisig/core/account.dart';
-import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
-import 'package:monero_dart/src/crypto/types/types.dart';
+import 'package:monero_dart/src/crypto/crypto.dart';
 import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/network/config.dart';
@@ -102,6 +99,10 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
 
   /// get private spend key
   RctKey getPrivateSpendKey() {
+    if (isWatchOnly) {
+      throw const DartMoneroPluginException(
+          "Watch only account does not have a private spend key");
+    }
     return account.privSkey!.key;
   }
 

@@ -33,19 +33,14 @@ class GetOutResponse extends DaemonBaseResponse {
 
   GetOutResponse(
       {required List<OutKeyResponse> outs,
-      required BigInt? credits,
-      required String status,
-      required String? topHash,
-      required bool untrusted})
-      : outs = outs.immutable,
-        super(
-            credits: credits,
-            status: status,
-            topHash: topHash,
-            untrusted: untrusted);
-  GetOutResponse.fromJson(Map<String, dynamic> json)
+      required super.credits,
+      required super.status,
+      required super.topHash,
+      required bool super.untrusted})
+      : outs = outs.immutable;
+  GetOutResponse.fromJson(super.json)
       : outs = (json["outs"] as List)
             .map((e) => OutKeyResponse.fromJson(e))
             .toList(),
-        super.fromJson(json);
+        super.fromJson();
 }

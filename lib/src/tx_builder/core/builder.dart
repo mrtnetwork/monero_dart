@@ -1,4 +1,4 @@
-part of 'package:monero_dart/src/api/tx_builder/tx_builder.dart';
+part of 'package:monero_dart/src/tx_builder/tx_builder.dart';
 
 abstract class MoneroTxBuilder<T extends SpendablePayment>
     extends MoneroSerialization {
@@ -9,14 +9,20 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   final List<T> sources;
   final TxDestination? change;
   late final BigInt fee = sourceKeys.total - destinationKeys.total;
+  BigInt get totalInput => sourceKeys.total;
+  BigInt get totalOutput => sourceKeys.total;
+  String get feeAsXMR => MoneroTransactionHelper.toXMR(fee);
+  String get totalInputAsXMR => MoneroTransactionHelper.toXMR(totalInput);
+  String get totalOutputAsXMR => MoneroTransactionHelper.toXMR(totalOutput);
   String get txId => transaction.getTxHash();
+  MoneroTransaction getFinalTx();
   MoneroTxProof generateProof(
-      {required MoneroAddress receiverAddress, required String message}) {
+      {required MoneroAddress receiverAddress, required String? message}) {
     return MoneroTransactionHelper.generateOutProof(
         transaction: transaction,
         allTxKeys: destinationKeys.allTxKeys,
         receiverAddress: receiverAddress,
-        message: message);
+        message: message ?? '');
   }
 
   MoneroTxBuilder(
@@ -124,6 +130,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final List<TxExtra> extras = [];
     final unknowDsts =
         currentDestinations.where((e) => e.address != change?.address);
+    print("unknow dsts ${unknowDsts}");
     if (unknowDsts.length == 1) {
       final dst = unknowDsts.elementAt(0);
       List<int> paymentId = List<int>.filled(8, 0);
@@ -187,7 +194,6 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       KeyV? aResult,
       bool isMultisig = false,
       bool fakeSignature = false}) {
-    // final int nTotalOuts = sources[0].outs.length;
     final List<int> index = sources.map((e) => e.realOutIndex).toList();
     final CtKeyV inSk =
         sources.map((e) => e.payment.output.toSecretKey).toList();

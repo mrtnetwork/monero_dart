@@ -1,21 +1,41 @@
 import 'package:blockchain_utils/utils/string/string.dart';
+import 'package:monero_dart/src/provider/utils/utils.dart';
 import 'package:monero_dart/src/serialization/storage_format/types/entry.dart';
 
 enum DemonRequestType { json, jsonRPC, binary }
 
-abstract class DaemonRequestParams {
+abstract class MoneroRPCMethodParams<RESULT, RESPONSE> {
   abstract final String method;
+  const MoneroRPCMethodParams();
+
+  /// request params.
+  Object get params => {};
+
+  /// request headers.
+  Map<String, String> get headers => {
+        'Content-Type': 'application/json',
+      };
+
+  /// type of request
+  DemonRequestType get requestType => DemonRequestType.json;
+
+  /// convert request params, method and etc for service provider.
+  MoneroRequestDetails toRequest(int id);
+
+  /// convert response to specify object.
+  /// should be overwrite in each request methods.
+  RESULT onResonse(RESPONSE result) {
+    return result as RESULT;
+  }
 }
 
+/// monero daemon request
 abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
-    implements DaemonRequestParams {
+    extends MoneroRPCMethodParams<RESULT, RESPONSE> {
   const MoneroDaemonRequestParam();
-  Object get params => {};
-  final Map<String, String>? header = null;
-  DemonRequestType get requestType => DemonRequestType.json;
-  // final DaemonCustomResponseParse? parser = null;
 
-  MoneroRequestDetails toRequest(int v) {
+  @override
+  MoneroRequestDetails toRequest(int id) {
     final p = params;
     Object? body;
     if (requestType == DemonRequestType.binary) {
@@ -26,90 +46,73 @@ abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
     } else if (requestType == DemonRequestType.json) {
       body = StringUtils.fromJson(params);
     } else {
-      body = StringUtils.fromJson({
-        "jsonrpc": "2.0",
-        "id": v,
-        "method": method,
-        "params": params,
-      });
+      body =
+          ProviderUtils.buildRpcRequest(params: params, method: method, id: id);
     }
 
     return MoneroRequestDetails(
-        id: v,
+        id: id,
         method: method,
-        header: header ?? {},
+        headers: headers,
         body: body,
         requestType: requestType,
         api: MoneroRequestApiType.daemon);
   }
-
-  RESULT onResonse(RESPONSE result) {
-    return result as RESULT;
-  }
 }
 
 abstract class MoneroWalletRequestParam<RESULT, RESPONSE>
-    implements MoneroDaemonRequestParam<RESULT, RESPONSE> {
+    extends MoneroDaemonRequestParam<RESULT, RESPONSE> {
   const MoneroWalletRequestParam();
-  @override
-  Object get params => {};
-  @override
-  final Map<String, String>? header = null;
   @override
   DemonRequestType get requestType => DemonRequestType.jsonRPC;
 
   @override
-  MoneroRequestDetails toRequest(int v) {
-    final Object body = StringUtils.fromJson({
-      "jsonrpc": "2.0",
-      "id": v,
-      "method": method,
-      "params": params,
-    });
+  MoneroRequestDetails toRequest(int id) {
+    final body =
+        ProviderUtils.buildRpcRequest(params: params, method: method, id: id);
     return MoneroRequestDetails(
-        id: v,
+        id: id,
         method: method,
-        header: header ?? {},
+        headers: headers,
         body: body,
         requestType: requestType,
         api: MoneroRequestApiType.wallet);
   }
-
-  @override
-  RESULT onResonse(RESPONSE result) {
-    return result as RESULT;
-  }
 }
 
-typedef DaemonCustomResponseParse = Object Function(List<int> responseBytes);
-
+/// monero api type (daemon, wallet)
 enum MoneroRequestApiType { daemon, wallet }
 
+/// the data of request can be build to request in provider
+/// like method, params and headers
 class MoneroRequestDetails {
   const MoneroRequestDetails({
     required this.id,
     required this.method,
     required this.requestType,
-    this.responseParser,
-    this.header = const {},
+    this.headers = const {},
     this.body,
     required this.api,
   });
 
+  /// api of request
   final MoneroRequestApiType api;
+
+  /// request id
   final int id;
 
+  /// request method
   final String method;
 
-  final Map<String, String> header;
+  /// the header of request.
+  final Map<String, String> headers;
 
+  /// body of request
   final Object? body;
 
   final DemonRequestType requestType;
-  final DaemonCustomResponseParse? responseParser;
 
   Uri toUrl(String baseUrl) {
-    if (api == MoneroRequestApiType.wallet) return Uri.parse(baseUrl);
     if (requestType == DemonRequestType.binary) {
       return Uri.parse(baseUrl).replace(path: method);
     }

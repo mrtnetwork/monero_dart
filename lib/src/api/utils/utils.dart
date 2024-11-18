@@ -1,6 +1,7 @@
 part of 'package:monero_dart/src/api/api.dart';
 
 mixin MoneroApiUtils on MoneroApiInterface {
+  /// decode output amount.
   MoneroLockedOutput? _getLockedOutputs(
       {required MoneroTxout out,
       required int realIndex,
@@ -41,11 +42,13 @@ mixin MoneroApiUtils on MoneroApiInterface {
           mask: mask,
           derivation: derivation,
           outputPublicKey: outPublicKey,
-          accountIndex: index);
+          accountIndex: index,
+          unlockTime: tx.unlockTime);
     }
     return null;
   }
 
+  /// decode output amount and generate key image.
   MoneroUnlockedOutput? _getUnlockOut(
       {required MoneroTransaction tx,
       required MoneroBaseAccountKeys account,
@@ -59,6 +62,7 @@ mixin MoneroApiUtils on MoneroApiInterface {
         account: account, out: lockedOut, realIndex: realIndex);
   }
 
+  /// decode output amount and convert to locked payment.
   MoneroLockedPayment? _getLockedPayment(
       {required MoneroTxout out,
       required int realIndex,
@@ -78,6 +82,7 @@ mixin MoneroApiUtils on MoneroApiInterface {
         globalIndex: indices[realIndex]) as MoneroLockedPayment;
   }
 
+  /// decode output amount and convert to unlocked payment.
   MoneroUnLockedPayment? _getUnlockedPayment(
       {required MoneroTransaction tx,
       required MoneroBaseAccountKeys account,
@@ -96,6 +101,7 @@ mixin MoneroApiUtils on MoneroApiInterface {
     return _toUnlockPayment(account: account, lockedOut: lockedOut);
   }
 
+  /// convert unlocked payment to multisig payment
   MoneroUnlockedMultisigPayment _toMultisigUnlockedOutput(
       {required MoneroMultisigAccountKeys account,
       required MoneroUnLockedPayment payment,
@@ -131,18 +137,18 @@ mixin MoneroApiUtils on MoneroApiInterface {
             infos: otherSigners,
             keyImage: unlockedOut.keyImage,
             exclude: ownerMultisigInfo.partialKeyImages.clone());
-
+    // print("multisigKeyImage ${BytesUtils.toHexString(multisigKeyImage)}");
     final multisigOut = MoneroUnlockedMultisigOutput(
-      amount: unlockedOut.amount,
-      derivation: unlockedOut.derivation,
-      ephemeralSecretKey: unlockedOut.ephemeralSecretKey,
-      ephemeralPublicKey: unlockedOut.ephemeralPublicKey,
-      multisigKeyImage: multisigKeyImage,
-      keyImage: unlockedOut.keyImage,
-      mask: unlockedOut.mask,
-      outputPublicKey: unlockedOut.outputPublicKey,
-      accountindex: unlockedOut.accountIndex,
-    );
+        amount: unlockedOut.amount,
+        derivation: unlockedOut.derivation,
+        ephemeralSecretKey: unlockedOut.ephemeralSecretKey,
+        ephemeralPublicKey: unlockedOut.ephemeralPublicKey,
+        multisigKeyImage: multisigKeyImage,
+        keyImage: unlockedOut.keyImage,
+        mask: unlockedOut.mask,
+        outputPublicKey: unlockedOut.outputPublicKey,
+        accountindex: unlockedOut.accountIndex,
+        unlockTime: unlockedOut.unlockTime);
     return MoneroUnlockedMultisigPayment(
         output: multisigOut,
         txPubkey: payment.txPubkey,
@@ -153,26 +159,27 @@ mixin MoneroApiUtils on MoneroApiInterface {
         globalIndex: payment.globalIndex);
   }
 
+  /// convert locked output to unlocked output.
   MoneroUnlockedOutput? _toUnlockOutput(
       {required MoneroBaseAccountKeys account,
       required MoneroLockedOutput out,
       required int realIndex}) {
-    // final out = lockedOut.output;
     final RctKey spendKey = account.getPrivateSpendKey();
     final scalarStep1 = MoneroCrypto.deriveSecretKey(
         derivation: out.derivation,
         outIndex: realIndex,
         privateSpendKey: spendKey);
-    MoneroPrivateKey secretKey;
+    MoneroPrivateKey ephemeralSecretKey;
     MoneroPrivateKey? subSecretKey;
     if (out.accountIndex.isSubaddress) {
       subSecretKey = account.getSubAddressSpendPrivateKey(out.accountIndex);
-      secretKey = MoneroCrypto.scSecretAdd(a: scalarStep1, b: subSecretKey);
+      ephemeralSecretKey =
+          MoneroCrypto.scSecretAdd(a: scalarStep1, b: subSecretKey);
     } else {
-      secretKey = scalarStep1;
+      ephemeralSecretKey = scalarStep1;
     }
 
-    final MoneroPrivateKey ephemeralSecretKey = secretKey;
+    // final MoneroPrivateKey ephemeralSecretKey = secretKey;
     MoneroPublicKey ephemeralPublicKey;
     if (account.type.isMultisig) {
       ephemeralPublicKey = MoneroCrypto.derivePublicKey(
@@ -201,59 +208,19 @@ mixin MoneroApiUtils on MoneroApiInterface {
         keyImage: keyImage,
         mask: out.mask,
         outputPublicKey: out.outputPublicKey,
-        accountindex: out.accountIndex);
+        accountindex: out.accountIndex,
+        unlockTime: out.unlockTime);
   }
 
+  /// convert locked payment to unlocked payment.
   MoneroUnLockedPayment? _toUnlockPayment(
       {required MoneroBaseAccountKeys account,
       required MoneroLockedPayment lockedOut}) {
-    final out = lockedOut.output;
-    final RctKey spendKey = account.getPrivateSpendKey();
-    final scalarStep1 = MoneroCrypto.deriveSecretKey(
-        derivation: out.derivation,
-        outIndex: lockedOut.index,
-        privateSpendKey: spendKey);
-    MoneroPrivateKey secretKey;
-    MoneroPrivateKey? subSecretKey;
-    if (out.accountIndex.isSubaddress) {
-      subSecretKey = account.getSubAddressSpendPrivateKey(out.accountIndex);
-      secretKey = MoneroCrypto.scSecretAdd(a: scalarStep1, b: subSecretKey);
-    } else {
-      secretKey = scalarStep1;
-    }
-
-    final MoneroPrivateKey ephemeralSecretKey = secretKey;
-    MoneroPublicKey ephemeralPublicKey;
-    if (account.type.isMultisig) {
-      ephemeralPublicKey = MoneroCrypto.derivePublicKey(
-          derivation: out.derivation,
-          outIndex: lockedOut.index,
-          basePublicKey: account.account.publicSpendKey);
-      if (out.accountIndex.isSubaddress) {
-        final subAddrPk = subSecretKey!.publicKey;
-        ephemeralPublicKey =
-            MoneroCrypto.addPublicKey(ephemeralPublicKey, subAddrPk);
-      }
-    } else {
-      ephemeralPublicKey = ephemeralSecretKey.publicKey;
-    }
-    assert(out.outputPublicKey == ephemeralPublicKey, "should be equal.");
-    if (out.outputPublicKey != ephemeralPublicKey) {
-      return null;
-    }
-    final keyImage = MoneroCrypto.generateKeyImage(
-        pubkey: ephemeralPublicKey, secretKey: ephemeralSecretKey);
-    final outInfo = MoneroUnlockedOutput(
-        amount: out.amount,
-        derivation: out.derivation,
-        ephemeralPublicKey: ephemeralPublicKey.key,
-        ephemeralSecretKey: ephemeralSecretKey.key,
-        keyImage: keyImage,
-        mask: out.mask,
-        outputPublicKey: out.outputPublicKey,
-        accountindex: out.accountIndex);
+    final unlockedOut = _toUnlockOutput(
+        account: account, out: lockedOut.output, realIndex: lockedOut.index);
+    if (unlockedOut == null) return null;
     return MoneroUnLockedPayment(
-        output: outInfo,
+        output: unlockedOut,
         txPubkey: lockedOut.txPubkey,
         paymentId: lockedOut.paymentId,
         encryptedPaymentid: lockedOut.encryptedPaymentid,

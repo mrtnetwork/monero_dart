@@ -1,6 +1,6 @@
-import 'package:blockchain_utils/exception/exception.dart';
+import 'package:monero_dart/src/exception/exception.dart';
 
 /// exception for multisig account generating operations.
-class MoneroMultisigAccountException extends BlockchainUtilsException {
+class MoneroMultisigAccountException extends DartMoneroPluginException {
   const MoneroMultisigAccountException(super.message, {super.details});
 }

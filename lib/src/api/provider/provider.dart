@@ -71,18 +71,6 @@ class QuickMoneroProvider {
     return offsets;
   }
 
-  Future<DaemonGetOutputHistogramResponse> getHistograms(
-      List<BigInt> amounts) async {
-    return await provider.request(DaemonRequestGetOutputHistogram(
-        amounts: amounts,
-        minCount: BigInt.zero,
-        maxCount: BigInt.zero,
-        unlocked: true,
-        recentCutoff: BigInt.from(
-            (DateTime.now().millisecondsSinceEpoch ~/ 1000) -
-                MoneroConst.recentOutputZone)));
-  }
-
   Future<GetOutResponse> getOuts(
       List<DaemonGetOutRequestParams> outputs) async {
     final outs = await provider
@@ -90,10 +78,15 @@ class QuickMoneroProvider {
     return outs;
   }
 
-  Future<DaemonIsKeyImageSpentResponse> keyImageSpends(
-      List<String> keyImages) async {
+  Future<DaemonIsKeyImageSpentResponse> keyImageSpends(List<String> keyImages,
+      {bool validateResponse = true}) async {
     final result =
         await provider.request(DaemonRequestIsKeyImageSpent(keyImages));
+    if (validateResponse && result.spentStatus.length != keyImages.length) {
+      throw const DartMoneroPluginException(
+          "Invalid daemon response: Mismatch between the number of key images and the status response.");
+    }
+
     return result;
   }
 

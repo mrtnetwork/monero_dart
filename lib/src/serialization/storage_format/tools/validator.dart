@@ -6,6 +6,8 @@ import 'package:monero_dart/src/serialization/storage_format/types/types.dart';
 import 'package:monero_dart/src/serialization/storage_format/tools/serializer.dart';
 
 class MoneroStorageFormatValidator {
+  /// validate the name of section enteries.
+  /// must not be greather than 255 character.
   static String asValidName(String name) {
     if (name.isEmpty || name.length > 255) {
       throw const MoneroSerializationException(
@@ -14,6 +16,7 @@ class MoneroStorageFormatValidator {
     return name;
   }
 
+  /// cast object to [T], exception if failed.
   static T asA<T>(Object? value) {
     try {
       return value as T;
@@ -23,6 +26,7 @@ class MoneroStorageFormatValidator {
     }
   }
 
+  /// cast object to Map<String,dynamic>, exception if failed.
   static Map<String, dynamic> asMap(Object? value) {
     try {
       return (value as Map).cast<String, dynamic>();
@@ -32,6 +36,7 @@ class MoneroStorageFormatValidator {
     }
   }
 
+  /// check and validate numeric data with current type.
   static BigInt validateNumricData(
       {required Object? value, required MoneroStorageTypes type}) {
     final typeData = MoneroStorageSerializer.getNumericTypesBitLength(type);
@@ -46,6 +51,7 @@ class MoneroStorageFormatValidator {
     return toBig;
   }
 
+  /// convert the element of array to specify type [T]
   static List<T> asArrayOf<T>(Object? value, {bool allowEmpty = false}) {
     try {
       final toList = (value as List).cast<Object?>();
@@ -68,6 +74,7 @@ class MoneroStorageFormatValidator {
     }
   }
 
+  /// check array and return type of element with casting list to [T]
   static Tuple<MoneroStorageTypes, List<T>> toArrayObject<T>(Object? value) {
     try {
       final asList = asArrayOf<Object>(value);
@@ -105,6 +112,7 @@ class MoneroStorageFormatValidator {
     }
   }
 
+  /// detect type of value.
   static MoneroStorageTypes findType(Object? value) {
     if (value is MoneroStorageContainer) {
       return value.type;
@@ -132,6 +140,7 @@ class MoneroStorageFormatValidator {
         details: {"value": value});
   }
 
+  /// force object as primitive type. exception if failed.
   static Tuple<T, MoneroStorageTypes> asPrimitiveType<T>(Object? value) {
     final type = findType(value);
     if (type.isPrimitive) {
@@ -146,6 +155,7 @@ class MoneroStorageFormatValidator {
         details: {"value": value});
   }
 
+  /// check and validate primitive type with current type and value.
   static Object validatePrimitiveObjects(
       {required Object? value, required MoneroStorageTypes type}) {
     if (value is MoneroStorageContainer && value.type.isPrimitive) {

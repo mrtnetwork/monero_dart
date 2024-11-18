@@ -8,3 +8,4 @@ export 'models/models.dart';
 export 'network/network.dart';
 export 'provider/provider.dart';
 export 'serialization/serialization.dart';
+export 'tx_builder/tx_builder.dart';

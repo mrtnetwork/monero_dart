@@ -1,6 +1,33 @@
+// Copyright (c) 2021-2024, The Monero Project
+// Copyright (c) 2024, MRTNETWORK (https://github.com/mrtnetwork)
+
+// All rights reserved.
+
+// This software includes portions of the Monero Project's original C/C++ implementation,
+// which have been adapted and reimplemented in Dart.
+
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+// Redistributions of source code must retain the above copyright notice,
+// this list of conditions, and the following disclaimers.
+// Redistributions in binary form must reproduce the above copyright notice,
+// this list of conditions, and the following disclaimers in the documentation and/or other materials provided with the distribution.
+// Neither the name of the copyright holders nor the names of their contributors
+// may be used to endorse or promote products derived from this software without specific prior written permission.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+// IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+// EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import 'dart:math';
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/exception/exception.dart';
+import 'package:monero_dart/src/crypto/models/bullet_proof_data.dart';
 import 'package:monero_dart/src/models/transaction/signature/rct_prunable.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/multiexp.dart';
@@ -33,7 +60,6 @@ class BulletproofsPlusGenerator {
   static GroupElementP3 getHiP3(int index) {
     return getExponent(base: RCTConst.h, idx: index * 2);
   }
-
 
   static RctKey multiexp({required List<MultiexpData> data, int higiSize = 0}) {
     if (higiSize > 0) {
@@ -369,8 +395,16 @@ class BulletproofsPlusGenerator {
     return CryptoOps.scCheck(scalar) == 0;
   }
 
-
   static BulletproofPlus bulletproofPlusPROVE(KeyV sv, KeyV gamma) {
+    try {
+      return _bulletproofPlusPROVE(sv, gamma);
+    } catch (e) {
+      throw MoneroCryptoException("Failed to generate Bulletproof Plus.",
+          details: {"error": e.toString()});
+    }
+  }
+
+  static BulletproofPlus _bulletproofPlusPROVE(KeyV sv, KeyV gamma) {
     if (sv.length != gamma.length) {
       throw const MoneroCryptoException("Incompatible sizes of sv and gamma");
     }
@@ -594,6 +628,16 @@ class BulletproofsPlusGenerator {
 
   static BulletproofPlus bulletproofPlusPROVEAmouts(
       List<BigInt> v, KeyV gamma) {
+    try {
+      return _bulletproofPlusPROVEAmouts(v, gamma);
+    } catch (e) {
+      throw MoneroCryptoException("Failed to generate Bulletproof Plus.",
+          details: {"error": e.toString()});
+    }
+  }
+
+  static BulletproofPlus _bulletproofPlusPROVEAmouts(
+      List<BigInt> v, KeyV gamma) {
     if (v.length != gamma.length) {
       throw const MoneroCryptoException("Incompatible sizes of v and gamma");
     }
@@ -607,6 +651,15 @@ class BulletproofsPlusGenerator {
   }
 
   static bool bulletproofPlusVerify(List<BulletproofPlus> proofs) {
+    try {
+      return _bulletproofPlusVerify(proofs);
+    } catch (e) {
+      throw MoneroCryptoException("Failed to verify Bulletproof Plus.",
+          details: {"error": e.toString()});
+    }
+  }
+
+  static bool _bulletproofPlusVerify(List<BulletproofPlus> proofs) {
     const int logN = 6;
     const int N = 1 << logN;
     int maxLength = 0;
@@ -653,7 +706,6 @@ class BulletproofsPlusGenerator {
       if (proof.l.length != 6 + logM) {
         throw const MoneroCryptoException("Proof is not the expected size");
       }
-      // CHECK_AND_ASSERT_MES(proof.L.size() == 6+pd.logM, false, "Proof is not the expected size");
       maxLogM = max(logM, maxLogM);
 
       final int rounds = logM + logN;
@@ -870,25 +922,4 @@ class BulletproofsPlusGenerator {
     }
     return false;
   }
-}
-
-class BpPlusProofData {
-  final RctKey y;
-  final RctKey z;
-  final RctKey e;
-  final List<RctKey> challenges;
-  final int logM;
-  final int invOffset;
-  BpPlusProofData(
-      {required RctKey y,
-      required RctKey z,
-      required RctKey e,
-      required List<RctKey> challenges,
-      required this.logM,
-      required this.invOffset})
-      : y = y.asImmutableBytes,
-        z = z.asImmutableBytes,
-        e = e.asImmutableBytes,
-        challenges =
-            challenges.map((e) => e.asImmutableBytes).toList().immutable;
 }

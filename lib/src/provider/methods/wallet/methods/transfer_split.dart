@@ -70,7 +70,6 @@ class WalletRequestTransferSplit extends MoneroWalletRequestParam<
 
   @override
   WalletRPCSweepResponse onResonse(Map<String, dynamic> result) {
-    print(result);
     return WalletRPCSweepResponse.fromJson(result);
   }
 }

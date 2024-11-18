@@ -458,7 +458,10 @@ class DaemonMininStatusResponse extends DaemonBaseResponse {
 enum DaemonKeyImageSpentStatus {
   unspent,
   spentInBlockchain,
-  spentInPool,
+  spentInPool;
+
+  bool get isSpent => this != unspent;
+  bool get isUnspent => this == unspent;
 }
 
 class DaemonIsKeyImageSpentResponse extends DaemonBaseResponse {

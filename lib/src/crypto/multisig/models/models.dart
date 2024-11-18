@@ -40,11 +40,10 @@ class MultisigKLRKI extends MoneroSerialization {
   final RctKey ki;
   factory MultisigKLRKI.fromStruct(Map<String, dynamic> json) {
     return MultisigKLRKI(
-      k: json.asBytes("k"),
-      L: json.asBytes("L"),
-      R: json.asBytes("R"),
-      ki: json.asBytes("ki"),
-    );
+        k: json.asBytes("k"),
+        L: json.asBytes("L"),
+        R: json.asBytes("R"),
+        ki: json.asBytes("ki"));
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {

@@ -1,7 +1,6 @@
 import 'package:monero_dart/src/serialization/exception/exception.dart';
 
 class MoneroStorageTypes {
-  // Private constructor
   const MoneroStorageTypes._(this.name, this._value,
       {this.isPrimitive = true, this.isInteger = true});
 

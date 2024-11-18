@@ -3,20 +3,27 @@ import 'package:monero_dart/src/exception/exception.dart';
 
 class ProviderUtils {
   static List<String> parseBlockBinaryResponse(String hex) {
+    if (hex.isEmpty) return [];
     const int blockLengthHex = 64;
     if (!StringUtils.isHexBytes(hex)) {
       throw const DartMoneroPluginException("Invalid hex string.");
     }
-    final toBytes = BytesUtils.fromHexString(hex);
-    if (toBytes.length % blockLengthHex != 0) {
-      throw const DartMoneroPluginException("Invalid block response bytes.");
+    if (hex.length % blockLengthHex != 0) {
+      throw const DartMoneroPluginException(
+          "Invalid block ids response bytes.");
     }
     final List<String> blockIds = [];
-    int start = 0;
-    while (start < toBytes.length) {
-      blockIds.add(hex.substring(start, start + blockLengthHex));
-      start += blockLengthHex;
+    int offset = 0;
+    while (offset < hex.length) {
+      blockIds.add(hex.substring(offset, offset + blockLengthHex));
+      offset += blockLengthHex;
     }
     return blockIds;
+  }
+
+  static String buildRpcRequest(
+      {required Object? params, required String method, required int id}) {
+    return StringUtils.fromJson(
+        {"jsonrpc": "2.0", "id": id, "method": method, "params": params});
   }
 }

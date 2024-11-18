@@ -69,9 +69,9 @@ class DistributionResponse {
 
 class OutputDistributionResponse extends DaemonBaseResponse {
   final List<DistributionResponse> distributions;
-  OutputDistributionResponse.fromJson(Map<String, dynamic> json)
+  OutputDistributionResponse.fromJson(super.json)
       : distributions = (json["distributions"] as List)
             .map((e) => DistributionResponse.fromJson(e))
             .toList(),
-        super.fromJson(json);
+        super.fromJson();
 }

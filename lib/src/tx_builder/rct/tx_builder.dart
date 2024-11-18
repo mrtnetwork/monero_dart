@@ -1,4 +1,4 @@
-part of 'package:monero_dart/src/api/tx_builder/tx_builder.dart';
+part of 'package:monero_dart/src/tx_builder/tx_builder.dart';
 
 class MoneroRctTxBuilder
     extends MoneroTxBuilder<SpendablePayment<MoneroUnLockedPayment>> {
@@ -12,14 +12,13 @@ class MoneroRctTxBuilder
     required super.change,
   });
 
-  factory MoneroRctTxBuilder({
-    required MoneroBaseAccountKeys account,
-    required List<TxDestination> destinations,
-    required List<SpendablePayment<MoneroUnLockedPayment>> sources,
-    required BigInt fee,
-    bool fakeSignature = false,
-    TxDestination? change,
-  }) {
+  factory MoneroRctTxBuilder(
+      {required MoneroBaseAccountKeys account,
+      required List<TxDestination> destinations,
+      required List<SpendablePayment<MoneroUnLockedPayment>> sources,
+      required BigInt fee,
+      bool fakeSignature = false,
+      TxDestination? change}) {
     sources = List<SpendablePayment<MoneroUnLockedPayment>>.from(sources)
       ..sort((a, b) => BytesUtils.compareBytes(
           b.payment.output.keyImage, a.payment.output.keyImage));
@@ -105,5 +104,10 @@ class MoneroRctTxBuilder
   @override
   Layout<Map<String, dynamic>> createLayout({String? property}) {
     return layout(property: property);
+  }
+
+  @override
+  MoneroTransaction getFinalTx() {
+    return transaction;
   }
 }

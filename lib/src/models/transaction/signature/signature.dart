@@ -558,34 +558,23 @@ class RCTNull extends RCTSignatureBase {
 
 class RCTCLSAG extends RCTSignatureBase {
   RCTCLSAG._({
-    required List<EcdhInfoV2> ecdhInfo,
-    required BigInt txnFee,
-    required CtKeyV outPk,
-    required RCTType type,
-    RctKey? message,
-    CtKeyM? mixRing,
+    required List<EcdhInfoV2> super.ecdhInfo,
+    required super.txnFee,
+    required super.outPk,
+    required super.type,
+    super.message,
+    super.mixRing,
   }) : super(
-            type: type,
-            ecdhInfo: ecdhInfo,
-            outPk: outPk,
-            txnFee: txnFee,
-            message: message,
-            mixRing: mixRing,
             pseudoOuts: null);
 
   RCTCLSAG({
-    required List<EcdhInfoV2> ecdhInfo,
-    required BigInt txnFee,
-    required CtKeyV outPk,
-    RctKey? message,
-    CtKeyM? mixRing,
+    required List<EcdhInfoV2> super.ecdhInfo,
+    required super.txnFee,
+    required super.outPk,
+    super.message,
+    super.mixRing,
   }) : super(
             type: RCTType.rctTypeCLSAG,
-            ecdhInfo: ecdhInfo,
-            outPk: outPk,
-            txnFee: txnFee,
-            message: message,
-            mixRing: mixRing,
             pseudoOuts: null);
   factory RCTCLSAG.fromStruct(Map<String, dynamic> json) {
     return RCTCLSAG(
@@ -629,20 +618,14 @@ class RCTCLSAG extends RCTSignatureBase {
 
 class RCTSimple extends RCTSignatureBase {
   RCTSimple({
-    required List<EcdhInfoV1> ecdhInfo,
-    required BigInt txnFee,
-    required List<List<int>> pseudoOuts,
-    required CtKeyV outPk,
-    RctKey? message,
-    CtKeyM? mixRing,
+    required List<EcdhInfoV1> super.ecdhInfo,
+    required super.txnFee,
+    required List<List<int>> super.pseudoOuts,
+    required super.outPk,
+    super.message,
+    super.mixRing,
   }) : super(
-            type: RCTType.rctTypeSimple,
-            ecdhInfo: ecdhInfo,
-            outPk: outPk,
-            txnFee: txnFee,
-            message: message,
-            mixRing: mixRing,
-            pseudoOuts: pseudoOuts);
+            type: RCTType.rctTypeSimple);
   factory RCTSimple.fromStruct(Map<String, dynamic> json) {
     return RCTSimple(
         ecdhInfo: json
@@ -693,18 +676,13 @@ class RCTSimple extends RCTSignatureBase {
 
 class RCTBulletproof2 extends RCTCLSAG {
   RCTBulletproof2({
-    required List<EcdhInfoV2> ecdhInfo,
-    required BigInt txnFee,
-    required CtKeyV outPk,
-    RctKey? message,
-    CtKeyM? mixRing,
+    required super.ecdhInfo,
+    required super.txnFee,
+    required super.outPk,
+    super.message,
+    super.mixRing,
   }) : super._(
-            ecdhInfo: ecdhInfo,
-            txnFee: txnFee,
-            outPk: outPk,
-            type: RCTType.rctTypeBulletproof2,
-            message: message,
-            mixRing: mixRing);
+            type: RCTType.rctTypeBulletproof2);
   factory RCTBulletproof2.fromStruct(Map<String, dynamic> json) {
     return RCTBulletproof2(
         ecdhInfo: json
@@ -725,18 +703,13 @@ class RCTBulletproof2 extends RCTCLSAG {
 
 class RCTBulletproofPlus extends RCTCLSAG {
   RCTBulletproofPlus({
-    required List<EcdhInfoV2> ecdhInfo,
-    required BigInt txnFee,
-    required CtKeyV outPk,
-    List<int>? message,
-    List<List<CtKey>>? mixRing,
+    required super.ecdhInfo,
+    required super.txnFee,
+    required super.outPk,
+    super.message,
+    super.mixRing,
   }) : super._(
-            ecdhInfo: ecdhInfo,
-            txnFee: txnFee,
-            outPk: outPk,
-            type: RCTType.rctTypeBulletproofPlus,
-            message: message,
-            mixRing: mixRing);
+            type: RCTType.rctTypeBulletproofPlus);
   static Layout<Map<String, dynamic>> layout(
       {String? property, required int? outputLength}) {
     return RCTCLSAG.layout(property: property, outputLength: outputLength);
@@ -758,18 +731,13 @@ class RCTBulletproofPlus extends RCTCLSAG {
 
 class RCTFull extends RCTSignatureBase {
   RCTFull({
-    required List<EcdhInfoV1> ecdhInfo,
-    required BigInt txnFee,
-    required CtKeyV outPk,
-    List<int>? message,
-    List<List<CtKey>>? mixRing,
+    required List<EcdhInfoV1> super.ecdhInfo,
+    required super.txnFee,
+    required super.outPk,
+    super.message,
+    super.mixRing,
   }) : super(
             type: RCTType.rctTypeFull,
-            ecdhInfo: ecdhInfo,
-            outPk: outPk,
-            txnFee: txnFee,
-            message: message,
-            mixRing: mixRing,
             pseudoOuts: null);
   factory RCTFull.fromStruct(Map<String, dynamic> json) {
     return RCTFull(
@@ -813,18 +781,13 @@ class RCTFull extends RCTSignatureBase {
 
 class RCTBulletproof extends RCTSignatureBase {
   RCTBulletproof({
-    required List<EcdhInfoV1> ecdhInfo,
-    required BigInt txnFee,
-    required CtKeyV outPk,
-    List<int>? message,
-    List<List<CtKey>>? mixRing,
+    required List<EcdhInfoV1> super.ecdhInfo,
+    required super.txnFee,
+    required super.outPk,
+    super.message,
+    super.mixRing,
   }) : super(
             type: RCTType.rctTypeBulletproof,
-            ecdhInfo: ecdhInfo,
-            outPk: outPk,
-            txnFee: txnFee,
-            message: message,
-            mixRing: mixRing,
             pseudoOuts: null);
   factory RCTBulletproof.fromStruct(Map<String, dynamic> json) {
     return RCTBulletproof(

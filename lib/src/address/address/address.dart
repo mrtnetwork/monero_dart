@@ -3,8 +3,7 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/network/network.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/serialization/layout/constant/const.dart';
-import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
+import 'package:monero_dart/src/serialization/serialization.dart';
 part 'integrated_address.dart';
 part 'account_address.dart';
 

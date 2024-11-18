@@ -1,4 +1,4 @@
-part of 'package:monero_dart/src/api/tx_builder/tx_builder.dart';
+part of 'package:monero_dart/src/tx_builder/tx_builder.dart';
 
 class MoneroMultisigTxBuilder
     extends MoneroTxBuilder<SpendablePayment<MoneroUnlockedMultisigPayment>> {
@@ -151,7 +151,8 @@ class MoneroMultisigTxBuilder
         isMultisig: true,
         fee: fee,
         aResult: a);
-    final message = RCTGeneratorUtils.getPreMlsagHash(signature).asImmutableBytes;
+    final message =
+        RCTGeneratorUtils.getPreMlsagHash(signature).asImmutableBytes;
     final List<Clsag> clsags = [];
     final List<CLSAGContext> clsagContext = [];
     final KeyV cachedW = List.generate(sources.length, (_) => RCT.zero());
@@ -209,8 +210,8 @@ class MoneroMultisigTxBuilder
       TxDestination? change}) {
     sources =
         List<SpendablePayment<MoneroUnlockedMultisigPayment>>.from(sources)
-          ..sort((a, b) => BytesUtils.compareBytes(
-              b.payment.output.keyImage, a.payment.output.keyImage));
+          ..sort((a, b) =>
+              BytesUtils.compareBytes(b.payment.keyImage, a.payment.keyImage));
     sources = sources.immutable;
     final multisigAccount = account.multisigAccount;
     if (signers.contains(multisigAccount.multisigSignerPubKey)) {
@@ -462,7 +463,7 @@ class MoneroMultisigTxBuilder
         final kLRki = MoneroMultisigUtils.getMultisigCompositeKLRki(
             outPubKey: sources[j].payment.output.outputPublicKey,
             keyImage: sources[j].payment.keyImage,
-            newUsedL: _multisigInfo.l,
+            newUsedL: _multisigInfo.l[j],
             usedL: allUsedL,
             threshHold: threshold,
             infos: otherSignersInfo);
@@ -506,7 +507,7 @@ class MoneroMultisigTxBuilder
         for (final n in multisigNonces) {
           if (usedNonces.contains(n)) continue;
           final l = RCT.scalarmultBase_(n.key);
-          if (BytesUtils.isContains(_multisigInfo.l, l)) {
+          if (BytesUtils.isContains(_multisigInfo.l[s], l)) {
             nonce = n;
             usedNonces.add(nonce);
             break;
@@ -539,6 +540,7 @@ class MoneroMultisigTxBuilder
     ];
   }
 
+  @override
   MoneroTransaction getFinalTx() {
     if (!isReady) {
       throw const DartMoneroPluginException(

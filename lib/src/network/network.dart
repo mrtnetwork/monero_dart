@@ -5,27 +5,35 @@ import 'package:blockchain_utils/bip/monero/conf/monero_coins.dart';
 import 'package:monero_dart/src/exception/exception.dart';
 
 class MoneroNetwork {
+  /// network name
   final String name;
+
+  /// network address configration.
   final CoinConf config;
-  List<int> get prefixes => [
+
+  /// network address prefixes.
+  List<int> get _prefixes => [
         ...config.params.addrNetVer!,
         ...config.params.addrIntNetVer!,
         ...config.params.subaddrNetVer!,
       ];
   const MoneroNetwork._({required this.name, required this.config});
-  static const MoneroNetwork mainnet = MoneroNetwork._(
-    name: "Mainnet",
-    config: CoinsConf.moneroMainNet,
-  );
-  static const MoneroNetwork testnet = MoneroNetwork._(
-    name: "Testnet",
-    config: CoinsConf.moneroTestNet,
-  );
-  static const MoneroNetwork stagenet = MoneroNetwork._(
-    name: "Stagenet",
-    config: CoinsConf.moneroStageNet,
-  );
+
+  /// mainnet
+  static const MoneroNetwork mainnet =
+      MoneroNetwork._(name: "Mainnet", config: CoinsConf.moneroMainNet);
+
+  /// testnet
+  static const MoneroNetwork testnet =
+      MoneroNetwork._(name: "Testnet", config: CoinsConf.moneroTestNet);
+
+  /// stagenet
+  static const MoneroNetwork stagenet =
+      MoneroNetwork._(name: "Stagenet", config: CoinsConf.moneroStageNet);
+
   static const List<MoneroNetwork> values = [mainnet, testnet, stagenet];
+
+  /// find monero network from name.
   static MoneroNetwork fromName(String? name) {
     return values.firstWhere((e) => e.name == name,
         orElse: () => throw DartMoneroPluginException(
@@ -33,10 +41,11 @@ class MoneroNetwork {
             details: {"name": name}));
   }
 
+  /// find network from address type prefix bytes.
   static MoneroNetwork findNetwork(XmrAddressType type) {
     for (final i in type.prefixes) {
       for (final n in values) {
-        if (n.prefixes.contains(i)) {
+        if (n._prefixes.contains(i)) {
           return n;
         }
       }
@@ -45,6 +54,7 @@ class MoneroNetwork {
         "Invalid prefix: no related network found for the provided prefix.");
   }
 
+  /// detect address prefix bytes from type.
   List<int> findPrefix(XmrAddressType type) {
     switch (type) {
       case XmrAddressType.integrated:
@@ -59,6 +69,7 @@ class MoneroNetwork {
     }
   }
 
+  /// quick method to get coin from network.
   MoneroCoins get coin {
     switch (this) {
       case MoneroNetwork.mainnet:

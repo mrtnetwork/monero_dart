@@ -16,15 +16,13 @@ import 'package:monero_dart/src/network/config.dart';
 class MoneroTransactionHelper {
   static final BigRational _trxDecimal = BigRational(BigInt.from(10).pow(12));
 
-  /// Converts a string amount to SUN (smallest unit in Tron).
-  static BigInt toXMR(String amount) {
+  static BigInt toPiconero(String amount) {
     final parse = BigRational.parseDecimal(amount);
     return (parse * _trxDecimal).toBigInt();
   }
 
-  /// Converts a bigint sun to trx with decimal.
-  static String fromXMR(BigInt amount) {
-    final parse = BigRational(amount);
+  static String toXMR(BigInt piconero) {
+    final parse = BigRational(piconero);
     return (parse / _trxDecimal).toDecimal(digits: 12);
   }
 
