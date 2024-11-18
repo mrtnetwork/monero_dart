@@ -74,8 +74,7 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
       required List<MoneroUnLockedPayment> payments,
       required List<TxDestination> destinations,
       required MoneroAddress changeAddress,
-      MoneroFeePrority priority = MoneroFeePrority.defaultPriority,
-      DateTime? unlocktime}) async {
+      MoneroFeePrority priority = MoneroFeePrority.defaultPriority}) async {
     if (payments.toSet().length != payments.length) {
       throw const DartMoneroPluginException(
           "Multiple payment with same keyimage detected.");

@@ -130,7 +130,6 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final List<TxExtra> extras = [];
     final unknowDsts =
         currentDestinations.where((e) => e.address != change?.address);
-    print("unknow dsts ${unknowDsts}");
     if (unknowDsts.length == 1) {
       final dst = unknowDsts.elementAt(0);
       List<int> paymentId = List<int>.filled(8, 0);

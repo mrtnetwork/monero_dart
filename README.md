@@ -131,7 +131,7 @@ Transfer
 
 ```
 
-### Horizon and soroban provider
+### Daemon and wallet RPC
 
 ```dart
 /// Create a custom service provider that implements [MoneroServiceProvider]

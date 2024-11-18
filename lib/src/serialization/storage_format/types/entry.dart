@@ -50,7 +50,7 @@ class MoneroSection {
 
   /// check section has any entries or should be serialize as empty section.
   bool get hasValue {
-    return enteries.every((e) => !e.hasValue);
+    return !enteries.every((e) => !e.hasValue);
   }
 
   List<int> serialize() {
