@@ -1,6 +1,6 @@
 # Monero Dart
 
-monero_dart is a Dart package that implements Monero cryptography for creating and signing RingCT (Rct) transactions in pure Dart. It supports the latest Bulletproof Plus for RCT signatures and multisignature accounts for transaction creation. This package includes comprehensive account management features such as account generation, seed-to-mnemonic conversion, and serialization/storage formats. It also provides full support for interacting with Monero daemons and wallet RPCs, making it a complete solution for working with Monero in Dart.
+monero_dart is a Dart package that implements Monero cryptography for creating and signing RingCT (Rct) transactions in pure Dart. It supports the latest Bulletproof Plus for RCT signatures and multisignature accounts for transaction creation. This package includes comprehensive account management features such as account generation, seed-to-mnemonic conversion, and serialization. It also provides full support for interacting with Monero daemons and wallet RPCs, making it a complete solution for working with Monero in Dart.
 
 ## Futures
 
