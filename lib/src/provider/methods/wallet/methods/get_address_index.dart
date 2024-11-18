@@ -4,8 +4,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Get account and address indexes from a specific (sub)address.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_address_index
-class WalletRequestGetAddressIndex
-    extends MoneroWalletRequestParam<WalletRPCSubAddressIndexResponse, Map<String, dynamic>> {
+class WalletRequestGetAddressIndex extends MoneroWalletRequestParam<
+    WalletRPCSubAddressIndexResponse, Map<String, dynamic>> {
   WalletRequestGetAddressIndex(this.address);
 
   /// (sub)address to look for.

@@ -564,8 +564,7 @@ class RCTCLSAG extends RCTSignatureBase {
     required super.type,
     super.message,
     super.mixRing,
-  }) : super(
-            pseudoOuts: null);
+  }) : super(pseudoOuts: null);
 
   RCTCLSAG({
     required List<EcdhInfoV2> super.ecdhInfo,
@@ -573,9 +572,7 @@ class RCTCLSAG extends RCTSignatureBase {
     required super.outPk,
     super.message,
     super.mixRing,
-  }) : super(
-            type: RCTType.rctTypeCLSAG,
-            pseudoOuts: null);
+  }) : super(type: RCTType.rctTypeCLSAG, pseudoOuts: null);
   factory RCTCLSAG.fromStruct(Map<String, dynamic> json) {
     return RCTCLSAG(
         ecdhInfo: json
@@ -624,8 +621,7 @@ class RCTSimple extends RCTSignatureBase {
     required super.outPk,
     super.message,
     super.mixRing,
-  }) : super(
-            type: RCTType.rctTypeSimple);
+  }) : super(type: RCTType.rctTypeSimple);
   factory RCTSimple.fromStruct(Map<String, dynamic> json) {
     return RCTSimple(
         ecdhInfo: json
@@ -681,8 +677,7 @@ class RCTBulletproof2 extends RCTCLSAG {
     required super.outPk,
     super.message,
     super.mixRing,
-  }) : super._(
-            type: RCTType.rctTypeBulletproof2);
+  }) : super._(type: RCTType.rctTypeBulletproof2);
   factory RCTBulletproof2.fromStruct(Map<String, dynamic> json) {
     return RCTBulletproof2(
         ecdhInfo: json
@@ -708,8 +703,7 @@ class RCTBulletproofPlus extends RCTCLSAG {
     required super.outPk,
     super.message,
     super.mixRing,
-  }) : super._(
-            type: RCTType.rctTypeBulletproofPlus);
+  }) : super._(type: RCTType.rctTypeBulletproofPlus);
   static Layout<Map<String, dynamic>> layout(
       {String? property, required int? outputLength}) {
     return RCTCLSAG.layout(property: property, outputLength: outputLength);
@@ -736,9 +730,7 @@ class RCTFull extends RCTSignatureBase {
     required super.outPk,
     super.message,
     super.mixRing,
-  }) : super(
-            type: RCTType.rctTypeFull,
-            pseudoOuts: null);
+  }) : super(type: RCTType.rctTypeFull, pseudoOuts: null);
   factory RCTFull.fromStruct(Map<String, dynamic> json) {
     return RCTFull(
         ecdhInfo: json
@@ -786,9 +778,7 @@ class RCTBulletproof extends RCTSignatureBase {
     required super.outPk,
     super.message,
     super.mixRing,
-  }) : super(
-            type: RCTType.rctTypeBulletproof,
-            pseudoOuts: null);
+  }) : super(type: RCTType.rctTypeBulletproof, pseudoOuts: null);
   factory RCTBulletproof.fromStruct(Map<String, dynamic> json) {
     return RCTBulletproof(
         ecdhInfo: json

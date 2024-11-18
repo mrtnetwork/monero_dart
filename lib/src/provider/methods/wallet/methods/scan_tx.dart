@@ -1,6 +1,6 @@
 import 'package:monero_dart/src/provider/core/core.dart';
 
-/// Given list of txids, scan each for outputs belonging to your wallet. 
+/// Given list of txids, scan each for outputs belonging to your wallet.
 /// Note that the node will see these specific requests and may be a privacy concern.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#scan_tx
 class WalletRequestScanTx

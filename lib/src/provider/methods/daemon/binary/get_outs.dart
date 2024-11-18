@@ -29,7 +29,6 @@ class DaemonRequestGetOuts
 
   @override
   GetOutResponse onResonse(Map<String, dynamic> result) {
-
     return GetOutResponse.fromJson(result);
   }
 }

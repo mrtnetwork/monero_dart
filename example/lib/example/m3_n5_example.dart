@@ -81,7 +81,6 @@ void main() async {
           amount: "0.001",
           address: MoneroAddress(
               "51yw3EafPkXS6gwhJGGvNn7DzPEEGrgfeJZBvAFjzu8w252Zr1nx4PfVdXi4e6kiiQMBJ8k4JCFby2pANTAjofbo2rWBpbx")),
-   
     ],
     changeAddress: myAccount.primaryAddress(),
 

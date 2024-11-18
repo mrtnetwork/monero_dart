@@ -3,7 +3,6 @@ import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/bulletproofs_plu
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:test/test.dart';
 
-
 void main() {
   group("BulletproofsPlus", () {
     _test();

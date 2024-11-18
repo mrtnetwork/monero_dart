@@ -1,5 +1,8 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/monero_dart.dart';
+
 class MoneroChainAccountTracker {
   final MoneroBaseAccountKeys _account;
   final int startHeight;
@@ -51,8 +54,8 @@ class MoneroChainAccountTracker {
       }
     }
 
-    // final total = outputs.map((e) => e.output.amount).toList();
-    // final txes = outputs.map((e) => e.txHash).toList();
+    final total = outputs.map((e) => e.output.amount).toList();
+    final txes = outputs.map((e) => e.txHash).toList();
   }
 }
 

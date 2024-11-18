@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Return the wallet's balance.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_balance
-class WalletRequestGetBalance
-    extends MoneroWalletRequestParam<WalletRPCGetBalanceResponse, Map<String, dynamic>> {
+class WalletRequestGetBalance extends MoneroWalletRequestParam<
+    WalletRPCGetBalanceResponse, Map<String, dynamic>> {
   WalletRequestGetBalance(
       {required this.accountIndex,
       this.addressIndices,

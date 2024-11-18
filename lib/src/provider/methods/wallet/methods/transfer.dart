@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Send monero to a number of recipients.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#transfer
-class WalletRequestTransfer
-    extends MoneroWalletRequestParam<WalletRPCTransferMoneroResponse, Map<String, dynamic>> {
+class WalletRequestTransfer extends MoneroWalletRequestParam<
+    WalletRPCTransferMoneroResponse, Map<String, dynamic>> {
   WalletRequestTransfer(
       {required this.destinations,
       required this.accountIndex,

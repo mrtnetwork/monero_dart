@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Check if a wallet is a multisig one.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#is_multisig
-class WalletRequestIsMultisig
-    extends MoneroWalletRequestParam<WalletRPCIsMultisigResponse, Map<String, dynamic>> {
+class WalletRequestIsMultisig extends MoneroWalletRequestParam<
+    WalletRPCIsMultisigResponse, Map<String, dynamic>> {
   const WalletRequestIsMultisig();
 
   @override

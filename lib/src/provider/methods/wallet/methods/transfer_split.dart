@@ -10,7 +10,7 @@ class WalletRequestTransferSplit extends MoneroWalletRequestParam<
       this.accountIndex,
       this.subaddrIndices,
       this.priority,
-       this.paymentId,
+      this.paymentId,
       required this.ringSize,
       required this.unlockTime,
       this.getTxKeys,

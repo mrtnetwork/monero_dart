@@ -9,8 +9,7 @@ class MoneroIntegratedAddress extends MoneroAddress {
     required super.network,
     required List<int> paymentId,
   })  : paymentId = paymentId.asImmutableBytes,
-        super._(
-            type: XmrAddressType.integrated);
+        super._(type: XmrAddressType.integrated);
 
   factory MoneroIntegratedAddress(String address, {MoneroNetwork? network}) {
     final decode = XmrAddrDecoder().decode(address);

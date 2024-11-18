@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Obsolete. Conserved here for reference.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#stop_save_graph
-class DaemonRequestStopSaveGraph extends MoneroDaemonRequestParam<
-    DaemonBaseResponse, Map<String, dynamic>> {
+class DaemonRequestStopSaveGraph
+    extends MoneroDaemonRequestParam<DaemonBaseResponse, Map<String, dynamic>> {
   const DaemonRequestStopSaveGraph();
 
   @override

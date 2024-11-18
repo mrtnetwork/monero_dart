@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Get the mining status of the daemon.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#mining_status
-class DaemonRequestMiningStatus
-    extends MoneroDaemonRequestParam<DaemonMininStatusResponse, Map<String, dynamic>> {
+class DaemonRequestMiningStatus extends MoneroDaemonRequestParam<
+    DaemonMininStatusResponse, Map<String, dynamic>> {
   const DaemonRequestMiningStatus();
 
   @override

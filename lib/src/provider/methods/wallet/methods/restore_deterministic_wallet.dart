@@ -34,7 +34,8 @@ class WalletRequestRestoreDeterministicWallet extends MoneroWalletRequestParam<
       };
 
   @override
-  WalletRPCRestoreDeterministicWalletResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCRestoreDeterministicWalletResponse onResonse(
+      Map<String, dynamic> result) {
     return WalletRPCRestoreDeterministicWalletResponse.fromJson(result);
   }
 }

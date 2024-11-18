@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Remove filtering tag from a list of accounts.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#untag_accounts
-class WalletRequestUntagAccounts
-    extends MoneroWalletRequestParam<WalletRPCSweepResponse, Map<String, dynamic>> {
+class WalletRequestUntagAccounts extends MoneroWalletRequestParam<
+    WalletRPCSweepResponse, Map<String, dynamic>> {
   WalletRequestUntagAccounts({required this.accounts});
 
   /// Remove tag from this list of accounts.

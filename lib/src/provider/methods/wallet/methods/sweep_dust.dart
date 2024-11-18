@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Send all dust outputs back to the wallet's, to make them easier to spend (and mix).
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#sweep_dust
-class WalletRequestSweepDust
-    extends MoneroWalletRequestParam<WalletRPCSweepResponse, Map<String, dynamic>> {
+class WalletRequestSweepDust extends MoneroWalletRequestParam<
+    WalletRPCSweepResponse, Map<String, dynamic>> {
   WalletRequestSweepDust(
       {this.getTxKeys, this.doNotRelay, this.getTxHex, this.getTxMetadata});
 

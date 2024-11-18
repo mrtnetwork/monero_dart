@@ -4,8 +4,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Prove a transaction by checking its signature.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#check_tx_proof
-class WalletRequestCheckTxProof
-    extends MoneroWalletRequestParam<WalletRPCCheckTxProofResponse, Map<String, dynamic>> {
+class WalletRequestCheckTxProof extends MoneroWalletRequestParam<
+    WalletRPCCheckTxProofResponse, Map<String, dynamic>> {
   WalletRequestCheckTxProof(
       {required this.txId,
       required this.message,

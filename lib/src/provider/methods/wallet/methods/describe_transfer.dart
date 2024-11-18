@@ -8,11 +8,11 @@ class WalletRequestDescribeTransfer extends MoneroWalletRequestParam<
     WalletRPCDescribeTransferResponse, Map<String, dynamic>> {
   WalletRequestDescribeTransfer({this.unsignedTxSet, this.multisigTxSet});
 
-  /// A hexadecimal string representing a set of unsigned transactions 
+  /// A hexadecimal string representing a set of unsigned transactions
   /// (empty for multisig transactions; non-multisig signed transactions are not supported).
   final String? unsignedTxSet;
 
-  /// A hexadecimal string representing the set of signing keys used in 
+  /// A hexadecimal string representing the set of signing keys used in
   /// a multisig transaction (empty for unsigned transactions; non-multisig signed transactions are not supported).
   final String? multisigTxSet;
 

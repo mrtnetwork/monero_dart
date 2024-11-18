@@ -16,7 +16,8 @@ class WalletRequestSplitIntegratedAddress extends MoneroWalletRequestParam<
   Map<String, dynamic> get params => {"integrated_address": integratedAddress};
 
   @override
-  WalletRPCSplitIntegratedAddressResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCSplitIntegratedAddressResponse onResonse(
+      Map<String, dynamic> result) {
     return WalletRPCSplitIntegratedAddressResponse.fromJson(result);
   }
 }

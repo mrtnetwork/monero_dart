@@ -1,7 +1,7 @@
 import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
-/// Return the wallet's addresses for an account. 
+/// Return the wallet's addresses for an account.
 /// Optionally filter for specific set of subaddresses.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_address
 class WalletRequestGetAddress extends MoneroWalletRequestParam<

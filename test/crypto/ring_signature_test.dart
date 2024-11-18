@@ -6,6 +6,7 @@ import 'ring_signature_test_vector.dart';
 void main() async {
   _generateRingSignature();
 }
+
 void _generateRingSignature() {
   test("generate ring signature", () {
     for (final i in ringSignatureTestVector) {

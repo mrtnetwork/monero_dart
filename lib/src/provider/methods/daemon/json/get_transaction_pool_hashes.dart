@@ -15,7 +15,8 @@ class DaemonRequestGetTransactionPoolHashes extends MoneroDaemonRequestParam<
   DemonRequestType get requestType => DemonRequestType.json;
 
   @override
-  DaemonGetTransactionPoolHashesResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetTransactionPoolHashesResponse onResonse(
+      Map<String, dynamic> result) {
     return DaemonGetTransactionPoolHashesResponse.fromJson(result);
   }
 }

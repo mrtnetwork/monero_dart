@@ -1,7 +1,7 @@
 import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
-/// Similar to get_block_header_by_hash above, this method includes a block's height as 
+/// Similar to get_block_header_by_hash above, this method includes a block's height as
 /// an input parameter to retrieve basic information about the block.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_block_header_by_height
 class DaemonRequestGeBlockHeaderByHeight extends MoneroDaemonRequestParam<

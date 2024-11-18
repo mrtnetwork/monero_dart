@@ -2,7 +2,7 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
-/// Block header information can be retrieved using either a block's hash or height. 
+/// Block header information can be retrieved using either a block's hash or height.
 /// This method includes a block's hash as an input parameter to retrieve basic information about the block.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_block_header_by_hash
 class DaemonRequestGetBlockHeaderByHash extends MoneroDaemonRequestParam<

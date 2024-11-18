@@ -1,8 +1,8 @@
 import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
-/// Save the blockchain. The blockchain does not need saving and is always saved when modified, 
-/// however it does a sync to flush the filesystem cache onto the disk for safety purposes against 
+/// Save the blockchain. The blockchain does not need saving and is always saved when modified,
+/// however it does a sync to flush the filesystem cache onto the disk for safety purposes against
 /// Operating System or Hardware crashes.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#save_bc
 class DaemonRequestStartSaveBc

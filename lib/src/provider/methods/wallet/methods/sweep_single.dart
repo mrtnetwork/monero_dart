@@ -4,8 +4,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Send all of a specific unlocked output to an address.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#sweep_single
-class WalletRequestSweepSingle
-    extends MoneroWalletRequestParam<WalletRPCSweepSingleResponse, Map<String, dynamic>> {
+class WalletRequestSweepSingle extends MoneroWalletRequestParam<
+    WalletRPCSweepSingleResponse, Map<String, dynamic>> {
   WalletRequestSweepSingle(
       {required this.address,
       required this.keyImage,

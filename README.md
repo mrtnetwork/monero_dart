@@ -25,13 +25,11 @@ monero_dart is a Dart package that implements Monero cryptography for creating a
 
 ### Examples
 
-  - [Payment](https://github.com/mrtnetwork/stellar_dart/tree/main/example/lib/examples/send_assets.dart)
-  - [DeployContract](https://github.com/mrtnetwork/stellar_dart/tree/main/example/lib/examples/deploy_contract.dart)
-  - [CallContract](https://github.com/mrtnetwork/stellar_dart/tree/main/example/lib/examples/transfer.dart)
-  - [CreateSellOffer](https://github.com/mrtnetwork/stellar_dart/tree/main/example/lib/examples/create_sell_offer.dart)
-  - [EnableMultisigAccount](https://github.com/mrtnetwork/stellar_dart/tree/main/example/lib/examples/enable_multisig_account.dart)
-  - [PaymentUsingMultisigAccount](https://github.com/mrtnetwork/stellar_dart/tree/main/example/lib/examples/payment_using_multisig.dart)
-  - [PathPaymentStrict](https://github.com/mrtnetwork/stellar_dart/tree/main/example/lib/examples/path_payment_strict.dart)
+  - [Transfer](https://github.com/mrtnetwork/monero_dart/blob/main/example/lib/example/in7_out3_example.dart)
+  - [Multisig Transfer 1/2](https://github.com/mrtnetwork/monero_dart/blob/main/example/lib/example/m1_n2_example.dart)
+  - [Multisig Transfer 3/5](https://github.com/mrtnetwork/monero_dart/blob/main/example/lib/example/m3_n5_example.dart)
+  - [Simple chain account tracker](https://github.com/mrtnetwork/monero_dart/blob/main/example/lib/example/tracker.dart)
+
 
 
 Transfer 
@@ -132,6 +130,7 @@ Transfer
 ```
 
 ### Daemon and wallet RPC
+All RPC methods are available [here](https://github.com/mrtnetwork/monero_dart/tree/main/lib/src/provider/methods).
 
 ```dart
 /// Create a custom service provider that implements [MoneroServiceProvider]

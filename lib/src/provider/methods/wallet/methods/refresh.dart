@@ -3,8 +3,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Refresh a wallet after openning.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#refresh
-class WalletRequestRefresh
-    extends MoneroWalletRequestParam<WalletRPCRefreshResponse, Map<String, dynamic>> {
+class WalletRequestRefresh extends MoneroWalletRequestParam<
+    WalletRPCRefreshResponse, Map<String, dynamic>> {
   WalletRequestRefresh({this.startHeight});
 
   /// The block height from which to start refreshing.

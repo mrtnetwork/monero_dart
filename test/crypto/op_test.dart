@@ -38,8 +38,7 @@ void _test() {
   });
   test("description", () {
     final rct = RCT.scalarmultKey_(
-        RCT.scalarmultKey_(RCTConst.h, RCTConst.invEight),
-        RCTConst.eight);
+        RCT.scalarmultKey_(RCTConst.h, RCTConst.invEight), RCTConst.eight);
     expect(rct, RCTConst.h);
   });
   test("scalarmult8/identity", () {

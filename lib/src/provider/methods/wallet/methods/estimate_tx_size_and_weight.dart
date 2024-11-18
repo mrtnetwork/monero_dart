@@ -30,7 +30,8 @@ class WalletRequestEstimateTxSizeAndWeight extends MoneroWalletRequestParam<
       };
 
   @override
-  WalletRPCEstimateTxSizeAndWeightResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCEstimateTxSizeAndWeightResponse onResonse(
+      Map<String, dynamic> result) {
     return WalletRPCEstimateTxSizeAndWeightResponse.fromJson(result);
   }
 }

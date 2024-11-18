@@ -4,8 +4,8 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Send all unlocked balance to an address.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#sweep_all
-class WalletRequestSweepAll
-    extends MoneroWalletRequestParam<WalletRPCSweepResponse, Map<String, dynamic>> {
+class WalletRequestSweepAll extends MoneroWalletRequestParam<
+    WalletRPCSweepResponse, Map<String, dynamic>> {
   WalletRequestSweepAll(
       {required this.address,
       required this.accountIndex,

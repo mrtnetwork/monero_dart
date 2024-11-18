@@ -21,7 +21,8 @@ class WalletRequestMakeIntegratedAddress extends MoneroWalletRequestParam<
   Map<String, dynamic> get params =>
       {"standard_address": standardAddress?.address, "payment_id": paymentId};
   @override
-  WalletRPCMakeIntegratedAddressResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCMakeIntegratedAddressResponse onResonse(
+      Map<String, dynamic> result) {
     return WalletRPCMakeIntegratedAddressResponse.fromJson(result);
   }
 }

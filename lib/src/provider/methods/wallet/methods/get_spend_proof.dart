@@ -1,6 +1,6 @@
 import 'package:monero_dart/src/provider/core/core.dart';
 
-/// Generate a signature to prove a spend. Unlike proving a transaction, 
+/// Generate a signature to prove a spend. Unlike proving a transaction,
 /// it does not requires the destination public address.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_spend_proof
 class WalletRequestGetSpendProof

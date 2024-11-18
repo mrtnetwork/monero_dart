@@ -155,10 +155,6 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
     });
     return txWithIndices.expand((e) => e).toList();
   }
-
-
-  
-
 }
 
 class DaemonGetBlocksByHeightResponse extends DaemonBaseResponse {
