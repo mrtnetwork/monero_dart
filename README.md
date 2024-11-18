@@ -131,7 +131,8 @@ Transfer
 
 ### Daemon and wallet RPC
 All RPC methods are available [here](https://github.com/mrtnetwork/monero_dart/tree/main/lib/src/provider/methods).
-See the [example](https://github.com/mrtnetwork/monero_dart/blob/main/example/lib/example/provider_example.dart) for implementing the provider service.
+
+ See the [example](https://github.com/mrtnetwork/monero_dart/blob/main/example/lib/example/provider_example.dart) for implementing the provider service.
 
 ```dart
 /// Create a custom service provider that implements [MoneroServiceProvider]
