@@ -52,7 +52,6 @@ class TxResponse {
   }
 
   MoneroTransaction toTx() {
-    // print("hex $txHex");
     final toBytes = BytesUtils.tryFromHexString(txHex);
     if (toBytes?.isEmpty ?? true) {
       throw const DartMoneroPluginException("Invalid monero tx hex.");

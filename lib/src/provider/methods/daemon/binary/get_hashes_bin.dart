@@ -30,7 +30,6 @@ class DaemonRequestGetHashesBin extends MoneroDaemonRequestParam<
   DemonRequestType get requestType => DemonRequestType.binary;
   @override
   DaemonGetHashesBinResponse onResonse(Map<String, dynamic> result) {
-    // print("result $result");
     return DaemonGetHashesBinResponse.fromBinaryResponse(result);
   }
 }

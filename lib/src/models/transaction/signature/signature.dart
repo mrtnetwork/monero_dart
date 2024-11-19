@@ -171,9 +171,10 @@ class RCTSignature<S extends RCTSignatureBase, P extends RctSigPrunable>
 }
 
 class MoneroV1Signature extends MoneroTxSignatures {
-  final List<List<int>> signature;
+  final List<List<int>>? signature;
   const MoneroV1Signature(this.signature);
   factory MoneroV1Signature.fromStruct(Map<String, dynamic> json) {
+    if (json.isEmpty) return const MoneroV1Signature(null);
     return MoneroV1Signature(json
         .asListOfMap("v1")!
         .map((e) => List<int>.from(e["signature"]))
@@ -224,7 +225,7 @@ class MoneroV1Signature extends MoneroTxSignatures {
   @override
   Map<String, dynamic> toLayoutStruct() {
     return {
-      "v1": signature.map((e) => {"signature": e}).toList()
+      "v1": signature?.map((e) => {"signature": e}).toList() ?? {}
     };
   }
 }

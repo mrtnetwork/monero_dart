@@ -155,7 +155,7 @@ class MoneroCrypto {
     derivation.as32Bytes("deriveViewTag");
     final outputIndex = MoneroIntVarInt(LayoutConst.u48()).serialize(outIndex);
     final hash = QuickCrypto.keccack256Hash(
-        [..."view_tag".codeUnits, ...derivation.asBytes, ...outputIndex]);
+        [..."view_tag".codeUnits, ...derivation, ...outputIndex]);
     return hash[0];
   }
 

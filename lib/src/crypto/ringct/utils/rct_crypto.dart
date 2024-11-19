@@ -394,18 +394,17 @@ class RCT {
     }
   }
 
-  static List<int> scalarFast(List<int> scalar) {
+  static List<int> scalar32Fast(List<int> scalar) {
     final toint = BigintUtils.fromBytes(scalar, byteOrder: Endian.little);
     final reduce = toint % Curves.generatorED25519.order!;
     final tobytes = BigintUtils.toBytes(reduce,
-        order: Endian.little,
-        length: BigintUtils.orderLen(Curves.generatorED25519.order!));
+        order: Endian.little, length: RCTConst.i.length);
     return tobytes;
   }
 
   static List<int> hashToScalarFast_(List<int> data) {
     final h = QuickCrypto.keccack256Hash(data);
-    return scalarFast(h);
+    return scalar32Fast(h);
   }
 
   static List<int> hashToScalar_(List<int> data) {

@@ -1,4 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
+import 'package:monero_dart/src/account/account.dart';
 import 'package:monero_dart/src/address/address/address.dart';
 import 'package:monero_dart/src/api/models/models.dart';
 import 'package:monero_dart/src/crypto/models/ec_signature.dart';
@@ -77,6 +78,21 @@ class MoneroTransactionHelper {
     return viewTag == hash;
   }
 
+  static RctKey? inOuttoAccFast(
+      {required MoneroPrivateKey viewSecretKey,
+      required MoneroPublicKey txPubkey,
+      required int outIndex,
+      required int? viewTag}) {
+    final derivation = MoneroCrypto.generateKeyDerivationFast(
+            pubkey: txPubkey, secretKey: viewSecretKey)
+        .asImmutableBytes;
+    if (hasSameViewTag(
+        viewTag: viewTag, derivation: derivation, outIndex: outIndex)) {
+      return derivation;
+    }
+    return null;
+  }
+
   static RctKey? inOuttoAcc({
     required MoneroPrivateKey viewSecretKey,
     required MoneroPublicKey publicSpendKey,
@@ -85,11 +101,12 @@ class MoneroTransactionHelper {
     required int outIndex,
     required int? viewTag,
   }) {
-    final derivation = MoneroCrypto.generateKeyDerivationFast(
-            pubkey: txPubkey, secretKey: viewSecretKey)
-        .asImmutableBytes;
-    if (hasSameViewTag(
-        viewTag: viewTag, derivation: derivation, outIndex: outIndex)) {
+    final derivation = inOuttoAccFast(
+        viewSecretKey: viewSecretKey,
+        txPubkey: txPubkey,
+        outIndex: outIndex,
+        viewTag: viewTag);
+    if (derivation != null) {
       final pubKey = MoneroCrypto.derivePublicKeyFast(
           derivation: derivation,
           outIndex: outIndex,
@@ -457,6 +474,58 @@ class MoneroTransactionHelper {
         d: sharedSecret,
         signature: signature,
         version: version.version);
+  }
+
+  static MoneroLockedOutput? getLockedOutputsFast({
+    required int realIndex,
+    required MoneroTransaction tx,
+    required MoneroBaseAccountKeys account,
+  }) {
+    final out = tx.vout[realIndex];
+    final outPublicKey = out.target.getPublicKey();
+    if (outPublicKey == null) {
+      return null;
+    }
+    final viewTag = out.target.getViewTag();
+    final additionalPubKeys = tx.getTxAdditionalPubKeys();
+    final List<MoneroPublicKey> publicKeys = [
+      tx.getTxExtraPubKey(),
+      if (additionalPubKeys != null) additionalPubKeys.pubKeys[realIndex]
+    ];
+    for (final p in publicKeys) {
+      final derivationFast = MoneroTransactionHelper.inOuttoAccFast(
+          viewSecretKey: account.account.privVkey,
+          txPubkey: p,
+          viewTag: viewTag,
+          outIndex: realIndex);
+      if (derivationFast == null) continue;
+      for (final i in account.indexes) {
+        final derivePubKey = MoneroCrypto.derivePublicKeyFast(
+            derivation: derivationFast,
+            outIndex: realIndex,
+            basePublicKey: account.getSpendPublicKey(i));
+        if (derivePubKey == outPublicKey) {
+          final sharedSec = MoneroCrypto.derivationToScalarFast(
+              derivation: derivationFast, outIndex: realIndex);
+          final mask = RCT.zero();
+          final amount = RCTGeneratorUtils.decodeRct_(
+              sig: tx.signature.cast(),
+              secretKey: sharedSec,
+              outputIndex: realIndex,
+              mask: mask);
+          if (amount != null) {
+            return MoneroLockedOutput(
+                amount: amount,
+                mask: mask,
+                derivation: derivationFast,
+                outputPublicKey: outPublicKey,
+                accountIndex: i,
+                unlockTime: tx.unlockTime);
+          }
+        }
+      }
+    }
+    return null;
   }
 }
 

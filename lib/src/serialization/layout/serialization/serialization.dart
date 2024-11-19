@@ -24,6 +24,7 @@ abstract class MoneroSerialization {
       {required List<int> bytes,
       required Layout<Map<String, dynamic>> layout}) {
     final decode = layout.deserialize(bytes);
+    assert(bytes.length - decode.consumed == 0);
     return decode.value;
   }
 

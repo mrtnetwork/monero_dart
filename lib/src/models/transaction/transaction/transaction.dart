@@ -28,8 +28,16 @@ class MoneroTransaction extends MoneroTransactionPrefix {
     return MoneroTransaction.fromStruct(decode);
   }
   factory MoneroTransaction.fromStruct(Map<String, dynamic> json) {
-    final sig = MoneroTxSignatures.fromStruct(json.asMap("signature"));
+    final Map<String, dynamic> signatureJson = json.asMap("signature");
     final int version = json.as("version");
+
+    final MoneroTxSignatures sig;
+    if (version == 1 && signatureJson.isEmpty) {
+      sig = const MoneroV1Signature(null);
+    } else {
+      sig = MoneroTxSignatures.fromStruct(json.asMap("signature"));
+    }
+
     return MoneroTransaction(
         version: version,
         unlockTime: json.as("unlock_time"),
@@ -72,6 +80,10 @@ class MoneroTransaction extends MoneroTransactionPrefix {
               required remindBytes}) {
             if (transaction != null) {
               if (transaction.version == 1) {
+                if (transaction.signature.cast<MoneroV1Signature>().signature ==
+                    null) {
+                  return LayoutConst.noArgs();
+                }
                 final List<int> signatureLength =
                     List.filled(transaction.vin.length, 0);
                 for (int i = 0; i < transaction.vin.length; i++) {
@@ -99,6 +111,9 @@ class MoneroTransaction extends MoneroTransactionPrefix {
             final version = sourceOrResult?["version"];
             final List<int> signatureLength = List.filled(inputLength, 0);
             if (version == 1) {
+              if (remindBytes == 0) {
+                return LayoutConst.noArgs();
+              }
               for (int i = 0; i < inputLength; i++) {
                 final Map<String, dynamic> vin0 =
                     (sourceOrResult!["vin"] as List)[0];

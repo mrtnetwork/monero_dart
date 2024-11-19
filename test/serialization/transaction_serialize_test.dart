@@ -157,4 +157,10 @@ void _transaction() {
     final tx = MoneroTransaction.deserialize(txBytes);
     expect(tx.serialize(), txBytes);
   });
+  test("transaction v1 without signature.", () {
+    final txBytes = BytesUtils.fromHexString(
+        "010002028080d194b57403ffe105a28607eb8e01b8c8bf5c21106580f865e6f4c90fd7cf5143b1f535c1f3bd55b442d6cda456090280c0ee8ed20b0387f014b0a2129bb8012c76cb777345d338dcdf4b960ba71991c3be0ec3da93f13dff7a41d77bc467550480a0d9e61d02715eaae9105f7d8a36235e18364ed16686fbcc52d9f2814b83370c0dc63732d28088aca3cf020278b1aa3668569dd55dd4df093f6ce9eaab6f38a23b1eca317447c06f42a8730080f092cbdd08029562feb745f261e1cca3b03cdf1e8dd17f15293fd867ffa06e7c352be34a2f178080d194b5740224de3b4f7d842e5dfcdeb398e14c15c7b6c27d5e42fc56360a5f2f6cce5d5cef440221008ae9df8e5cd663deebb8975dfe39fa9b7854a76c894da804a9379527646fc24b014966bf7679c5b536ba58ab196c5d59fa71f2cfe9712bd37320f06efe97af78f5");
+    final tx = MoneroTransaction.deserialize(txBytes);
+    expect(tx.serialize(), txBytes);
+  });
 }
