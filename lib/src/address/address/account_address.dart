@@ -22,7 +22,7 @@ class MoneroAccountAddress extends MoneroAddress {
         "type": decode.type.toString()
       });
     }
-    final addrNetwork = MoneroNetwork.findNetwork(decode.type);
+    final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
       throw DartMoneroPluginException("Invalid address network.", details: {
         "excepted": network.toString(),

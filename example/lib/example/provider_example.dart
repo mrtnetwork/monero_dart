@@ -3,7 +3,7 @@ import 'package:monero_dart/monero_dart.dart';
 
 MoneroProvider createProvider({String? url}) {
   final provider = MoneroProvider(MoneroHTTPProvider(
-      daemoUrl: "http://node.tools.rino.io:18081",
+      daemoUrl: "http://stagenet.tools.rino.io:38081",
       walletUrl: "http://127.0.0.1:1880"));
   return provider;
 }

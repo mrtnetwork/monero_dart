@@ -1,14 +1,15 @@
 part of 'package:monero_dart/src/api/api.dart';
 
-class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
+class MoneroApi extends MoneroApiInterface {
   @override
   final QuickMoneroProvider provider;
   MoneroApi(MoneroProvider provider) : provider = QuickMoneroProvider(provider);
+
   @override
   Future<MoneroMultisigTxBuilder> createMultisigTransfer({
     required MoneroBaseAccountKeys account,
     required List<MoneroUnlockedMultisigPayment> payments,
-    required List<TxDestination> destinations,
+    required List<MoneroTxDestination> destinations,
     required MoneroAddress changeAddress,
     required List<MoneroPublicKey> signers,
     MoneroFeePrority priority = MoneroFeePrority.defaultPriority,
@@ -34,11 +35,11 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
     }
 
     final baseFee = await provider.baseFee();
-    TxDestination change = _getChange(
+    MoneroTxDestination change = _getChange(
       destinations: destinations,
       change: changeAddress,
       inamount: inAmounts,
-      fee: _getBaseFee(baseFee, priority),
+      fee: getBaseFee(baseFee, priority),
     );
     List<SpendablePayment<MoneroUnlockedMultisigPayment>> spendablePayment =
         provider.generateFakePaymentOuts(payments: payments);
@@ -48,8 +49,8 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
         sources: spendablePayment,
         fee: baseFee.fee,
         signers: signers,
-        fakeSignature: true);
-    final BigInt fee = _calcuateFee(
+        fakeTx: true);
+    final BigInt fee = calcuateFee(
         baseFee: baseFee, weight: estimateTx.weight(), priority: priority);
     change = _getChange(
         destinations: destinations,
@@ -65,21 +66,21 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
         fee: fee,
         change: change,
         signers: signers,
-        fakeSignature: false);
+        fakeTx: false);
   }
 
   @override
   Future<MoneroRctTxBuilder> createTransfer(
       {required MoneroBaseAccountKeys account,
       required List<MoneroUnLockedPayment> payments,
-      required List<TxDestination> destinations,
+      required List<MoneroTxDestination> destinations,
       required MoneroAddress changeAddress,
       MoneroFeePrority priority = MoneroFeePrority.defaultPriority}) async {
     if (payments.toSet().length != payments.length) {
       throw const DartMoneroPluginException(
           "Multiple payment with same keyimage detected.");
     }
-    if (payments.length > MoneroConst.bulletproofPlussMaxOutputs) {
+    if (payments.length > MoneroNetworkConst.bulletproofPlussMaxOutputs) {
       throw const DartMoneroPluginException("to many outputs.");
     }
     final outAmounts =
@@ -91,11 +92,11 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
           "output amounts exceed the total input amount and the fee.");
     }
     final baseFee = await provider.baseFee();
-    TxDestination change = _getChange(
+    MoneroTxDestination change = _getChange(
         destinations: destinations,
         change: changeAddress,
         inamount: inAmounts,
-        fee: _getBaseFee(baseFee, priority));
+        fee: getBaseFee(baseFee, priority));
     List<SpendablePayment> spendablePayment =
         provider.generateFakePaymentOuts(payments: payments);
     MoneroRctTxBuilder tx = MoneroRctTxBuilder(
@@ -103,10 +104,10 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
         destinations: destinations,
         sources: spendablePayment,
         fee: baseFee.fee,
-        fakeSignature: true,
+        fakeTx: true,
         change: change);
     final BigInt fee =
-        _calcuateFee(baseFee: baseFee, weight: tx.weight(), priority: priority);
+        calcuateFee(baseFee: baseFee, weight: tx.weight(), priority: priority);
     change = _getChange(
       destinations: destinations,
       change: changeAddress,
@@ -121,7 +122,7 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
         sources: spendablePayment,
         fee: fee,
         change: change,
-        fakeSignature: false);
+        fakeTx: false);
     return tx;
   }
 
@@ -143,7 +144,7 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
       required List<UnlockMultisigOutputRequest> payments,
       bool cleanUpSpent = false}) async {
     List<MoneroUnlockedMultisigPayment> multisigPayments = payments
-        .map((e) => _toMultisigUnlockedOutput(
+        .map((e) => MoneroTransactionHelper.toMultisigUnlockedOutput(
             account: account,
             payment: e.payment,
             multisigInfos: e.multisigInfos))
@@ -163,18 +164,14 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
     final List<MoneroUnLockedPayment> outputs = [];
     for (final tx in transactions) {
       if (!tx.hasIndices) continue;
-      for (final index in account.indexes) {
-        for (int i = 0; i < tx.transaction.vout.length; i++) {
-          final txOutputs = _getUnlockedPayment(
-              tx: tx.transaction,
-              account: account,
-              index: index,
-              out: tx.transaction.vout[i],
-              outIndex: i,
-              indices: tx.outputIndices);
-          if (txOutputs == null) continue;
+      for (int i = 0; i < tx.transaction.vout.length; i++) {
+        final txOutputs = MoneroTransactionHelper.getUnlockedPayment(
+            tx: tx.transaction,
+            account: account,
+            indices: tx.outputIndices,
+            realIndex: i);
+        if (txOutputs != null) {
           outputs.add(txOutputs);
-          break;
         }
       }
     }
@@ -200,18 +197,14 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
     final List<MoneroLockedPayment> outputs = [];
     for (final tx in transactions) {
       if (!tx.hasIndices) continue;
-      for (final index in account.indexes) {
-        for (int i = 0; i < tx.transaction.vout.length; i++) {
-          final txOutputs = _getLockedPayment(
-              tx: tx.transaction,
-              account: account,
-              index: index,
-              out: tx.transaction.vout[i],
-              realIndex: i,
-              indices: tx.outputIndices);
-          if (txOutputs == null) continue;
+      for (int i = 0; i < tx.transaction.vout.length; i++) {
+        final txOutputs = MoneroTransactionHelper.getLockedPayment(
+            tx: tx.transaction,
+            account: account,
+            realIndex: i,
+            indices: tx.outputIndices);
+        if (txOutputs != null) {
           outputs.add(txOutputs);
-          break;
         }
       }
     }
@@ -224,17 +217,11 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
       required MoneroBaseAccountKeys account}) {
     final List<MoneroUnlockedOutput> outputs = [];
     for (final tx in transactions) {
-      for (final index in account.indexes) {
-        for (int i = 0; i < tx.vout.length; i++) {
-          final txOutputs = _getUnlockOut(
-              tx: tx,
-              account: account,
-              index: index,
-              out: tx.vout[i],
-              realIndex: i);
-          if (txOutputs == null) continue;
+      for (int i = 0; i < tx.vout.length; i++) {
+        final txOutputs = MoneroTransactionHelper.getUnlockOut(
+            tx: tx, account: account, realIndex: i);
+        if (txOutputs != null) {
           outputs.add(txOutputs);
-          break;
         }
       }
     }
@@ -247,17 +234,11 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
       {required MoneroTransaction transaction,
       required MoneroBaseAccountKeys account}) {
     final List<MoneroUnlockedOutput> outputs = [];
-    for (final index in account.indexes) {
-      for (int i = 0; i < transaction.vout.length; i++) {
-        final txOutputs = _getUnlockOut(
-            tx: transaction,
-            account: account,
-            index: index,
-            out: transaction.vout[i],
-            realIndex: i);
-        if (txOutputs == null) continue;
+    for (int i = 0; i < transaction.vout.length; i++) {
+      final txOutputs = MoneroTransactionHelper.getUnlockOut(
+          tx: transaction, account: account, realIndex: i);
+      if (txOutputs != null) {
         outputs.add(txOutputs);
-        break;
       }
     }
     return outputs;
@@ -279,17 +260,11 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
       required MoneroBaseAccountKeys account}) {
     final List<MoneroLockedOutput> outputs = [];
     for (final tx in transactions) {
-      for (final index in account.indexes) {
-        for (int i = 0; i < tx.vout.length; i++) {
-          final txOutputs = _getLockedOutputs(
-              tx: tx,
-              account: account,
-              index: index,
-              out: tx.vout[i],
-              realIndex: i);
-          if (txOutputs == null) continue;
+      for (int i = 0; i < tx.vout.length; i++) {
+        final txOutputs = MoneroTransactionHelper.getLockedOutputs(
+            tx: tx, account: account, realIndex: i);
+        if (txOutputs != null) {
           outputs.add(txOutputs);
-          break;
         }
       }
     }
@@ -300,7 +275,7 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
   Future<List<T>> cleanUpSpent<T extends MoneroUnLockedPayment>(
       List<T> payments) async {
     final keyImages = payments.map((e) => e.keyImageAsHex).toList();
-    final status = await provider.keyImageSpends(keyImages);
+    final status = await provider.keyImagesStatus(keyImages);
     final List<T> unspentPayments = [];
     for (int i = 0; i < payments.length; i++) {
       if (status.spentStatus[i].isUnspent) {
@@ -323,5 +298,44 @@ class MoneroApi extends MoneroApiInterface with MoneroApiUtils {
                 .toList())
         .expand((e) => e)
         .toList();
+  }
+
+  BigInt getBaseFee(
+      DaemonGetEstimateFeeResponse baseFee, MoneroFeePrority priority) {
+    if (priority.index >= baseFee.fees.length) {
+      throw const DartMoneroPluginException(
+          "Failed to determine base fee based on your priority.");
+    }
+    if (priority.index == 0) return baseFee.fee;
+    return baseFee.fees[priority.index];
+  }
+
+  MoneroTxDestination _getChange({
+    required List<MoneroTxDestination> destinations,
+    required MoneroAddress change,
+    required BigInt inamount,
+    required BigInt fee,
+  }) {
+    final outAmounts =
+        destinations.fold<BigInt>(BigInt.zero, (p, c) => p + c.amount) + fee;
+
+    final changeAmount = inamount - outAmounts;
+    if (changeAmount.isNegative) {
+      throw const DartMoneroPluginException(
+          "output amounts exceed the total input amount and the fee.");
+    }
+    return MoneroTxDestination(amount: changeAmount, address: change);
+  }
+
+  BigInt calcuateFee(
+      {required BigInt weight,
+      required DaemonGetEstimateFeeResponse baseFee,
+      required MoneroFeePrority priority}) {
+    BigInt fee = getBaseFee(baseFee, priority);
+    fee = weight * fee;
+    fee = (fee + baseFee.quantizationMask - BigInt.one) ~/
+        baseFee.quantizationMask *
+        baseFee.quantizationMask;
+    return fee;
   }
 }

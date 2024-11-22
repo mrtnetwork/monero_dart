@@ -1,7 +1,7 @@
 import 'package:blockchain_utils/bip/address/xmr_addr.dart';
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/address/address/address.dart';
-import 'package:monero_dart/src/api/models/models.dart';
+import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/crypto/crypto.dart';
 import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/helper/extension.dart';
@@ -55,6 +55,13 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
       required this.type,
       required this.account})
       : indexes = indexes.toImutableList;
+
+  factory MoneroBaseAccountKeys.deserialize(List<int> bytes,
+      {String? property}) {
+    final decode = MoneroVariantSerialization.deserialize(
+        bytes: bytes, layout: layout(property: property));
+    return MoneroBaseAccountKeys.fromStruct(decode);
+  }
 
   factory MoneroBaseAccountKeys.fromStruct(Map<String, dynamic> json) {
     final decode = MoneroVariantSerialization.toVariantDecodeResult(json);
@@ -130,7 +137,8 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
 
   /// create integrated address with specify paymentId
   MoneroAddress integratedAddress({List<int>? paymentId}) {
-    paymentId ??= QuickCrypto.generateRandom(MoneroConst.paymentIdLength);
+    paymentId ??=
+        QuickCrypto.generateRandom(MoneroNetworkConst.paymentIdLength);
     return MoneroIntegratedAddress.fromPubKeys(
         pubSpendKey: account.pubSkey.key,
         pubViewKey: account.pubVkey.key,
@@ -159,12 +167,23 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   /// create subAddress with specify index
   /// index must be exists
   MoneroAddress subAddress(MoneroAccountIndex index) {
+    if (!index.isSubaddress) {
+      throw const DartMoneroPluginException(
+          "Use primary address for Non-subaddress index.");
+    }
     final keys = account.scubaddr.computeKeys(index.minor, index.major);
     return MoneroAccountAddress.fromPubKeys(
         pubSpendKey: keys.pubSKey.key,
         pubViewKey: keys.pubVKey.key,
         network: network,
         type: XmrAddressType.subaddress);
+  }
+
+  MoneroAddress indexAddress(MoneroAccountIndex index) {
+    if (index.isSubaddress) {
+      return subAddress(index);
+    }
+    return primaryAddress();
   }
 
   @override

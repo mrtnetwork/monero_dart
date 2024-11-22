@@ -1,5 +1,5 @@
 /// the network config constants.
-class MoneroConst {
+class MoneroNetworkConst {
   /// transaction default unlock time
   static final BigInt unlockTime = BigInt.zero;
 

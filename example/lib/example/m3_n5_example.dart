@@ -69,15 +69,15 @@ void main() async {
     account: myAccount,
     payments: multisigPayments,
     destinations: [
-      TxDestination.fromXMR(
+      MoneroTxDestination.fromXMR(
           amount: "0.001",
           address: MoneroAddress(
               "72wPFyWbpgxStTLKy8eeXsawUuD7SAXBMT526pSbzrn91vn35qFgBngisd4sCf7XMhSfKv74kcViS7Jeeu7TE464KixVTHo")),
-      TxDestination.fromXMR(
+      MoneroTxDestination.fromXMR(
           amount: "0.001",
           address: MoneroAddress(
               "76dZbjNCQeVaQVeCq9y6H4dZ5wZqA9NY7WSnjjNUYzz5aht9rd3Qro57SSaN2eerE1aHkS9qvw5iscx3JrAT87bL8FiJ1Ye")),
-      TxDestination.fromXMR(
+      MoneroTxDestination.fromXMR(
           amount: "0.001",
           address: MoneroAddress(
               "51yw3EafPkXS6gwhJGGvNn7DzPEEGrgfeJZBvAFjzu8w252Zr1nx4PfVdXi4e6kiiQMBJ8k4JCFby2pANTAjofbo2rWBpbx")),

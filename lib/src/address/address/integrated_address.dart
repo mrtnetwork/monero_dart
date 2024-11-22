@@ -17,7 +17,7 @@ class MoneroIntegratedAddress extends MoneroAddress {
       throw const DartMoneroPluginException(
           "Use `MoneroAccountAddress` for creating a MoneroAccount address.");
     }
-    final addrNetwork = MoneroNetwork.findNetwork(decode.type);
+    final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
       throw DartMoneroPluginException("Invalid address network.", details: {
         "excepted": network.toString(),

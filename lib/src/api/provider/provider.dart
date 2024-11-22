@@ -5,8 +5,8 @@ class QuickMoneroProvider {
   const QuickMoneroProvider(this.provider);
 
   Future<DaemonGetEstimateFeeResponse> baseFee() async {
-    return await provider.request(
-        const DaemonRequestGetFeeEstimate(MoneroConst.feeEstimateGraceBlocks));
+    return await provider.request(const DaemonRequestGetFeeEstimate(
+        MoneroNetworkConst.feeEstimateGraceBlocks));
   }
 
   Future<DaemonGetBlockHeightResponse> currentHeight() async {
@@ -78,7 +78,7 @@ class QuickMoneroProvider {
     return outs;
   }
 
-  Future<DaemonIsKeyImageSpentResponse> keyImageSpends(List<String> keyImages,
+  Future<DaemonIsKeyImageSpentResponse> keyImagesStatus(List<String> keyImages,
       {bool validateResponse = true}) async {
     final result =
         await provider.request(DaemonRequestIsKeyImageSpent(keyImages));
@@ -127,7 +127,7 @@ class QuickMoneroProvider {
       }
     }
     final offsets = await getAbsoluteDistribution();
-    if (offsets.length < MoneroConst.cryptonoteDefaultTxSpendableAge) {
+    if (offsets.length < MoneroNetworkConst.cryptonoteDefaultTxSpendableAge) {
       throw const DartMoneroPluginException("Not enough rct outputs");
     }
     if (offsets.last < maxGlobalIndex) {
@@ -148,8 +148,9 @@ class QuickMoneroProvider {
     for (final i in payments) {
       final BigInt amount = BigInt.zero;
       final Set<BigInt> indices = {};
-      const defaultOutCount = MoneroConst.cryptonoteMinedMoneyUnlockWindow -
-          MoneroConst.cryptonoteDefaultTxSpendableAge;
+      const defaultOutCount =
+          MoneroNetworkConst.cryptonoteMinedMoneyUnlockWindow -
+              MoneroNetworkConst.cryptonoteDefaultTxSpendableAge;
       final int outputsCount = baseRequestCount + defaultOutCount;
       final int start = outKeysRequests.length;
       final BigInt numOuts = gamma.numRctOuts;
@@ -219,8 +220,9 @@ class QuickMoneroProvider {
     }
     int base = 0;
     for (final payment in payments) {
-      const defaultOutCount = MoneroConst.cryptonoteMinedMoneyUnlockWindow -
-          MoneroConst.cryptonoteDefaultTxSpendableAge;
+      const defaultOutCount =
+          MoneroNetworkConst.cryptonoteMinedMoneyUnlockWindow -
+              MoneroNetworkConst.cryptonoteDefaultTxSpendableAge;
       final int outputsCount = baseRequestCount + defaultOutCount;
       final List<OutsEntery> out = [];
       final mask = RCT.commit(

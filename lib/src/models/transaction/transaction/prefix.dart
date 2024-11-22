@@ -16,13 +16,13 @@ class MoneroTransactionPrefix extends MoneroSerialization {
   final List<MoneroTxout> vout;
   final List<int> extra;
   MoneroTransactionPrefix(
-      {int version = MoneroConst.currentVersion,
+      {int version = MoneroNetworkConst.currentVersion,
       BigInt? unlockTime,
       required List<MoneroTxin> vin,
       required List<MoneroTxout> vout,
       required List<int> extra})
       : version = version.asUint32,
-        unlockTime = unlockTime?.asUint64 ?? MoneroConst.unlockTime,
+        unlockTime = unlockTime?.asUint64 ?? MoneroNetworkConst.unlockTime,
         vin = vin.immutable,
         vout = vout.immutable,
         extra = extra.asImmutableBytes;

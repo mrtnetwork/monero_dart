@@ -38,14 +38,14 @@ class MoneroMultisigTxBuilder
     final destinationKeys =
         ComputeDestinationKeys.fromStruct(json.asMap("destinationKeys"));
     final tx = MoneroTransaction.fromStruct(json.asMap("transaction"));
-    final change = json.mybeAs<TxDestination, Map<String, dynamic>>(
+    final change = json.mybeAs<MoneroTxDestination, Map<String, dynamic>>(
         key: "change",
         onValue: (e) {
-          return TxDestination.fromStruct(e);
+          return MoneroTxDestination.fromStruct(e);
         });
-    final List<TxDestination> destinations = json
+    final List<MoneroTxDestination> destinations = json
         .asListOfMap("destinations")!
-        .map((e) => TxDestination.fromStruct(e))
+        .map((e) => MoneroTxDestination.fromStruct(e))
         .toList();
     final List<SpendablePayment<MoneroUnlockedMultisigPayment>> sources = json
         .asListOfMap("sources")!
@@ -97,11 +97,11 @@ class MoneroMultisigTxBuilder
           property: "transaction",
           transaction: transaction,
           forcePrunable: true),
-      MoneroLayoutConst.variantVec(TxDestination.layout(),
+      MoneroLayoutConst.variantVec(MoneroTxDestination.layout(),
           property: "destinations"),
       MoneroLayoutConst.variantVec(SpendablePayment.layout(),
           property: "sources"),
-      LayoutConst.optional(TxDestination.layout(), property: "change"),
+      LayoutConst.optional(MoneroTxDestination.layout(), property: "change"),
       MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
           property: "cachedW"),
       MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
@@ -140,14 +140,14 @@ class MoneroMultisigTxBuilder
     required ComputeSourceKeys sourceKeys,
     required List<SpendablePayment<MoneroUnlockedMultisigPayment>> sources,
     required BigInt fee,
-    bool fakeSignature = false,
+    bool fakeTx = false,
   }) {
     final KeyV a = List.generate(sources.length, (_) => RCT.zero());
     final signature = MoneroTxBuilder._buildSignature(
         destinationKeys: destinationKeys,
         sourceKeys: sourceKeys,
         sources: sources,
-        fakeSignature: fakeSignature,
+        fakeTx: fakeTx,
         isMultisig: true,
         fee: fee,
         aResult: a);
@@ -202,12 +202,12 @@ class MoneroMultisigTxBuilder
 
   factory MoneroMultisigTxBuilder(
       {required MoneroMultisigAccountKeys account,
-      required List<TxDestination> destinations,
+      required List<MoneroTxDestination> destinations,
       required List<SpendablePayment<MoneroUnlockedMultisigPayment>> sources,
       required List<MoneroPublicKey> signers,
       required BigInt fee,
-      bool fakeSignature = false,
-      TxDestination? change}) {
+      bool fakeTx = false,
+      MoneroTxDestination? change}) {
     sources =
         List<SpendablePayment<MoneroUnlockedMultisigPayment>>.from(sources)
           ..sort((a, b) =>
@@ -239,20 +239,23 @@ class MoneroMultisigTxBuilder
     }
 
     final seed = MoneroTxBuilder._createTxSecretKeySeed(
-        entropy: RCT.skGen_(), sources: sources);
-    final sourceKeys = MoneroTxBuilder._computeSourceKeys(sources: sources);
+        sources: sources, fakeTx: fakeTx);
+    final sourceKeys = MoneroTxBuilder._computeSourceKeys(
+      sources: sources,
+    );
     final destinationKeys = MoneroTxBuilder._computeDestinationKeys(
         account: account,
         destinations: destinations,
         sources: sourceKeys,
         change: change,
         txSeed: seed,
-        fee: fee);
+        fee: fee,
+        fakeTx: fakeTx);
     final signature = MoneroMultisigTxBuilder.buildSignature(
         destinationKeys: destinationKeys,
         sourceKeys: sourceKeys,
         sources: sources,
-        fakeSignature: fakeSignature,
+        fakeTx: fakeTx,
         fee: fee);
     final transaction = MoneroMultisigTxBuilder.buildTx(
         sourceKeys: sourceKeys,
@@ -276,7 +279,7 @@ class MoneroMultisigTxBuilder
                 .map((e) => e.publicKey)
                 .toList(),
             sourceLength: sourceKeys.sourcesLength));
-    if (!fakeSignature) {
+    if (!fakeTx) {
       builder._init();
     }
     return builder;
@@ -299,7 +302,7 @@ class MoneroMultisigTxBuilder
       {required ComputeDestinationKeys destinationKeys,
       required ComputeSourceKeys sourceKeys,
       required List<SpendablePayment<MoneroUnlockedMultisigPayment>> sources,
-      required List<TxDestination> destinations,
+      required List<MoneroTxDestination> destinations,
       required RCTSignature signature}) {
     final inAmout = sourceKeys.total;
     final List<BigInt> outAmounts = destinationKeys.amounts;

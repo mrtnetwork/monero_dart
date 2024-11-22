@@ -42,12 +42,10 @@ class MoneroNetwork {
   }
 
   /// find network from address type prefix bytes.
-  static MoneroNetwork findNetwork(XmrAddressType type) {
-    for (final i in type.prefixes) {
-      for (final n in values) {
-        if (n._prefixes.contains(i)) {
-          return n;
-        }
+  static MoneroNetwork fromNetVersion(int netVersion) {
+    for (final n in values) {
+      if (n._prefixes.contains(netVersion)) {
+        return n;
       }
     }
     throw const DartMoneroPluginException(
@@ -86,6 +84,6 @@ class MoneroNetwork {
 
   @override
   String toString() {
-    return "MoneroNetwork.$stagenet";
+    return "MoneroNetwork.$name";
   }
 }

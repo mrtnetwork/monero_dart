@@ -49,7 +49,7 @@ abstract class MoneroAddress extends MoneroSerialization {
     }
     final psKey = MoneroPublicKey.fromBytes(decode.publicSpendKey);
     final pvKey = MoneroPublicKey.fromBytes(decode.publicViewKey);
-    final addrNetwork = MoneroNetwork.findNetwork(decode.type);
+    final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
       throw DartMoneroPluginException("Invalid address network.", details: {
         "excepted": network.toString(),

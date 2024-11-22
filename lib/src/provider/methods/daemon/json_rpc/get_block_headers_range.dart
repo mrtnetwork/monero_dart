@@ -17,10 +17,10 @@ class DaemonRequestGetBlockHeaderByRange extends MoneroDaemonRequestParam<
   final bool fillPowHash;
 
   /// The starting block's height.
-  final BigInt startHeight;
+  final int startHeight;
 
   /// The ending block's height.
-  final BigInt endHeight;
+  final int endHeight;
   @override
   String get method => "get_block_headers_range";
   @override

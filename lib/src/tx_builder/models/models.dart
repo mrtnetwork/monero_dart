@@ -258,7 +258,7 @@ class TxDestinationInfo {
       required this.singleDestionation});
 
   factory TxDestinationInfo(
-      {required List<TxDestination> destinations,
+      {required List<MoneroTxDestination> destinations,
       required MoneroAddress? changeAddr}) {
     int stdaddresses = 0;
     int subaddresses = 0;

@@ -1,18 +1,14 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/account/account.dart';
 import 'package:monero_dart/src/address/address/address.dart';
-import 'package:monero_dart/src/api/models/models.dart';
 import 'package:monero_dart/src/crypto/models/ec_signature.dart';
 import 'package:monero_dart/src/crypto/monero/crypto.dart';
+import 'package:monero_dart/src/crypto/multisig/multisig.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/generator.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/models/transaction/signature/signature.dart';
-import 'package:monero_dart/src/models/transaction/transaction/output.dart';
-import 'package:monero_dart/src/models/transaction/transaction/extra.dart';
-import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
-import 'package:monero_dart/src/network/config.dart';
+import 'package:monero_dart/src/models/models.dart';
 
 class MoneroTransactionHelper {
   static final BigRational _trxDecimal = BigRational(BigInt.from(10).pow(12));
@@ -476,137 +472,275 @@ class MoneroTransactionHelper {
         version: version.version);
   }
 
-  static MoneroLockedOutput? getLockedOutputsFast({
+  /// decode output amount.
+  static MoneroLockedOutput? getLockedOutputs({
+    // required MoneroTxout out,
     required int realIndex,
     required MoneroTransaction tx,
     required MoneroBaseAccountKeys account,
+    // required MoneroAccountIndex index,
   }) {
+    if (realIndex >= tx.vout.length) {
+      throw const DartMoneroPluginException(
+          "Invalid transaction output index.");
+    }
     final out = tx.vout[realIndex];
     final outPublicKey = out.target.getPublicKey();
-    if (outPublicKey == null) {
+    final additionalPubKeys = tx.getTxAdditionalPubKeys();
+    if (outPublicKey == null ||
+        additionalPubKeys != null &&
+            additionalPubKeys.pubKeys.length != tx.vout.length) {
       return null;
     }
     final viewTag = out.target.getViewTag();
-    final additionalPubKeys = tx.getTxAdditionalPubKeys();
+
     final List<MoneroPublicKey> publicKeys = [
       tx.getTxExtraPubKey(),
       if (additionalPubKeys != null) additionalPubKeys.pubKeys[realIndex]
     ];
     for (final p in publicKeys) {
-      final derivationFast = MoneroTransactionHelper.inOuttoAccFast(
+      final derivation = inOuttoAccFast(
           viewSecretKey: account.account.privVkey,
           txPubkey: p,
           viewTag: viewTag,
           outIndex: realIndex);
-      if (derivationFast == null) continue;
-      for (final i in account.indexes) {
-        final derivePubKey = MoneroCrypto.derivePublicKeyFast(
-            derivation: derivationFast,
-            outIndex: realIndex,
-            basePublicKey: account.getSpendPublicKey(i));
-        if (derivePubKey == outPublicKey) {
+      if (derivation == null) continue;
+      for (final index in account.indexes) {
+        final pubKey = MoneroCrypto.derivePublicKeyFast(
+          derivation: derivation,
+          outIndex: realIndex,
+          basePublicKey: account.getSpendPublicKey(index),
+        );
+        if (pubKey == outPublicKey) {
           final sharedSec = MoneroCrypto.derivationToScalarFast(
-              derivation: derivationFast, outIndex: realIndex);
+              derivation: derivation, outIndex: realIndex);
           final mask = RCT.zero();
           final amount = RCTGeneratorUtils.decodeRct_(
               sig: tx.signature.cast(),
               secretKey: sharedSec,
               outputIndex: realIndex,
               mask: mask);
-          if (amount != null) {
-            return MoneroLockedOutput(
-                amount: amount,
-                mask: mask,
-                derivation: derivationFast,
-                outputPublicKey: outPublicKey,
-                accountIndex: i,
-                unlockTime: tx.unlockTime);
-          }
+          if (amount == null) continue;
+          return MoneroLockedOutput(
+              amount: amount,
+              mask: mask,
+              derivation: derivation,
+              outputPublicKey: outPublicKey,
+              accountIndex: index,
+              unlockTime: tx.unlockTime,
+              realIndex: realIndex);
         }
       }
     }
     return null;
   }
-}
 
-class MoneroTxVersion {
-  final String name;
-  final int version;
-  const MoneroTxVersion._({required this.name, this.version = 1});
-  static const MoneroTxVersion v1In = MoneroTxVersion._(name: "InProofV1");
-  static const MoneroTxVersion v1Out = MoneroTxVersion._(name: "OutProofV1");
-  static const MoneroTxVersion v2In =
-      MoneroTxVersion._(name: "InProofV2", version: 2);
-  static const MoneroTxVersion v2Out =
-      MoneroTxVersion._(name: "OutProofV2", version: 2);
-  static const List<MoneroTxVersion> values = [v1In, v1Out, v2In, v2Out];
-  static MoneroTxVersion fromBase58(String proof) {
-    return values.firstWhere(
-      (e) => proof.startsWith(e.name),
-      orElse: () => throw DartMoneroPluginException("Invalid proof version.",
-          details: {"proof": proof}),
-    );
+  /// decode output amount and generate key image.
+  static MoneroUnlockedOutput? getUnlockOut({
+    required MoneroTransaction tx,
+    required MoneroBaseAccountKeys account,
+    required int realIndex,
+  }) {
+    final lockedOut =
+        getLockedOutputs(tx: tx, account: account, realIndex: realIndex);
+    if (lockedOut == null) return null;
+    return toUnlockOutput(account: account, out: lockedOut);
   }
 
-  bool get isOut =>
-      this == MoneroTxVersion.v1Out || this == MoneroTxVersion.v2Out;
-}
+  /// decode output amount and convert to locked payment.
+  static MoneroLockedPayment? getLockedPayment(
+      {required int realIndex,
+      required MoneroTransaction tx,
+      required MoneroBaseAccountKeys account,
+      required List<BigInt> indices}) {
+    final lockedOut =
+        getLockedOutputs(realIndex: realIndex, tx: tx, account: account);
+    if (lockedOut == null) return null;
+    return _toPayment(
+            out: lockedOut,
+            transaction: tx,
+            account: account,
+            realIndex: realIndex,
+            globalIndex: indices[realIndex])
+        .cast<MoneroLockedPayment>();
+  }
 
-class MoneroTxProof {
-  final MoneroTxVersion version;
-  static const int lenght = 96;
-  final List<MoneroPublicKey> sharedSecret;
-  final List<MECSignature> signatures;
-  factory MoneroTxProof(
-      {required List<MoneroPublicKey> sharedSecret,
-      required List<MECSignature> signatures,
-      required MoneroTxVersion version}) {
-    if (sharedSecret.isEmpty || sharedSecret.length != signatures.length) {
-      throw const DartMoneroPluginException("Invalid proof data provided.");
+  /// decode output amount and convert to unlocked payment.
+  static MoneroUnLockedPayment? getUnlockedPayment({
+    required MoneroTransaction tx,
+    required MoneroBaseAccountKeys account,
+    required List<BigInt> indices,
+    required int realIndex,
+  }) {
+    final lockedOut = getLockedPayment(
+        tx: tx, account: account, indices: indices, realIndex: realIndex);
+    if (lockedOut == null) return null;
+    return toUnlockPayment(account: account, lockedOut: lockedOut);
+  }
+
+  /// convert unlocked payment to multisig payment
+  static MoneroUnlockedMultisigPayment toMultisigUnlockedOutput(
+      {required MoneroMultisigAccountKeys account,
+      required MoneroUnLockedPayment payment,
+      required List<MoneroMultisigOutputInfo> multisigInfos}) {
+    final MoneroUnlockedOutput unlockedOut = payment.output;
+    final multisigAccount = account.multisigAccount;
+    if (multisigInfos.map((e) => e.signer).toSet().length !=
+        multisigInfos.length) {
+      throw const DartMoneroPluginException(
+          "Duplicate multisig info provided.");
     }
-    return MoneroTxProof._(
-        sharedSecret: sharedSecret, signatures: signatures, version: version);
-  }
-  MoneroTxProof._(
-      {required List<MoneroPublicKey> sharedSecret,
-      required List<MECSignature> signatures,
-      required this.version})
-      : sharedSecret = sharedSecret.toImutableList,
-        signatures = signatures.toImutableList;
-  factory MoneroTxProof.fromBase58(String proof) {
-    try {
-      final version = MoneroTxVersion.fromBase58(proof);
-      final b58 = proof.substring(version.name.length);
-      final decode = Base58XmrDecoder.decode(b58);
-      if (decode.length < lenght || decode.length % lenght != 0) {
-        throw DartMoneroPluginException("Invalid proof data.",
-            details: {"proof": proof});
+    final signer = multisigAccount.multisigSignerPubKey;
+    for (final i in multisigInfos) {
+      if (!multisigAccount.signers.contains(i.signer)) {
+        throw const DartMoneroPluginException(
+            "Invalid multisig info. signer does not exist.");
       }
-      final List<MoneroPublicKey> sharedSecret = [];
-      final List<MECSignature> signatures = [];
-      final sigLen = decode.length ~/ lenght;
-      for (int i = 0; i < sigLen; i++) {
-        final int start = lenght * i;
-        final part = decode.sublist(start, start + lenght);
-        sharedSecret.add(MoneroPublicKey.fromBytes(part.sublist(0, 32)));
-        signatures.add(MECSignature.fromBytes(part.sublist(32)));
-      }
-      return MoneroTxProof._(
-          sharedSecret: sharedSecret, signatures: signatures, version: version);
-    } on DartMoneroPluginException {
-      rethrow;
-    } catch (e) {
-      throw DartMoneroPluginException("Invalid proof data.",
-          details: {"proof": proof});
     }
+    final ownerMultisigInfo = multisigInfos.firstWhere(
+        (e) => e.signer == signer,
+        orElse: () =>
+            multisigAccount.generateMultisigInfo(payment.output).info);
+    final otherSigners =
+        multisigInfos.where((e) => e.signer != signer).toList();
+
+    if (otherSigners.length + 1 < account.multisigAccount.threshold) {
+      throw const DartMoneroPluginException(
+          "Some multisig output info missing.");
+    }
+
+    final multisigKeyImage =
+        MoneroMultisigUtils.generateMultisigCompositeKeyImage(
+            infos: otherSigners,
+            keyImage: unlockedOut.keyImage,
+            exclude: ownerMultisigInfo.partialKeyImages.clone());
+    final multisigOut = MoneroUnlockedMultisigOutput(
+        amount: unlockedOut.amount,
+        derivation: unlockedOut.derivation,
+        ephemeralSecretKey: unlockedOut.ephemeralSecretKey,
+        ephemeralPublicKey: unlockedOut.ephemeralPublicKey,
+        multisigKeyImage: multisigKeyImage,
+        keyImage: unlockedOut.keyImage,
+        mask: unlockedOut.mask,
+        outputPublicKey: unlockedOut.outputPublicKey,
+        accountindex: unlockedOut.accountIndex,
+        unlockTime: unlockedOut.unlockTime,
+        realIndex: unlockedOut.realIndex);
+    return MoneroUnlockedMultisigPayment(
+        output: multisigOut,
+        txPubkey: payment.txPubkey,
+        paymentId: payment.paymentId,
+        encryptedPaymentid: payment.encryptedPaymentid,
+        multisigInfos: otherSigners,
+        globalIndex: payment.globalIndex);
   }
 
-  String toBase58() {
-    String result = MoneroConst.proofOutV2Prefix;
-    for (int i = 0; i < signatures.length; i++) {
-      result += Base58XmrEncoder.encode(sharedSecret[i].key);
-      result += Base58XmrEncoder.encode(signatures[i].toBytes());
+  /// convert locked output to unlocked output.
+  static MoneroUnlockedOutput? toUnlockOutput({
+    required MoneroBaseAccountKeys account,
+    required MoneroLockedOutput out,
+  }) {
+    final RctKey spendKey = account.getPrivateSpendKey();
+    final scalarStep1 = MoneroCrypto.deriveSecretKey(
+        derivation: out.derivation,
+        outIndex: out.realIndex,
+        privateSpendKey: spendKey);
+    MoneroPrivateKey ephemeralSecretKey;
+    MoneroPrivateKey? subSecretKey;
+    if (out.accountIndex.isSubaddress) {
+      subSecretKey = account.getSubAddressSpendPrivateKey(out.accountIndex);
+      ephemeralSecretKey =
+          MoneroCrypto.scSecretAdd(a: scalarStep1, b: subSecretKey);
+    } else {
+      ephemeralSecretKey = scalarStep1;
     }
-    return result;
+
+    // final MoneroPrivateKey ephemeralSecretKey = secretKey;
+    MoneroPublicKey ephemeralPublicKey;
+    if (account.type.isMultisig) {
+      ephemeralPublicKey = MoneroCrypto.derivePublicKey(
+          derivation: out.derivation,
+          outIndex: out.realIndex,
+          basePublicKey: account.account.publicSpendKey);
+      if (out.accountIndex.isSubaddress) {
+        final subAddrPk = subSecretKey!.publicKey;
+        ephemeralPublicKey =
+            MoneroCrypto.addPublicKey(ephemeralPublicKey, subAddrPk);
+      }
+    } else {
+      ephemeralPublicKey = ephemeralSecretKey.publicKey;
+    }
+    assert(out.outputPublicKey == ephemeralPublicKey, "should be equal.");
+    if (out.outputPublicKey != ephemeralPublicKey) {
+      return null;
+    }
+    final keyImage = MoneroCrypto.generateKeyImage(
+        pubkey: ephemeralPublicKey, secretKey: ephemeralSecretKey);
+    return MoneroUnlockedOutput(
+        amount: out.amount,
+        derivation: out.derivation,
+        ephemeralPublicKey: ephemeralPublicKey.key,
+        ephemeralSecretKey: ephemeralSecretKey.key,
+        keyImage: keyImage,
+        mask: out.mask,
+        outputPublicKey: out.outputPublicKey,
+        accountindex: out.accountIndex,
+        unlockTime: out.unlockTime,
+        realIndex: out.realIndex);
+  }
+
+  /// convert locked payment to unlocked payment.
+  static MoneroUnLockedPayment? toUnlockPayment(
+      {required MoneroBaseAccountKeys account,
+      required MoneroLockedPayment lockedOut}) {
+    final unlockedOut = toUnlockOutput(account: account, out: lockedOut.output);
+    if (unlockedOut == null) return null;
+    return MoneroUnLockedPayment(
+        output: unlockedOut,
+        txPubkey: lockedOut.txPubkey,
+        paymentId: lockedOut.paymentId,
+        encryptedPaymentid: lockedOut.encryptedPaymentid,
+        globalIndex: lockedOut.globalIndex);
+  }
+
+  static MoneroPayment _toPayment(
+      {required MoneroOutput out,
+      required MoneroTransaction transaction,
+      required MoneroBaseAccountKeys account,
+      required int realIndex,
+      required BigInt globalIndex,
+      List<MoneroMultisigOutputInfo>? multisigInfos}) {
+    final txPubKey = transaction.getTxExtraPubKey();
+    final paymentId = transaction.getTxPaymentId();
+    List<int>? encryptedPaymentId = transaction.getTxEncryptedPaymentId();
+    if (encryptedPaymentId != null) {
+      encryptedPaymentId = MoneroTransactionHelper.encryptPaymentId(
+          paymentId: encryptedPaymentId,
+          pubKey: txPubKey,
+          secretKey: account.account.privateViewKey);
+    }
+    if (out.type == MoneroOutputType.locked) {
+      return MoneroLockedPayment(
+          output: out.cast<MoneroLockedOutput>(),
+          txPubkey: txPubKey,
+          paymentId: paymentId,
+          encryptedPaymentid: encryptedPaymentId,
+          globalIndex: globalIndex);
+    }
+    if (out.type == MoneroOutputType.unlockedMultisig) {
+      return MoneroUnlockedMultisigPayment(
+          output: out.cast<MoneroUnlockedMultisigOutput>(),
+          txPubkey: txPubKey,
+          paymentId: paymentId,
+          encryptedPaymentid: encryptedPaymentId,
+          multisigInfos: multisigInfos!,
+          globalIndex: globalIndex);
+    }
+    return MoneroUnLockedPayment(
+        output: out.cast<MoneroUnlockedOutput>(),
+        txPubkey: txPubKey,
+        paymentId: paymentId,
+        encryptedPaymentid: encryptedPaymentId,
+        globalIndex: globalIndex);
   }
 }

@@ -31,21 +31,24 @@ class Gamma {
       required this.numRctOuts});
   factory Gamma(
       {required List<BigInt> rctOffsets,
-      double shape = MoneroConst.gammaShape,
-      double scale = MoneroConst.gammaScale}) {
-    if (rctOffsets.length < MoneroConst.cryptonoteDefaultTxSpendableAge) {
+      double shape = MoneroNetworkConst.gammaShape,
+      double scale = MoneroNetworkConst.gammaScale}) {
+    if (rctOffsets.length <
+        MoneroNetworkConst.cryptonoteDefaultTxSpendableAge) {
       throw const MoneroCryptoException("Bad offset calculation");
     }
-    const int blocksInYear = 86400 * 365 ~/ MoneroConst.difficultyTargetV2;
+    const int blocksInYear =
+        86400 * 365 ~/ MoneroNetworkConst.difficultyTargetV2;
     final int blocksConsider = IntUtils.min(rctOffsets.length, blocksInYear);
     final BigInt outputsConsider = rctOffsets.last -
         (blocksConsider < rctOffsets.length
             ? rctOffsets[rctOffsets.length - blocksConsider - 1]
             : BigInt.zero);
     final int end = rctOffsets.length -
-        (IntUtils.max(1, MoneroConst.cryptonoteDefaultTxSpendableAge) - 1);
+        (IntUtils.max(1, MoneroNetworkConst.cryptonoteDefaultTxSpendableAge) -
+            1);
     final numRctOuts = rctOffsets[end - 1];
-    final avgOutputTime = MoneroConst.difficultyTargetV2 *
+    final avgOutputTime = MoneroNetworkConst.difficultyTargetV2 *
         (BigInt.from(blocksConsider) / outputsConsider);
     return Gamma._(
         gammaDistribution: GammaDistribution(shape, scale),
@@ -58,11 +61,11 @@ class Gamma {
   BigInt pick() {
     double x = gammaDistribution.nextDouble();
     x = IntUtils.exp(x);
-    if (x > MoneroConst.defaultUnlockTime) {
-      x -= MoneroConst.defaultUnlockTime;
+    if (x > MoneroNetworkConst.defaultUnlockTime) {
+      x -= MoneroNetworkConst.defaultUnlockTime;
     } else {
       x = gammaDistribution
-          .randomIndex(MoneroConst.recentSpendWindow)
+          .randomIndex(MoneroNetworkConst.recentSpendWindow)
           .toDouble();
     }
     BigInt outIndex = BigInt.from(x ~/ avarageOutsTime);

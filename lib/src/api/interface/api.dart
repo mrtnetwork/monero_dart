@@ -185,7 +185,7 @@ abstract class MoneroApiInterface {
   ///   the transaction and identifying associated outputs.
   /// - [payments] : A list of [MoneroUnLockedPayment] representing the inputs to be used for
   ///   the transaction. These payments must be unlocked and available for spending.
-  /// - [destinations] : A list of [TxDestination] specifying the recipients and the amounts
+  /// - [destinations] : A list of [MoneroTxDestination] specifying the recipients and the amounts
   ///   to transfer.
   /// - [changeAddress] : A [MoneroAddress] specifying the address where any remaining balance
   ///   (change) should be sent.
@@ -195,7 +195,7 @@ abstract class MoneroApiInterface {
   Future<MoneroRctTxBuilder> createTransfer({
     required MoneroBaseAccountKeys account,
     required List<MoneroUnLockedPayment> payments,
-    required List<TxDestination> destinations,
+    required List<MoneroTxDestination> destinations,
     required MoneroAddress changeAddress,
     MoneroFeePrority priority = MoneroFeePrority.defaultPriority,
   });
@@ -211,7 +211,7 @@ abstract class MoneroApiInterface {
   ///   associated outputs and preparing the transaction.
   /// - [payments] : A list of [MoneroUnlockedMultisigPayment] representing the inputs to be used
   ///   for the transaction. These payments must be multisig-compatible and unlocked.
-  /// - [destinations] : A list of [TxDestination] specifying the recipients and the amounts to transfer.
+  /// - [destinations] : A list of [MoneroTxDestination] specifying the recipients and the amounts to transfer.
   /// - [changeAddress] : A [MoneroAddress] specifying the address where any remaining balance
   ///   (change) should be sent.
   /// - [signers] : A list of [MoneroPublicKey] representing the public keys of the multisig signers
@@ -222,7 +222,7 @@ abstract class MoneroApiInterface {
   Future<MoneroMultisigTxBuilder> createMultisigTransfer({
     required MoneroMultisigAccountKeys account,
     required List<MoneroUnlockedMultisigPayment> payments,
-    required List<TxDestination> destinations,
+    required List<MoneroTxDestination> destinations,
     required MoneroAddress changeAddress,
     required List<MoneroPublicKey> signers,
     MoneroFeePrority priority = MoneroFeePrority.defaultPriority,

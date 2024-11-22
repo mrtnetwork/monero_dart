@@ -14,17 +14,16 @@ class MoneroRctTxBuilder
 
   factory MoneroRctTxBuilder(
       {required MoneroBaseAccountKeys account,
-      required List<TxDestination> destinations,
+      required List<MoneroTxDestination> destinations,
       required List<SpendablePayment<MoneroUnLockedPayment>> sources,
       required BigInt fee,
-      bool fakeSignature = false,
-      TxDestination? change}) {
+      bool fakeTx = false,
+      MoneroTxDestination? change}) {
     sources = List<SpendablePayment<MoneroUnLockedPayment>>.from(sources)
       ..sort((a, b) => BytesUtils.compareBytes(
           b.payment.output.keyImage, a.payment.output.keyImage));
-    final entropy = RCT.skGen_();
     final seed = MoneroTxBuilder._createTxSecretKeySeed(
-        entropy: entropy, sources: sources, domain: "wallet_tx_privkeys_seed");
+        sources: sources, domain: "wallet_tx_privkeys_seed", fakeTx: fakeTx);
     final sourceKeys = MoneroTxBuilder._computeSourceKeys(sources: sources);
     final destinationKeys = MoneroTxBuilder._computeDestinationKeys(
         account: account,
@@ -32,13 +31,14 @@ class MoneroRctTxBuilder
         sources: sourceKeys,
         change: change,
         txSeed: seed,
-        fee: fee);
+        fee: fee,
+        fakeTx: fakeTx);
     final signature = MoneroTxBuilder._buildSignature(
         destinationKeys: destinationKeys,
         sourceKeys: sourceKeys,
         sources: sources,
         fee: fee,
-        fakeSignature: fakeSignature);
+        fakeTx: fakeTx);
     final transaction = MoneroTxBuilder._buildTx(
         destinationKeys: destinationKeys,
         sourceKeys: sourceKeys,
@@ -60,14 +60,14 @@ class MoneroRctTxBuilder
           ComputeDestinationKeys.fromStruct(json.asMap("destinationKeys")),
       transaction: MoneroTransaction.fromStruct(json.asMap("transaction")),
       txKey: json.asBytes("txKey"),
-      change: json.mybeAs<TxDestination, Map<String, dynamic>>(
+      change: json.mybeAs<MoneroTxDestination, Map<String, dynamic>>(
           key: "change",
           onValue: (e) {
-            return TxDestination.fromStruct(e);
+            return MoneroTxDestination.fromStruct(e);
           }),
       destinations: json
           .asListOfMap("destinations")!
-          .map((e) => TxDestination.fromStruct(e))
+          .map((e) => MoneroTxDestination.fromStruct(e))
           .toList(),
       sources: json
           .asListOfMap("sources")!
@@ -81,7 +81,7 @@ class MoneroRctTxBuilder
       ComputeSourceKeys.layout(property: "sourceKeys"),
       ComputeDestinationKeys.layout(property: "destinationKeys"),
       MoneroTransaction.layout(property: "transaction", forcePrunable: true),
-      MoneroLayoutConst.variantVec(TxDestination.layout(),
+      MoneroLayoutConst.variantVec(MoneroTxDestination.layout(),
           property: "destinations"),
       MoneroLayoutConst.variantVec(SpendablePayment.layout(),
           property: "sources"),

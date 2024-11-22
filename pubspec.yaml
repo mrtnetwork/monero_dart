@@ -1,6 +1,6 @@
 name: monero_dart
 description: A pure Dart solution for Monero cryptography, supporting RingCT transactions, Bulletproof Plus, multi-sig accounts, account management, and full daemon/wallet RPC support.
-version: 0.1.0
+version: 0.2.0
 homepage: "https://github.com/mrtnetwork/monero_dart"
 repository: "https://github.com/mrtnetwork/monero_dart"
 Author: mrhaydari.t@gmail.com

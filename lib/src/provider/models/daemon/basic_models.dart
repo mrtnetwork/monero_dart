@@ -613,7 +613,7 @@ class DaemonBlockHeaderResponse {
   final String prevHash;
   final int nonce;
   final bool orphanStatus;
-  final BigInt height;
+  final int height;
   final BigInt depth;
   final String hash;
   final BigInt difficulty;
@@ -623,8 +623,8 @@ class DaemonBlockHeaderResponse {
   final String wideCumulativeDifficulty;
   final BigInt cumulativeDifficultyTop64;
   final BigInt reward;
-  final BigInt blockSize;
-  final BigInt blockWeight;
+  final int blockSize;
+  final int blockWeight;
   final BigInt numTxes;
   final String powHash;
   final BigInt longTermWeight;
@@ -638,7 +638,7 @@ class DaemonBlockHeaderResponse {
         prevHash = json['prev_hash'],
         nonce = json['nonce'],
         orphanStatus = json['orphan_status'],
-        height = BigintUtils.parse(json['height']),
+        height = IntUtils.parse(json['height']),
         depth = BigintUtils.parse(json['depth']),
         hash = json['hash'],
         difficulty = BigintUtils.parse(json['difficulty']),
@@ -649,8 +649,8 @@ class DaemonBlockHeaderResponse {
         cumulativeDifficultyTop64 =
             BigintUtils.parse(json['cumulative_difficulty_top64']),
         reward = BigintUtils.parse(json['reward']),
-        blockSize = BigintUtils.tryParse(json['block_size']) ?? BigInt.zero,
-        blockWeight = BigintUtils.tryParse(json['block_weight']) ?? BigInt.zero,
+        blockSize = IntUtils.tryParse(json['block_size']) ?? 0,
+        blockWeight = IntUtils.tryParse(json['block_weight']) ?? 0,
         numTxes = BigintUtils.parse(json['num_txes']),
         powHash = json['pow_hash'],
         longTermWeight =

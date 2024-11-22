@@ -26,6 +26,7 @@
 
 import 'dart:typed_data';
 import 'package:blockchain_utils/blockchain_utils.dart';
+import 'package:blockchain_utils/crypto/crypto/cdsa/utils/ed25519_utils.dart';
 import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/models/transaction/signature/signature.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
@@ -223,6 +224,12 @@ class RCT {
     return ag;
   }
 
+  static List<int> scalarmultBaseFast_(List<int> a) {
+    final sc = Ed25519Utils.asScalarInt(Ed25519Utils.scalarReduce(a));
+    final data = Curves.generatorED25519 * sc;
+    return data.toBytes();
+  }
+
   static void scalarmultBase(List<int> ag, List<int> a) {
     final GroupElementP3 point = GroupElementP3();
     CryptoOps.scReduce32Copy(ag, a);
@@ -265,6 +272,12 @@ class RCT {
     return ap;
   }
 
+  static List<int> scalarmultKeyFast_(List<int> p, List<int> a) {
+    final ap = zero();
+    scalarmultKeyFast(ap, p, a);
+    return ap;
+  }
+
   static void scalarmultKey(RctKey ap, List<int> p, List<int> a) {
     final GroupElementP3 aP3 = GroupElementP3();
     if (CryptoOps.geFromBytesVartime_(aP3, p) != 0) {
@@ -273,6 +286,13 @@ class RCT {
     final GroupElementP2 r = GroupElementP2();
     CryptoOps.geScalarMult(r, a, aP3);
     CryptoOps.geToBytes(ap, r);
+  }
+
+  static void scalarmultKeyFast(RctKey ap, List<int> p, List<int> a) {
+    final point = EDPoint.fromBytes(curve: Curves.curveEd25519, data: p);
+    final sc = Ed25519Utils.asScalarInt(a);
+    final key = (point * sc).toBytes();
+    CryptoOps.scFill(ap, key);
   }
 
   static void scalarmult8(GroupElementP3 res, List<int> p) {

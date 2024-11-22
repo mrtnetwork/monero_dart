@@ -36,7 +36,7 @@ void main() async {
       payments: outs,
       destinations: List.generate(10, (i) {
         final account = generateRandomAccount();
-        return TxDestination(
+        return MoneroTxDestination(
             amount: MoneroTransactionHelper.toPiconero("0.001"),
             address: i.isEven
                 ? account.subAddress(MoneroAccountIndex.minor1)

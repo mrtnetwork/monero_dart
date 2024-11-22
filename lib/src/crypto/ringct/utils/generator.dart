@@ -637,14 +637,14 @@ class RCTGeneratorUtils {
     return nBulletproofMaxAmountBase(
         lSize: proof.l.length,
         rSize: proof.r.length,
-        maxOuts: MoneroConst.bulletproofMaxOutputs);
+        maxOuts: MoneroNetworkConst.bulletproofMaxOutputs);
   }
 
   static int _nBulletproofPlusMaxAmounts(BulletproofPlus proof) {
     return nBulletproofMaxAmountBase(
         lSize: proof.l.length,
         rSize: proof.r.length,
-        maxOuts: MoneroConst.bulletproofPlussMaxOutputs);
+        maxOuts: MoneroNetworkConst.bulletproofPlussMaxOutputs);
   }
 
   static int nBulletproofMaxAmounts(List<Bulletproof> proofs) {
