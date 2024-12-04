@@ -29,8 +29,6 @@ class DistributionResponse {
   final bool binary;
   final bool compress;
   final List<BigInt> distribution;
-  // final String? distribution;
-  // final String? compressData;
   final int startHeight;
   const DistributionResponse(
       {required this.amount,
@@ -38,7 +36,6 @@ class DistributionResponse {
       required this.binary,
       required this.compress,
       required this.distribution,
-      // required this.compressData,
       required this.startHeight});
   factory DistributionResponse.fromJson(Map<String, dynamic> json) {
     final bool compress = json["compress"];

@@ -5,11 +5,7 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_accounts
 class WalletRequestGetAccounts extends MoneroWalletRequestParam<
     WalletRPCGetAccountsResponse, Map<String, dynamic>> {
-  WalletRequestGetAccounts({
-    this.tag,
-    this.regex,
-    this.strictBalances,
-  });
+  WalletRequestGetAccounts({this.tag, this.regex, this.strictBalances});
 
   /// Tag for filtering accounts.
   final String? tag;

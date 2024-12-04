@@ -836,21 +836,20 @@ class RCTGeneratorUtils {
     return index;
   }
 
-  static BigInt decodeRct(
+  static (BigInt, RctKey) decodeRct(
       {required RCTSignature sig,
       required RctKey secretKey,
-      required int outputIndex,
-      RctKey? mask}) {
+      required int outputIndex}) {
     if (outputIndex >= sig.signature.ecdhInfo.length) {
       throw const MoneroCryptoException("Bad index");
     }
     if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
       throw const MoneroCryptoException(
-          "Mismatched sizes of rv.outPk and rv.ecdhInfo");
+          "Mismatched sizes of publickey and ECDH");
     }
     final ecdh = sig.signature.ecdhInfo[outputIndex];
     final result = RCT.ecdhDecode(ecdh: ecdh, sharedSec: secretKey);
-    mask ??= RCT.zero();
+    final mask = RCT.zero();
     CryptoOps.scFill(mask, result.mask);
     final RctKey amount = result.amount;
     final RctKey c = sig.signature.outPk[outputIndex].mask;
@@ -867,17 +866,17 @@ class RCTGeneratorUtils {
       throw const MoneroCryptoException(
           "amount decoded incorrectly, will be unable to spend");
     }
-    return RCT.h2d(amount);
+    final bAmount = RCT.h2d(amount);
+    return (bAmount, mask);
   }
 
-  static BigInt? decodeRct_(
+  static (BigInt, RctKey)? decodeRct_(
       {required RCTSignature sig,
       required RctKey secretKey,
-      required int outputIndex,
-      RctKey? mask}) {
+      required int outputIndex}) {
     try {
       return decodeRct(
-          sig: sig, secretKey: secretKey, outputIndex: outputIndex, mask: mask);
+          sig: sig, secretKey: secretKey, outputIndex: outputIndex);
     } on MoneroCryptoException {
       return null;
     }

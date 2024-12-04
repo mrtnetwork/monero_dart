@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.2
-  blockchain_utils: ^3.5.0
+  blockchain_utils: ^3.6.0
   monero_dart:
     path: ../
 

@@ -111,7 +111,7 @@ class QuickMoneroProvider {
   }
 
   Future<List<SpendablePayment<T>>>
-      generatePaymentOutputs<T extends MoneroUnLockedPayment>(
+      generatePaymentOutputs<T extends MoneroPayment>(
           {required List<T> payments, int fakeOutsLength = 15}) async {
     if (fakeOutsLength <= 0) {
       throw const DartMoneroPluginException(

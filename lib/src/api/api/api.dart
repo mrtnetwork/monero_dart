@@ -39,7 +39,7 @@ class MoneroApi extends MoneroApiInterface {
       destinations: destinations,
       change: changeAddress,
       inamount: inAmounts,
-      fee: getBaseFee(baseFee, priority),
+      fee: priority.getBaseFee(baseFee),
     );
     List<SpendablePayment<MoneroUnlockedMultisigPayment>> spendablePayment =
         provider.generateFakePaymentOuts(payments: payments);
@@ -50,8 +50,8 @@ class MoneroApi extends MoneroApiInterface {
         fee: baseFee.fee,
         signers: signers,
         fakeTx: true);
-    final BigInt fee = calcuateFee(
-        baseFee: baseFee, weight: estimateTx.weight(), priority: priority);
+    final BigInt fee =
+        priority.calcuateFee(baseFee: baseFee, weight: estimateTx.weight());
     change = _getChange(
         destinations: destinations,
         change: changeAddress,
@@ -96,8 +96,8 @@ class MoneroApi extends MoneroApiInterface {
         destinations: destinations,
         change: changeAddress,
         inamount: inAmounts,
-        fee: getBaseFee(baseFee, priority));
-    List<SpendablePayment> spendablePayment =
+        fee: priority.getBaseFee(baseFee));
+    List<SpendablePayment<MoneroUnLockedPayment>> spendablePayment =
         provider.generateFakePaymentOuts(payments: payments);
     MoneroRctTxBuilder tx = MoneroRctTxBuilder(
         account: account,
@@ -107,7 +107,7 @@ class MoneroApi extends MoneroApiInterface {
         fakeTx: true,
         change: change);
     final BigInt fee =
-        calcuateFee(baseFee: baseFee, weight: tx.weight(), priority: priority);
+        priority.calcuateFee(baseFee: baseFee, weight: tx.weight());
     change = _getChange(
       destinations: destinations,
       change: changeAddress,
@@ -300,16 +300,6 @@ class MoneroApi extends MoneroApiInterface {
         .toList();
   }
 
-  BigInt getBaseFee(
-      DaemonGetEstimateFeeResponse baseFee, MoneroFeePrority priority) {
-    if (priority.index >= baseFee.fees.length) {
-      throw const DartMoneroPluginException(
-          "Failed to determine base fee based on your priority.");
-    }
-    if (priority.index == 0) return baseFee.fee;
-    return baseFee.fees[priority.index];
-  }
-
   MoneroTxDestination _getChange({
     required List<MoneroTxDestination> destinations,
     required MoneroAddress change,
@@ -325,17 +315,5 @@ class MoneroApi extends MoneroApiInterface {
           "output amounts exceed the total input amount and the fee.");
     }
     return MoneroTxDestination(amount: changeAmount, address: change);
-  }
-
-  BigInt calcuateFee(
-      {required BigInt weight,
-      required DaemonGetEstimateFeeResponse baseFee,
-      required MoneroFeePrority priority}) {
-    BigInt fee = getBaseFee(baseFee, priority);
-    fee = weight * fee;
-    fee = (fee + baseFee.quantizationMask - BigInt.one) ~/
-        baseFee.quantizationMask *
-        baseFee.quantizationMask;
-    return fee;
   }
 }

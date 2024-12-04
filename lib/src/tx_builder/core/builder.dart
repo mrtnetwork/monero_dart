@@ -130,7 +130,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   }
 
   static RctKey _createTxSecretKeySeed(
-      {required List<SpendablePayment> sources,
+      {required List<SpendablePayment<MoneroUnLockedPayment>> sources,
       String domain = "multisig_tx_privkeys_seed",
       required bool fakeTx}) {
     if (fakeTx) return _MonerTxBuilderConst.fakeScalar;
@@ -177,7 +177,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   }
 
   static ComputeSourceKeys _computeSourceKeys(
-      {required List<SpendablePayment> sources}) {
+      {required List<SpendablePayment<MoneroUnLockedPayment>> sources}) {
     final List<TxinToKey> inputs = sources.map((e) {
       return TxinToKey(
           amount: e.payment.output.amount,
@@ -203,6 +203,13 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       ...destinations,
       if (change != null) change
     ];
+    if (currentDestinations.length == 1) {
+      currentDestinations.add(MoneroTxDestination(
+          amount: BigInt.zero,
+          address: MoneroAccountAddress.fromPubKeys(
+              pubSpendKey: RCT.skpkGen_().item2,
+              pubViewKey: RCT.skpkGen_().item2)));
+    }
     final addresses = currentDestinations.map((e) => e.address).toList();
     if (addresses.toSet().length != addresses.length) {
       throw const DartMoneroPluginException(
@@ -301,7 +308,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   static RCTSignature _buildSignature(
       {required ComputeDestinationKeys destinationKeys,
       required ComputeSourceKeys sourceKeys,
-      required List<SpendablePayment> sources,
+      required List<SpendablePayment<MoneroUnLockedPayment>> sources,
       required BigInt fee,
       KeyV? aResult,
       bool isMultisig = false,

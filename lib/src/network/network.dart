@@ -1,7 +1,4 @@
-import 'package:blockchain_utils/bip/address/xmr_addr.dart';
-import 'package:blockchain_utils/bip/coin_conf/coin_conf.dart';
-import 'package:blockchain_utils/bip/coin_conf/coins_conf.dart';
-import 'package:blockchain_utils/bip/monero/conf/monero_coins.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/exception/exception.dart';
 
 class MoneroNetwork {

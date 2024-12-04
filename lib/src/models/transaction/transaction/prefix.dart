@@ -46,13 +46,14 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     ], property: property);
   }
 
-  List<TxExtra> toTxExtra() {
+  List<TxExtra> _toTxExtra() {
     return MoneroTransactionHelper.extraParsing(extra);
   }
 
-  MoneroPublicKey getTxExtraPubKey() {
-    final extras = toTxExtra();
-    final pubKeyExtra = extras
+  late final List<TxExtra> txExtras = _toTxExtra();
+  MoneroPublicKey _getTxExtraPubKey() {
+    // final extras = toTxExtra();
+    final pubKeyExtra = txExtras
         .firstWhere((e) => e.type == TxExtraTypes.publicKey,
             orElse: () => throw const DartMoneroPluginException(
                 "Cannot find tx public key extra."))
@@ -60,10 +61,11 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     return pubKeyExtra.publicKey;
   }
 
-  TxExtraAdditionalPubKeys? getTxAdditionalPubKeys() {
-    final extras = toTxExtra();
+  late final MoneroPublicKey txPublicKey = _getTxExtraPubKey();
+
+  TxExtraAdditionalPubKeys? _getTxAdditionalPubKeys() {
     try {
-      return extras
+      return txExtras
           .firstWhere((e) => e.type == TxExtraTypes.additionalPubKeys)
           .cast();
     } on StateError {
@@ -71,12 +73,13 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     }
   }
 
+  late TxExtraAdditionalPubKeys? additionalPubKeys = _getTxAdditionalPubKeys();
+
   List<TxExtraNonce> getTxExtraNonces() {
-    final extras = toTxExtra();
-    return extras.whereType<TxExtraNonce>().toList();
+    return txExtras.whereType<TxExtraNonce>().toList();
   }
 
-  RctKey? getTxEncryptedPaymentId() {
+  RctKey? _getTxEncryptedPaymentId() {
     final nonces = getTxExtraNonces();
     for (final i in nonces) {
       if (i.hasEncryptedPaymentId != null) {
@@ -86,7 +89,10 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     return null;
   }
 
-  RctKey? getTxPaymentId() {
+  late final RctKey? txEncryptedPaymentId =
+      _getTxEncryptedPaymentId()?.asImmutableBytes;
+
+  RctKey? _getTxPaymentId() {
     final nonces = getTxExtraNonces();
     for (final i in nonces) {
       if (i.hasPaymentId != null) {
@@ -95,6 +101,8 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     }
     return null;
   }
+
+  late final RctKey? txPaymentId = _getTxPaymentId()?.asImmutableBytes;
 
   List<int> getTranactionPrefixHash() {
     final serialize = layout().serialize(toLayoutStruct());

@@ -71,4 +71,8 @@ class MoneroBlock extends MoneroBlockheader {
   List<String> txIds() {
     return txHashes.map((e) => BytesUtils.toHexString(e)).toList();
   }
+
+  String previousBlockHash() {
+    return BytesUtils.toHexString(hash);
+  }
 }

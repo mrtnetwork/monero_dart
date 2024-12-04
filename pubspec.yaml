@@ -12,9 +12,9 @@ environment:
   sdk: '>=3.3.0 <4.0.0'
 
 dependencies:
-  blockchain_utils: ^3.5.0
+  blockchain_utils: ^3.6.0
   # blockchain_utils:
-  #   path: ../bitcoin/blockchain_utils
+  #   path: ../../blockchain_utils
 
 dev_dependencies:
   lints: ^4.0.0

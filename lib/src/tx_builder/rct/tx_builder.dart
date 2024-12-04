@@ -6,7 +6,6 @@ class MoneroRctTxBuilder
     required super.sourceKeys,
     required super.destinationKeys,
     required super.transaction,
-    required MoneroPrivateKey txKey,
     required super.destinations,
     required super.sources,
     required super.change,
@@ -47,11 +46,15 @@ class MoneroRctTxBuilder
       sourceKeys: sourceKeys,
       destinationKeys: destinationKeys,
       transaction: transaction,
-      txKey: destinationKeys.allTxKeys.first,
       change: change,
       destinations: destinations,
       sources: sources,
     );
+  }
+  factory MoneroRctTxBuilder.deserialize(List<int> bytes, {String? property}) {
+    final decode = MoneroSerialization.deserialize(
+        bytes: bytes, layout: layout(property: property));
+    return MoneroRctTxBuilder.fromStruct(decode);
   }
   factory MoneroRctTxBuilder.fromStruct(Map<String, dynamic> json) {
     return MoneroRctTxBuilder._(
@@ -59,7 +62,6 @@ class MoneroRctTxBuilder
       destinationKeys:
           ComputeDestinationKeys.fromStruct(json.asMap("destinationKeys")),
       transaction: MoneroTransaction.fromStruct(json.asMap("transaction")),
-      txKey: json.asBytes("txKey"),
       change: json.mybeAs<MoneroTxDestination, Map<String, dynamic>>(
           key: "change",
           onValue: (e) {
@@ -76,16 +78,21 @@ class MoneroRctTxBuilder
     );
   }
 
-  static Layout<Map<String, dynamic>> layout({String? property}) {
+  static Layout<Map<String, dynamic>> layout(
+      {String? property, MoneroTransaction? transaction}) {
     return LayoutConst.struct([
       ComputeSourceKeys.layout(property: "sourceKeys"),
       ComputeDestinationKeys.layout(property: "destinationKeys"),
-      MoneroTransaction.layout(property: "transaction", forcePrunable: true),
+      MoneroTransaction.layout(
+        property: "transaction",
+        transaction: transaction,
+        forcePrunable: true,
+      ),
       MoneroLayoutConst.variantVec(MoneroTxDestination.layout(),
           property: "destinations"),
       MoneroLayoutConst.variantVec(SpendablePayment.layout(),
           property: "sources"),
-      LayoutConst.optional(MoneroAddress.layout(), property: "changeAddress"),
+      LayoutConst.optional(MoneroTxDestination.layout(), property: "change"),
     ], property: property);
   }
 
@@ -103,7 +110,7 @@ class MoneroRctTxBuilder
 
   @override
   Layout<Map<String, dynamic>> createLayout({String? property}) {
-    return layout(property: property);
+    return layout(property: property, transaction: transaction);
   }
 
   @override

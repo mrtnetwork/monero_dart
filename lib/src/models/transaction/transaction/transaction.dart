@@ -177,7 +177,6 @@ class MoneroTransaction extends MoneroTransactionPrefix {
       "vout": vout.map((e) => e.toLayoutStruct()).toList(),
       "extera": extra,
       "signature": signature.toLayoutStruct(),
-      // "rctSigPrunable": rctSigPrunable?.toLayoutStruct() ?? {},
     };
   }
 

@@ -1,4 +1,3 @@
-import 'package:blockchain_utils/bip/address/xmr_addr.dart';
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/address/address/address.dart';
 import 'package:monero_dart/src/models/models.dart';

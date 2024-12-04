@@ -4,7 +4,7 @@ import 'package:blockchain_utils/layout/layout.dart';
 class MoneroBigIntVarInt extends Layout<BigInt> {
   MoneroBigIntVarInt(this.layout, {String? property})
       : super(-1, property: property);
-  final BaseIntiger layout;
+  final BigIntLayout layout;
   static BigInt readVarintBig(List<int> bytes) {
     BigInt result = BigInt.zero;
     int shift = 0;
@@ -68,7 +68,7 @@ class MoneroBigIntVarInt extends Layout<BigInt> {
 class MoneroIntVarInt extends Layout<int> {
   MoneroIntVarInt(this.layout, {String? property})
       : super(-1, property: property);
-  final BaseIntiger layout;
+  final IntegerLayout layout;
   int readVarint(List<int> bytes, {int startIndex = 0}) {
     int result = 0;
     int shift = 0;

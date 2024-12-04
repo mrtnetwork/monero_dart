@@ -91,8 +91,7 @@ class MoneroCrypto {
   static List<int> derivationToScalar(
       {required List<int> derivation, required int outIndex}) {
     derivation.as32Bytes("derivationToScalar");
-    final outputIndex =
-        MoneroBigIntVarInt(LayoutConst.u64()).serialize(BigInt.from(outIndex));
+    final outputIndex = MoneroIntVarInt(LayoutConst.u48()).serialize(outIndex);
     final bytes = [...derivation.asImmutableBytes, ...outputIndex];
     final hash = RCT.hashToScalar_(bytes);
     return hash;
@@ -102,18 +101,16 @@ class MoneroCrypto {
   static List<int> derivationToScalarFast(
       {required List<int> derivation, required int outIndex}) {
     derivation.as32Bytes("derivationToScalar");
-    final outputIndex =
-        MoneroBigIntVarInt(LayoutConst.u64()).serialize(BigInt.from(outIndex));
+    final outputIndex = MoneroIntVarInt(LayoutConst.u48()).serialize(outIndex);
     final bytes = [...derivation.asImmutableBytes, ...outputIndex];
     return RCT.hashToScalarFast_(bytes);
   }
 
   /// Derives a public key from a base public key using a derivation and output index.
-  static MoneroPublicKey derivePublicKeyFast({
-    required List<int> derivation,
-    required int outIndex,
-    required MoneroPublicKey basePublicKey,
-  }) {
+  static MoneroPublicKey derivePublicKeyFast(
+      {required List<int> derivation,
+      required int outIndex,
+      required MoneroPublicKey basePublicKey}) {
     derivation.as32Bytes("derivePublicKey");
     final RctKey scalar =
         derivationToScalarFast(derivation: derivation, outIndex: outIndex);
@@ -356,6 +353,76 @@ class MoneroCrypto {
     final sH = RCT.hashToScalar_([...hash, ...publicKey, ...comm]);
     CryptoOps.scSub(sH, sH, signature.c);
     return CryptoOps.scIsNonZero(sH) == 0;
+  }
+
+  static MECSignature generateTxProofFast({
+    required List<int> hash,
+    required List<int> R,
+    required List<int> A,
+    required List<int>? B,
+    required List<int> d,
+    required List<int> r,
+  }) {
+    hash.as32Bytes("generateTxProof");
+    R.as32Bytes("generateTxProof");
+    A.as32Bytes("generateTxProof");
+    B?.as32Bytes("generateTxProof");
+    d.as32Bytes("generateTxProof");
+    r.as32Bytes("generateTxProof");
+    // sanity check
+    final GroupElementP3 rP3 = GroupElementP3();
+    final GroupElementP3 aP3 = GroupElementP3();
+    final GroupElementP3 bP3 = GroupElementP3();
+    final GroupElementP3 dP3 = GroupElementP3();
+    if (CryptoOps.geFromBytesVartime_(rP3, R) != 0) {
+      throw const MoneroCryptoException("tx pubkey is invalid");
+    }
+    if (CryptoOps.geFromBytesVartime_(aP3, A) != 0) {
+      throw const MoneroCryptoException("recipient view pubkey is invalid");
+    }
+    if (B != null && CryptoOps.geFromBytesVartime_(bP3, B) != 0) {
+      throw const MoneroCryptoException("recipient spend pubkey is invalid");
+    }
+    if (CryptoOps.geFromBytesVartime_(dP3, d) != 0) {
+      throw const MoneroCryptoException("key derivation is invalid");
+    }
+
+    final k = RCT.skGen_();
+
+    final sep = QuickCrypto.keccack256Hash("TXPROOF_V2".codeUnits);
+    List<int> x;
+    List<int> y;
+    if (B != null) {
+      // compute x = k*B
+      final GroupElementP2 xP2 = GroupElementP2();
+      CryptoOps.geScalarMult(xP2, k, bP3);
+      x = CryptoOps.geTobytes_(xP2);
+    } else {
+      // compute x = k*G
+      final GroupElementP3 xP3 = GroupElementP3();
+      CryptoOps.geScalarMultBase(xP3, k);
+      x = CryptoOps.geP3Tobytes_(xP3);
+    }
+
+    // compute y = k*A
+    final GroupElementP2 yP2 = GroupElementP2();
+    CryptoOps.geScalarMult(yP2, k, aP3);
+    y = CryptoOps.geTobytes_(yP2);
+
+    // sig.c = Hs(Msg || d || x || y || sep || R || A || B)
+    final c = RCT.hashToScalar_([
+      ...hash,
+      ...d,
+      ...x,
+      ...y,
+      ...sep,
+      ...R,
+      ...A,
+      ...B ?? CryptoOpsConst.zero
+    ]);
+    final List<int> sigR = RCT.zero();
+    CryptoOps.scMulSub(sigR, c, r, k);
+    return MECSignature(c: c, r: sigR);
   }
 
   /// generate tx proof

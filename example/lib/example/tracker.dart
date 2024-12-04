@@ -32,7 +32,11 @@ class MoneroChainAccountTracker {
   Future<void> startFetchingHeight() async {
     await updateLatestHeight();
     while (_currentHeight < _blockHeight) {
-      final r = await provider.getBlocks(startHeight: _currentHeight);
+      final r =
+          await provider.getBlocks(startHeight: _currentHeight, blockIds: []);
+      final f = r.blocks.first.toBlock().previousBlockHash();
+      final l = r.blocks.last.toBlock().previousBlockHash();
+      _currentHeight += r.blocks.length;
       final txes = r.toTxes();
       final keyImages = txes
           .map((e) => e.transaction.getInputsKeyImages())

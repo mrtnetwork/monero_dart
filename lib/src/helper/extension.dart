@@ -3,10 +3,13 @@ import 'package:monero_dart/src/exception/exception.dart';
 
 extension IntegerListValidator<T> on List<int> {
   List<int> as32Bytes(String operationName) {
+    if (length != 32) {
+      throw DartMoneroPluginException(
+          "$operationName failed. incorrect key 32 length.",
+          details: {"excepted": 32, "length": length});
+    }
     return this;
   }
-
-  void asMin32Bytes(String operationName) {}
 }
 
 extension ListValidator<T> on List<T> {

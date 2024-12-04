@@ -247,8 +247,8 @@ class WalletRPCSubAddressAcountResponse {
   /// Balance of the account (locked or unlocked).
   final BigInt balance;
 
-  /// Base64 representation of the first subaddress in the account.
-  final String baseAddress;
+  /// address.
+  final MoneroAddress baseAddress;
 
   /// Label of the account.
   final String? label;
@@ -267,11 +267,11 @@ class WalletRPCSubAddressAcountResponse {
       required this.unlockedBalance});
   WalletRPCSubAddressAcountResponse.fromJson(Map<String, dynamic> json)
       : accountIndex = IntUtils.parse(json["account_index"]),
-        label = json["balance"],
+        label = json["label"],
         tag = json["tag"],
         unlockedBalance = BigintUtils.parse(json["unlocked_balance"]),
         balance = BigintUtils.parse(json["balance"]),
-        baseAddress = json["base_address"];
+        baseAddress = MoneroAddress(json["base_address"]);
 }
 
 class WalletRPCGetAccountsResponse {

@@ -32,6 +32,7 @@ class WalletRequestIncommingTransfers extends MoneroWalletRequestParam<
   @override
   List<WalletRPCIncommingTransferResponse> onResonse(
       Map<String, dynamic> result) {
+    if (result.isEmpty) return [];
     return (result["transfers"] as List)
         .map((e) => WalletRPCIncommingTransferResponse.fromJson(e))
         .toList();

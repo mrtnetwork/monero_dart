@@ -1,12 +1,7 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/account/account.dart';
 import 'package:monero_dart/src/address/address/address.dart';
-import 'package:monero_dart/src/crypto/models/ec_signature.dart';
-import 'package:monero_dart/src/crypto/monero/crypto.dart';
-import 'package:monero_dart/src/crypto/multisig/multisig.dart';
-import 'package:monero_dart/src/crypto/ringct/utils/generator.dart';
-import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
-import 'package:monero_dart/src/crypto/types/types.dart';
+import 'package:monero_dart/src/crypto/crypto.dart';
 import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/models/models.dart';
 
@@ -74,7 +69,7 @@ class MoneroTransactionHelper {
     return viewTag == hash;
   }
 
-  static RctKey? inOuttoAccFast(
+  static RctKey? isAccountOutFast(
       {required MoneroPrivateKey viewSecretKey,
       required MoneroPublicKey txPubkey,
       required int outIndex,
@@ -89,7 +84,7 @@ class MoneroTransactionHelper {
     return null;
   }
 
-  static RctKey? inOuttoAcc({
+  static RctKey? isAccountOut({
     required MoneroPrivateKey viewSecretKey,
     required MoneroPublicKey publicSpendKey,
     required MoneroPublicKey txPubkey,
@@ -97,7 +92,7 @@ class MoneroTransactionHelper {
     required int outIndex,
     required int? viewTag,
   }) {
-    final derivation = inOuttoAccFast(
+    final derivation = isAccountOutFast(
         viewSecretKey: viewSecretKey,
         txPubkey: txPubkey,
         outIndex: outIndex,
@@ -246,7 +241,7 @@ class MoneroTransactionHelper {
           MoneroCrypto.derivationToScalar(derivation: derivation, outIndex: i);
       final amount = RCTGeneratorUtils.decodeRct_(
           sig: signature, secretKey: sharedSec, outputIndex: i);
-      if (amount != null) return amount;
+      if (amount != null) return amount.$1;
     }
     return null;
   }
@@ -261,8 +256,8 @@ class MoneroTransactionHelper {
         _hashProofMessage(message: message, transaction: transaction);
     final address =
         MoneroAddress(account.subaddress(index.minor, majorIndex: index.major));
-    final txPubKey = transaction.getTxExtraPubKey();
-    final additional = transaction.getTxAdditionalPubKeys();
+    final txPubKey = transaction.txPublicKey;
+    final additional = transaction.additionalPubKeys;
     final secretKey = account.privateViewKey;
     final List<RctKey> sharedSecrets = [];
     final RctKey temp = RCT.zero();
@@ -362,8 +357,8 @@ class MoneroTransactionHelper {
       required String proofStr,
       required String message,
       required MoneroAddress address}) {
-    final txPubKey = transaction.getTxExtraPubKey();
-    final additional = transaction.getTxAdditionalPubKeys();
+    final txPubKey = transaction.txPublicKey;
+    final additional = transaction.additionalPubKeys;
     final proof = MoneroTxProof.fromBase58(proofStr);
     if ((additional?.pubKeys.length ?? 0) + 1 != proof.signatures.length) {
       throw const DartMoneroPluginException(
@@ -474,11 +469,9 @@ class MoneroTransactionHelper {
 
   /// decode output amount.
   static MoneroLockedOutput? getLockedOutputs({
-    // required MoneroTxout out,
     required int realIndex,
     required MoneroTransaction tx,
     required MoneroBaseAccountKeys account,
-    // required MoneroAccountIndex index,
   }) {
     if (realIndex >= tx.vout.length) {
       throw const DartMoneroPluginException(
@@ -486,20 +479,20 @@ class MoneroTransactionHelper {
     }
     final out = tx.vout[realIndex];
     final outPublicKey = out.target.getPublicKey();
-    final additionalPubKeys = tx.getTxAdditionalPubKeys();
+    final additionalPubKeys = tx.additionalPubKeys;
     if (outPublicKey == null ||
-        additionalPubKeys != null &&
-            additionalPubKeys.pubKeys.length != tx.vout.length) {
+        (additionalPubKeys != null &&
+            additionalPubKeys.pubKeys.length != tx.vout.length)) {
       return null;
     }
     final viewTag = out.target.getViewTag();
 
     final List<MoneroPublicKey> publicKeys = [
-      tx.getTxExtraPubKey(),
+      tx.txPublicKey,
       if (additionalPubKeys != null) additionalPubKeys.pubKeys[realIndex]
     ];
     for (final p in publicKeys) {
-      final derivation = inOuttoAccFast(
+      final derivation = isAccountOutFast(
           viewSecretKey: account.account.privVkey,
           txPubkey: p,
           viewTag: viewTag,
@@ -507,23 +500,20 @@ class MoneroTransactionHelper {
       if (derivation == null) continue;
       for (final index in account.indexes) {
         final pubKey = MoneroCrypto.derivePublicKeyFast(
-          derivation: derivation,
-          outIndex: realIndex,
-          basePublicKey: account.getSpendPublicKey(index),
-        );
+            derivation: derivation,
+            outIndex: realIndex,
+            basePublicKey: account.getSpendPublicKey(index));
         if (pubKey == outPublicKey) {
           final sharedSec = MoneroCrypto.derivationToScalarFast(
               derivation: derivation, outIndex: realIndex);
-          final mask = RCT.zero();
           final amount = RCTGeneratorUtils.decodeRct_(
               sig: tx.signature.cast(),
               secretKey: sharedSec,
-              outputIndex: realIndex,
-              mask: mask);
+              outputIndex: realIndex);
           if (amount == null) continue;
           return MoneroLockedOutput(
-              amount: amount,
-              mask: mask,
+              amount: amount.$1,
+              mask: amount.$2,
               derivation: derivation,
               outputPublicKey: outPublicKey,
               accountIndex: index,
@@ -623,7 +613,7 @@ class MoneroTransactionHelper {
         keyImage: unlockedOut.keyImage,
         mask: unlockedOut.mask,
         outputPublicKey: unlockedOut.outputPublicKey,
-        accountindex: unlockedOut.accountIndex,
+        accountIndex: unlockedOut.accountIndex,
         unlockTime: unlockedOut.unlockTime,
         realIndex: unlockedOut.realIndex);
     return MoneroUnlockedMultisigPayment(
@@ -636,10 +626,9 @@ class MoneroTransactionHelper {
   }
 
   /// convert locked output to unlocked output.
-  static MoneroUnlockedOutput? toUnlockOutput({
-    required MoneroBaseAccountKeys account,
-    required MoneroLockedOutput out,
-  }) {
+  static MoneroUnlockedOutput? toUnlockOutput(
+      {required MoneroBaseAccountKeys account,
+      required MoneroLockedOutput out}) {
     final RctKey spendKey = account.getPrivateSpendKey();
     final scalarStep1 = MoneroCrypto.deriveSecretKey(
         derivation: out.derivation,
@@ -684,7 +673,7 @@ class MoneroTransactionHelper {
         keyImage: keyImage,
         mask: out.mask,
         outputPublicKey: out.outputPublicKey,
-        accountindex: out.accountIndex,
+        accountIndex: out.accountIndex,
         unlockTime: out.unlockTime,
         realIndex: out.realIndex);
   }
@@ -710,9 +699,9 @@ class MoneroTransactionHelper {
       required int realIndex,
       required BigInt globalIndex,
       List<MoneroMultisigOutputInfo>? multisigInfos}) {
-    final txPubKey = transaction.getTxExtraPubKey();
-    final paymentId = transaction.getTxPaymentId();
-    List<int>? encryptedPaymentId = transaction.getTxEncryptedPaymentId();
+    final txPubKey = transaction.txPublicKey;
+    final paymentId = transaction.txPaymentId;
+    List<int>? encryptedPaymentId = transaction.txEncryptedPaymentId;
     if (encryptedPaymentId != null) {
       encryptedPaymentId = MoneroTransactionHelper.encryptPaymentId(
           paymentId: encryptedPaymentId,
@@ -742,5 +731,25 @@ class MoneroTransactionHelper {
         paymentId: paymentId,
         encryptedPaymentid: encryptedPaymentId,
         globalIndex: globalIndex);
+  }
+
+  static List<SpendablePayment<T>>
+      generateFakePaymentOuts<T extends MoneroUnLockedPayment>(
+          {required List<T> payments, int fakeOutsLength = 16}) {
+    final List<List<OutsEntery>> outs = payments.map((e) {
+      return List.generate(fakeOutsLength, (i) {
+        return OutsEntery(
+            index: e.globalIndex - BigInt.from(i),
+            key: CtKey(
+                dest: i == 0
+                    ? e.output.ephemeralPublicKey
+                    : RCT.identity(clone: false),
+                mask: RCT.identity(clone: false)));
+      }).toList();
+    }).toList();
+    return List.generate(
+        payments.length,
+        (i) => SpendablePayment(
+            payment: payments[i], outs: outs[i], realOutIndex: 0));
   }
 }

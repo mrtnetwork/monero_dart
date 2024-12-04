@@ -5,12 +5,12 @@ import 'package:monero_dart/src/provider/core/core.dart';
 class DaemonRequestOnGetBlockHash
     extends MoneroDaemonRequestParam<String, String> {
   DaemonRequestOnGetBlockHash(this.blockHeight);
-  final BigInt blockHeight;
+  final int blockHeight;
 
   @override
   String get method => "on_get_block_hash";
   @override
-  Object get params => [blockHeight.toString()];
+  Object get params => [blockHeight];
   @override
   DemonRequestType get requestType => DemonRequestType.jsonRPC;
 }
