@@ -20,7 +20,7 @@ class DaemonRequestAddAuxPow extends MoneroDaemonRequestParam<
         "aux_pow": auxPow.map((e) => e.toJson()).toList()
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonAddAuxPowResponse onResonse(Map<String, dynamic> result) {
     return DaemonAddAuxPowResponse.fromJson(result);

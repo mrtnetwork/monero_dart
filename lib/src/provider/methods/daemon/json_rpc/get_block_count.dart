@@ -12,7 +12,7 @@ class DaemonRequestGetBlockCount extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonGetBlockCountResponse onResonse(Map<String, dynamic> result) {
     return DaemonGetBlockCountResponse.fromJson(result);

@@ -28,7 +28,7 @@ class DaemonRequestGetBlockHeaderByHash extends MoneroDaemonRequestParam<
         if (hashes.isNotEmpty) "hashes": hashes,
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonBlockHeadersResponse onResonse(Map<String, dynamic> result) {
     return DaemonBlockHeadersResponse.fromJson(result);

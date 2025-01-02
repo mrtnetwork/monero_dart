@@ -14,7 +14,7 @@ class DaemonRequestStartSaveBc
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonBaseResponse onResonse(Map<String, dynamic> result) {

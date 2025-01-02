@@ -20,10 +20,4 @@ class ProviderUtils {
     }
     return blockIds;
   }
-
-  static String buildRpcRequest(
-      {required Object? params, required String method, required int id}) {
-    return StringUtils.fromJson(
-        {"jsonrpc": "2.0", "id": id, "method": method, "params": params});
-  }
 }

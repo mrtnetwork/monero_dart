@@ -15,7 +15,7 @@ class DaemonRequestPruneBlockchain extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {"check": check};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonPruneBlockchainResponse onResonse(Map<String, dynamic> result) {
     return DaemonPruneBlockchainResponse.fromJson(result);

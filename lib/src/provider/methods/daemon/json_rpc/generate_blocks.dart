@@ -31,7 +31,7 @@ class DaemonRequestGenerateBlocks extends MoneroDaemonRequestParam<
         "starting_nonce": startingNonce
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonGenerateBlockResponse onResonse(Map<String, dynamic> result) {
     return DaemonGenerateBlockResponse.fromJson(result);

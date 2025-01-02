@@ -22,7 +22,7 @@ class DaemonRequestGetPublicNodes extends MoneroDaemonRequestParam<
   Map<String, dynamic> get params =>
       {"gray": gray, "white": white, "include_blocked": includeBlocked};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonGetPublicNodeResponse onResonse(Map<String, dynamic> result) {

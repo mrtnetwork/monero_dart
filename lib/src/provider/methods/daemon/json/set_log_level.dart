@@ -13,7 +13,7 @@ class DaemonRequestSetLogLevel
   @override
   Map<String, dynamic> get params => {"level": level};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonBaseResponse onResonse(Map<String, dynamic> result) {

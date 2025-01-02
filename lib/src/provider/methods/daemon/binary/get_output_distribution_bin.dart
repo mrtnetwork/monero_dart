@@ -32,7 +32,7 @@ class DaemonRequestGetOutputDistributionBin extends MoneroDaemonRequestParam<
         "compress": compress,
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.binary;
+  DemonRequestType get encodingType => DemonRequestType.binary;
   @override
   OutputDistributionResponse onResonse(Map<String, dynamic> result) {
     return OutputDistributionResponse.fromJson(result);

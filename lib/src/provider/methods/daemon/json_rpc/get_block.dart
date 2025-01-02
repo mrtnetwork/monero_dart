@@ -29,7 +29,7 @@ class DaemonRequestGetBlock extends MoneroDaemonRequestParam<
         "fill_pow_hash": fillPowHash
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonGetBlockResponse onResonse(Map<String, dynamic> result) {

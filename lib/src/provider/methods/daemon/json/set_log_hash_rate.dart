@@ -13,7 +13,7 @@ class DaemonRequestSetLogHashRate
   @override
   Map<String, dynamic> get params => {"visible": visible};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonBaseResponse onResonse(Map<String, dynamic> result) {

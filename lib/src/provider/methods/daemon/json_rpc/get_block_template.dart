@@ -18,10 +18,10 @@ class DaemonRequestOnGetBlockTemplate extends MoneroDaemonRequestParam<
   @override
   String get method => "get_block_template";
   @override
-  Object get params =>
+  Map<String, dynamic> get params =>
       {"wallet_address": walletAddress, "reserve_size": reserveSize};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonOnGetBlockTemplateResponse onResonse(Map<String, dynamic> result) {
     return DaemonOnGetBlockTemplateResponse.fromJson(result);

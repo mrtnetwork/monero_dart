@@ -12,7 +12,7 @@ class DaemonRequestGetConnections extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonGetConnectionsResponse onResonse(Map<String, dynamic> result) {

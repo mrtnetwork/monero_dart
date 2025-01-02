@@ -24,5 +24,5 @@ class DaemonRequestCalcPow extends MoneroDaemonRequestParam<String, String> {
         "seed_hash": seedHash
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 }

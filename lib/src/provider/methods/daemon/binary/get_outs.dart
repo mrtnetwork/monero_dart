@@ -25,7 +25,7 @@ class DaemonRequestGetOuts
         "get_txid ": getTxId
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.binary;
+  DemonRequestType get encodingType => DemonRequestType.binary;
 
   @override
   GetOutResponse onResonse(Map<String, dynamic> result) {

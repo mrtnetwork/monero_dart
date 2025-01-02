@@ -31,7 +31,7 @@ class DaemonRequestGetTransactions
         "split": split
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   List<TxResponse> onResonse(Map<String, dynamic> result) {

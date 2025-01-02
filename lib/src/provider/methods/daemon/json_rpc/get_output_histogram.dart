@@ -29,7 +29,7 @@ class DaemonRequestGetOutputHistogram extends MoneroDaemonRequestParam<
         "recent_cutoff": recentCutoff.toString()
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonGetOutputHistogramResponse onResonse(Map<String, dynamic> result) {

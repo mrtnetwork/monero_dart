@@ -1,7 +1,6 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/crypto.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/network/config.dart';
 
 class MoneroTxVersion {
   final String name;
@@ -76,7 +75,7 @@ class MoneroTxProof {
   }
 
   String toBase58() {
-    String result = MoneroNetworkConst.proofOutV2Prefix;
+    String result = version.name;
     for (int i = 0; i < signatures.length; i++) {
       result += Base58XmrEncoder.encode(sharedSecret[i].key);
       result += Base58XmrEncoder.encode(signatures[i].toBytes());

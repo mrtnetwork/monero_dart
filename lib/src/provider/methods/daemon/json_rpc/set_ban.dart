@@ -14,7 +14,7 @@ class DaemonRequestSetBans
   Map<String, dynamic> get params =>
       {"bans": bans.map((e) => e.toJson()).toList()};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonBaseResponse onResonse(Map<String, dynamic> result) {

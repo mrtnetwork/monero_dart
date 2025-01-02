@@ -12,7 +12,7 @@ class DaemonRequestGetFeeEstimate extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {"graceBlocks": graceBlocks.toString()};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonGetEstimateFeeResponse onResonse(Map<String, dynamic> result) {

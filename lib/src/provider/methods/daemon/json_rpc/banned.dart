@@ -12,7 +12,7 @@ class DaemonRequestBanned extends MoneroDaemonRequestParam<DaemonBannedResponse,
   @override
   Map<String, dynamic> get params => {"address": address};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonBannedResponse onResonse(Map<String, dynamic> result) {

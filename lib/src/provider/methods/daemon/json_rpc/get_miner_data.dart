@@ -11,7 +11,7 @@ class DaemonRequestGetMinerData extends MoneroDaemonRequestParam<
   String get method => "get_miner_data";
 
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonGetMinerDataResponse onResonse(Map<String, dynamic> result) {
     return DaemonGetMinerDataResponse.fromJson(result);

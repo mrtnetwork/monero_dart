@@ -1,12 +1,15 @@
+import 'package:blockchain_utils/service/service.dart';
 import 'package:blockchain_utils/utils/string/string.dart';
-import 'package:monero_dart/src/provider/utils/utils.dart';
 import 'package:monero_dart/src/serialization/storage_format/types/entry.dart';
 
 enum DemonRequestType { json, jsonRPC, binary }
 
-abstract class MoneroRPCMethodParams<RESULT, RESPONSE> {
+/// monero daemon request
+abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
+    extends BaseServiceRequest<RESULT, RESPONSE, MoneroRequestDetails> {
+  const MoneroDaemonRequestParam();
+
   abstract final String method;
-  const MoneroRPCMethodParams();
 
   /// request params.
   Object get params => {};
@@ -17,45 +20,28 @@ abstract class MoneroRPCMethodParams<RESULT, RESPONSE> {
       };
 
   /// type of request
-  DemonRequestType get requestType => DemonRequestType.json;
-
-  /// convert request params, method and etc for service provider.
-  MoneroRequestDetails toRequest(int id);
-
-  /// convert response to specify object.
-  /// should be overwrite in each request methods.
-  RESULT onResonse(RESPONSE result) {
-    return result as RESULT;
-  }
-}
-
-/// monero daemon request
-abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
-    extends MoneroRPCMethodParams<RESULT, RESPONSE> {
-  const MoneroDaemonRequestParam();
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
-  MoneroRequestDetails toRequest(int id) {
-    final p = params;
-    Object? body;
-    if (requestType == DemonRequestType.binary) {
-      if (p is Map && p.isNotEmpty) {
-        final storage = MoneroStorage.fromJson(p.cast());
-        body = storage.serialize();
-      }
-    } else if (requestType == DemonRequestType.json) {
-      body = StringUtils.fromJson(params);
-    } else {
-      body =
-          ProviderUtils.buildRpcRequest(params: params, method: method, id: id);
-    }
+  RequestServiceType get requestType => RequestServiceType.post;
 
+  @override
+  MoneroRequestDetails buildRequest(int requestID) {
+    // final p = params;
+    final body = switch (encodingType) {
+      DemonRequestType.binary ||
+      DemonRequestType.json =>
+        (params as Map<String, dynamic>),
+      DemonRequestType.jsonRPC => ServiceProviderUtils.buildJsonRPCParams(
+          params: params, method: method, requestId: requestID)
+    };
     return MoneroRequestDetails(
-        id: id,
+        requestID: requestID,
         method: method,
         headers: headers,
-        body: body,
-        requestType: requestType,
+        jsonBody: body,
+        requestType: encodingType,
+        type: requestType,
         api: MoneroRequestApiType.daemon);
   }
 }
@@ -64,18 +50,18 @@ abstract class MoneroWalletRequestParam<RESULT, RESPONSE>
     extends MoneroDaemonRequestParam<RESULT, RESPONSE> {
   const MoneroWalletRequestParam();
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
-  MoneroRequestDetails toRequest(int id) {
-    final body =
-        ProviderUtils.buildRpcRequest(params: params, method: method, id: id);
+  MoneroRequestDetails buildRequest(int requestID) {
     return MoneroRequestDetails(
-        id: id,
+        requestID: requestID,
         method: method,
         headers: headers,
-        body: body,
-        requestType: requestType,
+        jsonBody: ServiceProviderUtils.buildJsonRPCParams(
+            params: params, method: method, requestId: requestID),
+        requestType: encodingType,
+        type: requestType,
         api: MoneroRequestApiType.wallet);
   }
 }
@@ -85,41 +71,62 @@ enum MoneroRequestApiType { daemon, wallet }
 
 /// the data of request can be build to request in provider
 /// like method, params and headers
-class MoneroRequestDetails {
+class MoneroRequestDetails extends BaseServiceRequestParams {
   const MoneroRequestDetails({
-    required this.id,
+    required super.requestID,
     required this.method,
     required this.requestType,
-    this.headers = const {},
-    this.body,
+    required super.headers,
+    super.type = RequestServiceType.post,
+    required this.jsonBody,
     required this.api,
   });
 
   /// api of request
   final MoneroRequestApiType api;
 
-  /// request id
-  final int id;
-
   /// request method
   final String method;
 
-  /// the header of request.
-  final Map<String, String> headers;
+  @override
+  List<int>? body() {
+    switch (requestType) {
+      case DemonRequestType.json:
+      case DemonRequestType.jsonRPC:
+        return StringUtils.encode(StringUtils.fromJson(jsonBody));
+      case DemonRequestType.binary:
+        if (jsonBody.isNotEmpty) {
+          final storage = MoneroStorage.fromJson(jsonBody);
+          return storage.serialize();
+        }
+    }
+    return null;
+  }
 
-  /// body of request
-  final Object? body;
+  final Map<String, dynamic> jsonBody;
 
   final DemonRequestType requestType;
 
-  Uri toUrl(String baseUrl) {
+  @override
+  Uri toUri(String uri) {
     if (requestType == DemonRequestType.binary) {
-      return Uri.parse(baseUrl).replace(path: method);
+      return Uri.parse(uri).replace(path: method);
     }
     if (requestType == DemonRequestType.json) {
-      return Uri.parse(baseUrl).replace(path: method);
+      return Uri.parse(uri).replace(path: method);
     } else {
-      return Uri.parse(baseUrl).replace(path: "json_rpc");
+      return Uri.parse(uri).replace(path: "json_rpc");
     }
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      "id": requestID,
+      "type": type.name,
+      "body": jsonBody,
+      "api": api.name,
+      "request_type": requestType.name
+    };
   }
 }

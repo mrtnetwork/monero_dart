@@ -13,7 +13,7 @@ class DaemonRequestRelayTx
   @override
   Map<String, dynamic> get params => {"txids": txids};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonBaseResponse onResonse(Map<String, dynamic> result) {

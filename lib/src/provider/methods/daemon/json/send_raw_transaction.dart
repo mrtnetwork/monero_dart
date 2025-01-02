@@ -23,7 +23,7 @@ class DaemonRequestSendRawTransaction extends MoneroDaemonRequestParam<
         "do_sanity_checks": doSanityChecks
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonSendRawTxResponse onResonse(Map<String, dynamic> result) {

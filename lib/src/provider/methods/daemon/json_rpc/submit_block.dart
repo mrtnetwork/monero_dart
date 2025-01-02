@@ -17,5 +17,5 @@ class DaemonRequestSubmitBlock
   @override
   List<String> get params => blockBlobData;
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 }

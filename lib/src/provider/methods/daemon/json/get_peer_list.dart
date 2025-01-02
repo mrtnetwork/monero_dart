@@ -16,7 +16,7 @@ class DaemonRequestGetPeerList extends MoneroDaemonRequestParam<
   Map<String, dynamic> get params =>
       {"public_only": publicOnly, "include_blocked": includeBlock};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonGetPeerListResponse onResonse(Map<String, dynamic> result) {

@@ -30,7 +30,7 @@ class DaemonRequestGetBlockHeaderByRange extends MoneroDaemonRequestParam<
         "end_height": endHeight.toString()
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonBlockHeadersByRangeResponse onResonse(Map<String, dynamic> result) {
     return DaemonBlockHeadersByRangeResponse.fromJson(result);

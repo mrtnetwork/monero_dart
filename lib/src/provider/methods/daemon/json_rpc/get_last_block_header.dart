@@ -14,7 +14,7 @@ class DaemonRequestGetLastBlockHeader extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {"fill_pow_hash": fillPowHash};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonGetLastBlockHeaderResponse onResonse(Map<String, dynamic> result) {
     return DaemonGetLastBlockHeaderResponse.fromJson(result);

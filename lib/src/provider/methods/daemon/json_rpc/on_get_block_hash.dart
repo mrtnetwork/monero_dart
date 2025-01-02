@@ -12,5 +12,5 @@ class DaemonRequestOnGetBlockHash
   @override
   Object get params => [blockHeight];
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 }

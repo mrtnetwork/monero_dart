@@ -10,5 +10,5 @@ class DaemonRequestGetTxPoolBackLog extends MoneroDaemonRequestParam<
   String get method => "get_txpool_backlog";
 
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 }

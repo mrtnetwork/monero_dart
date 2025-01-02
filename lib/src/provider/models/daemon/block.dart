@@ -22,6 +22,10 @@ class DaemonTxBlobEntryResponse {
   MoneroTransaction toTx() {
     return MoneroTransaction.deserialize(BytesUtils.fromHexString(blob));
   }
+
+  Map<String, dynamic> toJson() {
+    return {"blob": blob, "prunable_hash": prunableHash};
+  }
 }
 
 class DaemonBlockCompleteEntryResponse {
@@ -29,6 +33,7 @@ class DaemonBlockCompleteEntryResponse {
   final String block;
   final BigInt blockWeight;
   final List<DaemonTxBlobEntryResponse> txs;
+
   DaemonBlockCompleteEntryResponse(
       {required this.pruned,
       required this.block,
@@ -55,6 +60,15 @@ class DaemonBlockCompleteEntryResponse {
 
   MoneroBlock toBlock() {
     return MoneroBlock.deserialize(BytesUtils.fromHexString(block));
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "pruned": pruned,
+      "block": block,
+      "blockWeight": blockWeight.toString(),
+      "txs": txs.map((e) => e.toJson()).toList()
+    };
   }
 }
 

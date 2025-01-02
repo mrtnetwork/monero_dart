@@ -12,7 +12,7 @@ class DaemonRequestMiningStatus extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonMininStatusResponse onResonse(Map<String, dynamic> result) {

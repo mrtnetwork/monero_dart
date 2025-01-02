@@ -225,10 +225,10 @@ class WalletRPCGenerateFromKeysResponse {
 
 class WalletRPCGetAccountTagsResponse {
   /// Filter tag.
-  final String tag;
+  final String? tag;
 
   /// Label for the tag.
-  final String label;
+  final String? label;
 
   ///  List of tagged account indices.
   final List<int> accounts;
@@ -236,8 +236,10 @@ class WalletRPCGetAccountTagsResponse {
   WalletRPCGetAccountTagsResponse.fromJson(Map<String, dynamic> json)
       : tag = json["tag"],
         label = json["label"],
-        accounts =
-            (json["accounts"] as List).map((e) => IntUtils.parse(e)).toList();
+        accounts = (json["accounts"] as List?)
+                ?.map((e) => IntUtils.parse(e))
+                .toList() ??
+            [];
 }
 
 class WalletRPCSubAddressAcountResponse {

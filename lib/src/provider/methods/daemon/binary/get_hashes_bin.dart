@@ -27,7 +27,7 @@ class DaemonRequestGetHashesBin extends MoneroDaemonRequestParam<
         "start_height": startHeight,
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.binary;
+  DemonRequestType get encodingType => DemonRequestType.binary;
   @override
   DaemonGetHashesBinResponse onResonse(Map<String, dynamic> result) {
     return DaemonGetHashesBinResponse.fromBinaryResponse(result);

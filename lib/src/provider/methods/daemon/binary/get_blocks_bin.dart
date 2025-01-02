@@ -39,7 +39,7 @@ class DaemonRequestGetBlocksBin extends MoneroDaemonRequestParam<
         "pool_info_since": poolInfoSince ?? BigInt.zero
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.binary;
+  DemonRequestType get encodingType => DemonRequestType.binary;
   @override
   DaemonGetBlockBinResponse onResonse(Map<String, dynamic> result) {
     return DaemonGetBlockBinResponse.fromJson(result);

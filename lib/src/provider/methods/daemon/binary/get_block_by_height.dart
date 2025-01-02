@@ -14,7 +14,7 @@ class DaemonRequestGetBlocksByHeightBin extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {"heights": heights};
   @override
-  DemonRequestType get requestType => DemonRequestType.binary;
+  DemonRequestType get encodingType => DemonRequestType.binary;
   @override
   DaemonGetBlocksByHeightResponse onResonse(Map<String, dynamic> result) {
     return DaemonGetBlocksByHeightResponse.fromJson(result);

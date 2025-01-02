@@ -12,7 +12,7 @@ class DaemonRequestGetTransactionPoolHashesBin
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   GetOutResponse onResonse(Map<String, dynamic> result) {

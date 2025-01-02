@@ -15,7 +15,7 @@ class DaemonRequestOutPeers extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {"out_peers": outPeers, "set": set};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonOutPeersResponse onResonse(Map<String, dynamic> result) {

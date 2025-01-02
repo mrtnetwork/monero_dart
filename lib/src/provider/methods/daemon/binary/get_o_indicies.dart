@@ -18,7 +18,7 @@ class DaemonRequestGetOIndexes extends MoneroDaemonRequestParam<
         "txid": MoneroStorageBinary.fromListOfHex([txId])
       };
   @override
-  DemonRequestType get requestType => DemonRequestType.binary;
+  DemonRequestType get encodingType => DemonRequestType.binary;
 
   @override
   DaemonGetTxGlobalOutputIndexesResponse onResonse(

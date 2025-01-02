@@ -11,7 +11,7 @@ class DaemonRequestSyncInfo extends MoneroDaemonRequestParam<
   String get method => "sync_info";
 
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonSyncInfoResponse onResonse(Map<String, dynamic> result) {

@@ -18,7 +18,7 @@ class DaemonRequestGetCoinbaseTxSum extends MoneroDaemonRequestParam<
   Map<String, dynamic> get params =>
       {"height": height.toString(), "count": count.toString()};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 
   @override
   DaemonCoinbaseTxSumResponse onResonse(Map<String, dynamic> result) {

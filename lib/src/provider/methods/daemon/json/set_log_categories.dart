@@ -14,7 +14,7 @@ class DaemonRequestSetLogCategories extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {"categories": categories};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonSetLogCategoriesResponse onResonse(Map<String, dynamic> result) {

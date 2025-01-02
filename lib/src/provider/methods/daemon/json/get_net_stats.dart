@@ -11,7 +11,7 @@ class DaemonRequestGetNetStats extends MoneroDaemonRequestParam<
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonGetNetStatsResponse onResonse(Map<String, dynamic> result) {

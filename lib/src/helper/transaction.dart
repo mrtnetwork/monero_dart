@@ -249,11 +249,11 @@ class MoneroTransactionHelper {
   static MoneroTxProof generateInProof({
     required MoneroTransaction transaction,
     required MoneroAccount account,
-    required String message,
+    String? message,
     required MoneroAccountIndex index,
   }) {
     final List<int> prefixHash =
-        _hashProofMessage(message: message, transaction: transaction);
+        _hashProofMessage(message: message ?? '', transaction: transaction);
     final address =
         MoneroAddress(account.subaddress(index.minor, majorIndex: index.major));
     final txPubKey = transaction.txPublicKey;
@@ -298,10 +298,8 @@ class MoneroTransactionHelper {
     throw const DartMoneroPluginException("No funds received in this tx.");
   }
 
-  static RctKey _hashProofMessage({
-    required MoneroTransaction transaction,
-    required String message,
-  }) {
+  static RctKey _hashProofMessage(
+      {required MoneroTransaction transaction, required String message}) {
     final messageBytes = StringUtils.toBytes(message);
     return QuickCrypto.keccack256Hash([
       ...BytesUtils.fromHexString(transaction.getTxHash()),
@@ -355,7 +353,7 @@ class MoneroTransactionHelper {
   static BigInt? checkProof(
       {required MoneroTransaction transaction,
       required String proofStr,
-      required String message,
+      String? message,
       required MoneroAddress address}) {
     final txPubKey = transaction.txPublicKey;
     final additional = transaction.additionalPubKeys;
@@ -365,7 +363,7 @@ class MoneroTransactionHelper {
           "Miss matching length of proof and tx pub keys.");
     }
     final prefixHash =
-        _hashProofMessage(transaction: transaction, message: message);
+        _hashProofMessage(transaction: transaction, message: message ?? '');
     bool verify = false;
     for (int i = 0; i < proof.signatures.length; i++) {
       final sharedSecret = proof.sharedSecret[i];

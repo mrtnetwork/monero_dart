@@ -52,7 +52,7 @@ Transfer
 
   /// Set up the Monero provider with an HTTP provider for Stagenet daemon.
   final provider = MoneroProvider(
-      MoneroHTTPProvider(daemoUrl: "http://stagenet.community.rino.io:38081"));
+      MoneroHTTPProvider(daemoUrl: RPC_URL));
 
   /// Create an instance of the [MoneroApi] using the configured provider.
   final api = MoneroApi(provider);
@@ -125,7 +125,7 @@ Transfer
   /// Generate an integrated address, using a specified
   /// payment ID (represented by a 8-byte payment ID).
   final integratedAddress =
-      myAccount.integratedAddress(paymentId: 8 /* 8 bytes payment ID */);
+      myAccount.integratedAddress(paymentId: /* 8 bytes payment ID */);
 
 ```
 
@@ -139,12 +139,14 @@ All RPC methods are available [here](https://github.com/mrtnetwork/monero_dart/t
 /// to handle communication with Monero services via HTTP.
 class MoneroHTTPProvider implements MoneroServiceProvider {
   @override
-  Future<MoneroServiceResponse> post(MoneroRequestDetails params,
+  Future<MoneroServiceResponse<T>> doRequest<T>(MoneroRequestDetails params,
       {Duration? timeout}) async {
-    /// Send the HTTP request to the network and return the response.
-    /// The response contains the status code and the response body in bytes.
-    return MoneroServiceResponse(
-        status: response.statusCode, responseBytes: response.bodyBytes);
+    final url = params.toUri(
+        params.api == MoneroRequestApiType.wallet ? walletUrl! : daemoUrl!);
+    final response = await client
+        .post(url, headers: params.headers, body: params.body())
+        .timeout(timeout ?? defaultRequestTimeout);
+    return params.toResponse(response.body, response.statusCode);
   }
 }
 

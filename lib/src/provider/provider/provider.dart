@@ -4,7 +4,7 @@ import 'package:monero_dart/src/provider/service/service.dart';
 import 'package:monero_dart/src/serialization/storage_format/tools/serializer.dart';
 
 /// Facilitates communication with the monero deamon or wallet api by making requests using a provided [MoneroProvider].
-class MoneroProvider {
+class MoneroProvider extends BaseProvider<MoneroRequestDetails> {
   /// The underlying deamon service provider used for network communication.
   final MoneroServiceProvider rpc;
 
@@ -13,90 +13,77 @@ class MoneroProvider {
 
   int _id = 0;
 
-  static dynamic _parseResponse(
+  static SERVICERESPONSE _findError<SERVICERESPONSE>(
       {required MoneroServiceResponse response,
-      required MoneroRequestDetails request}) {
-    String body = "Daemon request failed with status code ${response.status}";
-    if (response.responseBytes.isNotEmpty) {
-      final encode = StringUtils.tryDecode(response.responseBytes);
-      body = encode ?? body;
+      required MoneroRequestDetails params}) {
+    switch (params.requestType) {
+      case DemonRequestType.json:
+      case DemonRequestType.jsonRPC:
+        final data = response
+            .cast<BaseServiceResponse<Map<String, dynamic>>>()
+            .getResult(params);
+        if (params.requestType == DemonRequestType.json) {
+          return ServiceProviderUtils.parseResponse(
+              object: data, params: params);
+        }
+        final error =
+            StringUtils.tryToJson<Map<String, dynamic>>(data["error"]);
+        if (error != null) {
+          throw RPCError(
+              message: error["message"]?.toString() ?? '',
+              errorCode: IntUtils.tryParse(error["code"]),
+              details: error);
+        }
+        return ServiceProviderUtils.parseResponse(
+            object: data["result"], params: params);
+      case DemonRequestType.binary:
+        final data =
+            response.cast<BaseServiceResponse<List<int>>>().getResult(params);
+        final jsonData = MoneroStorageSerializer.deserialize(data);
+        return ServiceProviderUtils.parseResponse(
+            object: jsonData, params: params);
     }
-    if (!response.isSuccess) {
-      throw RPCError(
-          message: body, errorCode: null, details: StringUtils.tryToJson(body));
-    }
+  }
 
-    if (request.requestType == DemonRequestType.binary) {
-      try {
-        return MoneroStorageSerializer.deserialize(response.responseBytes);
-      } catch (e) {
-        throw RPCError(
-            message: "Monero storage deserialization failed.",
-            errorCode: null,
-            details: {"error": e.toString(), "method": request.method});
-      }
-    }
-    final Map<String, dynamic>? bodyJson = StringUtils.tryToJson(body);
-    if (bodyJson == null) {
-      throw RPCError(
-          message: "response convertion to json failed.",
-          errorCode: null,
-          details: {"method": request.method});
-    }
-    if (request.requestType == DemonRequestType.jsonRPC) {
-      final error = bodyJson["error"];
-      if (error != null) {
-        throw RPCError(
-            message: error["message"] ?? body,
-            errorCode: int.tryParse(error["code"]?.toString() ?? ""),
-            details: error is Map ? Map<String, dynamic>.from(error) : null);
-      }
-      return bodyJson["result"];
-    }
-
-    return bodyJson;
+  /// Sends a request to the monero using the specified [request] parameter.
+  ///
+  /// The [timeout] parameter, if provided, sets the maximum duration for the request.
+  @override
+  Future<RESULT> request<RESULT, SERVICERESPONSE>(
+      BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request,
+      {Duration? timeout}) async {
+    final r = await requestDynamic(request, timeout: timeout);
+    return request.onResonse(r);
   }
 
   /// Sends a request to the monero network using the specified [request] parameter.
   ///
   /// The [timeout] parameter, if provided, sets the maximum duration for the request.
   /// Whatever is received will be returned
-  Future<dynamic> requestDynamic(
-    MoneroDaemonRequestParam request, {
-    Duration? timeout,
-
-    /// if false the [MoneroServiceResponse] returned.
-    bool parseResponse = true,
-  }) async {
-    final id = ++_id;
-    final params = request.toRequest(id);
-    final data = await rpc.post(params, timeout: timeout);
-    if (!parseResponse) return data;
-    return _parseResponse(response: data, request: params);
+  @override
+  Future<SERVICERESPONSE> requestDynamic<RESULT, SERVICERESPONSE>(
+      BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request,
+      {Duration? timeout}) async {
+    final params = request.buildRequest(_id++);
+    final response = switch (params.requestType) {
+      DemonRequestType.json ||
+      DemonRequestType.jsonRPC =>
+        await rpc.doRequest<Map<String, dynamic>>(params, timeout: timeout),
+      DemonRequestType.binary =>
+        await rpc.doRequest<List<int>>(params, timeout: timeout)
+    };
+    return _findError(response: response, params: params);
   }
 
   /// Sends a request to the monero network using the specified [request] parameter.
   ///
   /// The [timeout] parameter, if provided, sets the maximum duration for the request.
-  Future<T> request<T, E>(MoneroDaemonRequestParam<T, E> request,
+  /// response binary data will be returned
+  Future<List<int>> requestBinary<RESULT, SERVICERESPONSE>(
+      BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request,
       {Duration? timeout}) async {
-    final data = await requestDynamic(request, timeout: timeout);
-    if (data is Map && data.containsKey("status")) {
-      if (data["status"] != "OK") {
-        throw RPCError(
-            message: data["status"],
-            errorCode: null,
-            details: Map<String, dynamic>.from(data));
-      }
-    }
-    final Object result;
-    if (E == List<Map<String, dynamic>>) {
-      result = (data as List)
-          .map((e) => (e as Map).cast<String, dynamic>())
-          .toList();
-    } else {
-      result = data;
-    }
-    return request.onResonse(result as E);
+    final params = request.buildRequest(_id++);
+    final response = await rpc.doRequest<List<int>>(params, timeout: timeout);
+    return response.getResult(params);
   }
 }

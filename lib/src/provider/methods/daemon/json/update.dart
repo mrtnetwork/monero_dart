@@ -13,7 +13,7 @@ class DaemonRequestUpdate extends MoneroDaemonRequestParam<DaemonUpdateResponse,
   @override
   Map<String, dynamic> get params => {"command": command, "path": path};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonUpdateResponse onResonse(Map<String, dynamic> result) {

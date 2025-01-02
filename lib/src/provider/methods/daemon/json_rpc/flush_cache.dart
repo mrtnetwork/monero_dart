@@ -16,7 +16,7 @@ class DaemonRequestFlushCache
   Map<String, dynamic> get params =>
       {"bad_txs": badTxs, "bad_blocks": badBlocks};
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   DaemonBaseResponse onResonse(Map<String, dynamic> result) {
     return DaemonBaseResponse.fromJson(result);

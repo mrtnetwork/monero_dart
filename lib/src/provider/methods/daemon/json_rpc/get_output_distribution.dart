@@ -40,7 +40,7 @@ class DaemonRequestGetOutputDistribution extends MoneroDaemonRequestParam<
   }
 
   @override
-  DemonRequestType get requestType => DemonRequestType.jsonRPC;
+  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override
   OutputDistributionResponse onResonse(Map<String, dynamic> result) {
     return OutputDistributionResponse.fromJson(result);

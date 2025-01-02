@@ -18,7 +18,7 @@ class DaemonRequestSetLimit extends MoneroDaemonRequestParam<
   Map<String, dynamic> get params =>
       {"limit_up": limitUp.toString(), "limit_down": limitDown.toString()};
   @override
-  DemonRequestType get requestType => DemonRequestType.json;
+  DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
   DaemonLimitResponse onResonse(Map<String, dynamic> result) {
