@@ -157,6 +157,21 @@ class MoneroCrypto {
   }
 
   /// Generates a key image from a public key and private key.
+  static List<int> generateKeyImageBytes(
+      {required List<int> pubkey,
+      required List<int> secretKey,
+      RctKey? resultKey}) {
+    final GroupElementP3 point = GroupElementP3();
+    final GroupElementP2 point2 = GroupElementP2();
+    hashToEcPoint(pubkey, point);
+    CryptoOps.geScalarMult(point2, secretKey, point);
+    resultKey ??= RCT.zero();
+    resultKey.as32Bytes("generateKeyImage");
+    CryptoOps.geToBytes(resultKey, point2);
+    return resultKey;
+  }
+
+  /// Generates a key image from a public key and private key.
   static List<int> generateKeyImage(
       {required MoneroPublicKey pubkey,
       required MoneroPrivateKey secretKey,

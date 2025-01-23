@@ -1,3 +1,3 @@
-library monero_address;
+library;
 
 export 'address/address.dart';

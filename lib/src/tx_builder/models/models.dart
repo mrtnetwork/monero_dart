@@ -241,8 +241,8 @@ class TxDestinationInfo {
     RctKey txPubKey;
 
     if (singleDestionation != null) {
-      txPubKey = RCT.scalarmultKey_(
-          singleDestionation!.pubSpendKey.key, txSecretKey.key);
+      txPubKey =
+          RCT.scalarmultKey_(singleDestionation!.pubSpendKey, txSecretKey.key);
     } else {
       txPubKey = RCT.scalarmultBase_(txSecretKey.key);
     }

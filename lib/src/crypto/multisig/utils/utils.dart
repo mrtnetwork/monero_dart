@@ -22,27 +22,35 @@ class MoneroMultisigUtils {
   }
 
   static MultisigKLRKI getMultisigKLRki({
-    required MoneroPublicKey outPybKey,
-    required MoneroPrivateKey secretKey,
+    required List<int> outPybKey,
+    required List<int> secretKey,
     required RctKey keyImage,
   }) {
     final l = RCT.zero();
     final r = generateMultisigLr(
         pubKey: outPybKey, secretKey: secretKey, resultKeyL: l);
-    return MultisigKLRKI(k: secretKey.key, L: l, R: r, ki: keyImage);
+    return MultisigKLRKI(k: secretKey, L: l, R: r, ki: keyImage);
   }
 
   static RctKey generateMultisigLr(
-      {required MoneroPublicKey pubKey,
-      required MoneroPrivateKey secretKey,
+      {required List<int> pubKey,
+      required List<int> secretKey,
       RctKey? resultKeyL,
       RctKey? resultKeyR}) {
     resultKeyL ??= RCT.zero();
     resultKeyR ??= RCT.zero();
-    RCT.scalarmultBase(resultKeyL, secretKey.key);
-    MoneroCrypto.generateKeyImage(
+    RCT.scalarmultBase(resultKeyL, secretKey);
+    MoneroCrypto.generateKeyImageBytes(
         pubkey: pubKey, secretKey: secretKey, resultKey: resultKeyR);
     return resultKeyR;
+  }
+
+  static RctKey generateMultisigKeyImageBytes(
+      {required List<int> outputPubKey,
+      required List<int> multisigKey,
+      RctKey? resultKey}) {
+    return MoneroCrypto.generateKeyImageBytes(
+        pubkey: outputPubKey, secretKey: multisigKey, resultKey: resultKey);
   }
 
   static RctKey generateMultisigKeyImage(
@@ -70,13 +78,13 @@ class MoneroMultisigUtils {
   }
 
   static MultisigKLRKI getMultisigCompositeKLRki(
-      {required MoneroPublicKey outPubKey,
+      {required List<int> outPubKey,
       required RctKey keyImage,
       required List<MoneroMultisigOutputInfo> infos,
       required List<RctKey> usedL,
       required List<RctKey> newUsedL,
       required int threshHold}) {
-    final sk = MoneroPrivateKey.fromBytes(RCT.skGen_());
+    final sk = RCT.skGen_().asImmutableBytes;
     final klrki = getMultisigKLRki(
         outPybKey: outPubKey, secretKey: sk, keyImage: keyImage);
     final RctKey L = klrki.L.clone();

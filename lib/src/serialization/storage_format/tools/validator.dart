@@ -26,7 +26,7 @@ class MoneroStorageFormatValidator {
     }
   }
 
-  /// cast object to Map<String,dynamic>, exception if failed.
+  /// cast object to `Map<String,dynamic>`, exception if failed.
   static Map<String, dynamic> asMap(Object? value) {
     try {
       return (value as Map).cast<String, dynamic>();

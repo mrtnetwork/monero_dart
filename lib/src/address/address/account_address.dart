@@ -30,8 +30,8 @@ class MoneroAccountAddress extends MoneroAddress {
       });
     }
     return MoneroAccountAddress._(
-        pubSpendKey: MoneroPublicKey.fromBytes(decode.publicSpendKey),
-        pubViewKey: MoneroPublicKey.fromBytes(decode.publicViewKey),
+        pubSpendKey: decode.publicSpendKey,
+        pubViewKey: decode.publicViewKey,
         address: address,
         network: addrNetwork,
         type: decode.type);
@@ -52,8 +52,8 @@ class MoneroAccountAddress extends MoneroAddress {
         pubViewKey: pubViewKey,
         netVarBytes: network.findPrefix(type));
     return MoneroAccountAddress._(
-        pubSpendKey: MoneroPublicKey.fromBytes(pubSpendKey),
-        pubViewKey: MoneroPublicKey.fromBytes(pubViewKey),
+        pubSpendKey: pubSpendKey,
+        pubViewKey: pubViewKey,
         address: encode,
         network: network,
         type: type);

@@ -25,8 +25,8 @@ class MoneroIntegratedAddress extends MoneroAddress {
       });
     }
     return MoneroIntegratedAddress._(
-        pubSpendKey: MoneroPublicKey.fromBytes(decode.publicSpendKey),
-        pubViewKey: MoneroPublicKey.fromBytes(decode.publicViewKey),
+        pubSpendKey: decode.publicSpendKey,
+        pubViewKey: decode.publicViewKey,
         address: address,
         network: addrNetwork,
         paymentId: decode.paymentId!);
@@ -38,11 +38,11 @@ class MoneroIntegratedAddress extends MoneroAddress {
       required List<int> paymentId,
       MoneroNetwork network = MoneroNetwork.mainnet}) {
     paymentId = paymentId.asImmutableBytes;
-    final psKey = MoneroPublicKey.fromBytes(pubSpendKey);
-    final pvKey = MoneroPublicKey.fromBytes(pubViewKey);
+    final psKey = pubSpendKey;
+    final pvKey = pubViewKey;
     final encode = XmrAddrEncoder().encode(
-        pubSpendKey: psKey.compressed,
-        pubViewKey: pvKey.compressed,
+        pubSpendKey: psKey,
+        pubViewKey: pvKey,
         paymentId: paymentId,
         netVarBytes: network.findPrefix(XmrAddressType.integrated));
     return MoneroIntegratedAddress._(

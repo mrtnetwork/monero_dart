@@ -179,8 +179,8 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
   MoneroMultisigInfo generateMultisigInfo(MoneroUnlockedOutput out) {
     final List<RctKey> keyImages = [];
     for (final i in multisigPrivateKeys) {
-      final partialKeyImage = MoneroMultisigUtils.generateMultisigKeyImage(
-          outputPubKey: out.outputPublicKey, multisigKey: i);
+      final partialKeyImage = MoneroMultisigUtils.generateMultisigKeyImageBytes(
+          outputPubKey: out.outputPublicKey, multisigKey: i.key);
       keyImages.add(partialKeyImage);
     }
 
@@ -194,7 +194,7 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
       nonces.add(sK);
       final r = MoneroMultisigUtils.getMultisigKLRki(
           outPybKey: out.outputPublicKey,
-          secretKey: sK,
+          secretKey: sK.key,
           keyImage: out.keyImage);
       lr.add(MultisigLR(l: r.L, r: r.R));
     }

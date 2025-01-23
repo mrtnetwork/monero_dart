@@ -232,7 +232,7 @@ class QuickMoneroProvider {
         final int i = base + n;
         if (outKeysRequests[i].index == payment.globalIndex) {
           if (BytesUtils.bytesEqual(
-              outKeysResponse[i].key, payment.output.outputPublicKey.key)) {
+              outKeysResponse[i].key, payment.output.outputPublicKey)) {
             if (BytesUtils.bytesEqual(outKeysResponse[i].mask, mask)) {
               if (outKeysResponse[i].unlocked) {
                 hasRealOut = true;
@@ -247,7 +247,7 @@ class QuickMoneroProvider {
       }
       out.add(OutsEntery(
           index: payment.globalIndex,
-          key: CtKey(dest: payment.output.outputPublicKey.key, mask: mask)));
+          key: CtKey(dest: payment.output.outputPublicKey, mask: mask)));
 
       for (int idx = base;
           idx < base + outputsCount && out.length < fakeOutsLength + 1;

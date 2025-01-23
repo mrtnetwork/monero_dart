@@ -2,7 +2,7 @@ import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Set the daemon log categories. Categories are represented as a comma separated list of
-/// <Category>:<level> (similarly to syslog standard <Facility>:<Severity-level>
+/// `<Category>:<level>` (similarly to syslog standard `<Facility>:<Severity-level>`
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#set_log_categories
 class DaemonRequestSetLogCategories extends MoneroDaemonRequestParam<
     DaemonSetLogCategoriesResponse, Map<String, dynamic>> {

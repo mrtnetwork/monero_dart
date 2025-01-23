@@ -14,7 +14,7 @@ class _MonerTxBuilderConst {
     if (additionalSecretKey != null) {
       if (address.isSubaddress) {
         additionalTxPubKey = RCT.scalarmultKeyFast_(
-            address.pubSpendKey.compressed, additionalSecretKey.key);
+            address.pubSpendKey, additionalSecretKey.key);
       } else {
         additionalTxPubKey = RCT.scalarmultBaseFast_(additionalSecretKey.key);
       }
@@ -26,17 +26,16 @@ class _MonerTxBuilderConst {
     } else {
       if (address.isSubaddress && additionalSecretKey != null) {
         derivation = MoneroCrypto.generateKeyDerivationFast(
-            pubkey: address.pubViewKey, secretKey: additionalSecretKey);
+            pubkey: address.publicViewKey, secretKey: additionalSecretKey);
       } else {
         derivation = MoneroCrypto.generateKeyDerivationFast(
-            pubkey: address.pubViewKey, secretKey: txSecretKey);
+            pubkey: address.publicViewKey, secretKey: txSecretKey);
       }
     }
     final pk = MoneroCrypto.derivePublicKeyFast(
         derivation: derivation,
         outIndex: outIndex,
-        basePublicKey:
-            MoneroPublicKey.fromBytes(address.pubSpendKey.compressed));
+        basePublicKey: MoneroPublicKey.fromBytes(address.pubSpendKey));
     final amountKey = MoneroCrypto.derivationToScalarFast(
         derivation: derivation, outIndex: outIndex);
     TxoutTarget? key;
@@ -243,7 +242,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
         }
         paymentId = MoneroTransactionHelper.encryptPaymentId(
             paymentId: paymentId,
-            pubKey: unknowDsts.first.address.pubViewKey,
+            pubKey: unknowDsts.first.address.publicViewKey,
             secretKey: txKey);
       }
       final extra = TxExtraNonce.encryptedPaymentId(paymentId);

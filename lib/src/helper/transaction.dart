@@ -121,8 +121,8 @@ class MoneroTransactionHelper {
     List<int>? additionalTxPubKey;
     if (additionalSecretKey != null) {
       if (address.isSubaddress) {
-        additionalTxPubKey = RCT.scalarmultKey_(
-            address.pubSpendKey.compressed, additionalSecretKey.key);
+        additionalTxPubKey =
+            RCT.scalarmultKey_(address.pubSpendKey, additionalSecretKey.key);
       } else {
         additionalTxPubKey = RCT.scalarmultBase_(additionalSecretKey.key);
       }
@@ -133,18 +133,17 @@ class MoneroTransactionHelper {
           pubkey: txPublicKey, secretKey: changeAddressViewSecretKey!);
     } else {
       if (address.isSubaddress && additionalSecretKey != null) {
-        derivation = MoneroCrypto.generateKeyDerivation(
-            pubkey: address.pubViewKey, secretKey: additionalSecretKey);
+        derivation = MoneroCrypto.generateKeyDerivationBytes(
+            pubkey: address.pubViewKey, secretKey: additionalSecretKey.key);
       } else {
-        derivation = MoneroCrypto.generateKeyDerivation(
-            pubkey: address.pubViewKey, secretKey: txSecretKey);
+        derivation = MoneroCrypto.generateKeyDerivationBytes(
+            pubkey: address.pubViewKey, secretKey: txSecretKey.key);
       }
     }
     final pk = MoneroCrypto.derivePublicKey(
         derivation: derivation,
         outIndex: outIndex,
-        basePublicKey:
-            MoneroPublicKey.fromBytes(address.pubSpendKey.compressed));
+        basePublicKey: MoneroPublicKey.fromBytes(address.pubSpendKey));
     final amountKey = MoneroCrypto.derivationToScalar(
         derivation: derivation, outIndex: outIndex);
     TxoutTarget? key;
@@ -187,12 +186,12 @@ class MoneroTransactionHelper {
   }) {
     RctKey pubKey = RCT.zero();
     if (receiverAddress.isSubaddress) {
-      RCT.scalarmultKey(pubKey, receiverAddress.pubSpendKey.key, txKey.key);
+      RCT.scalarmultKey(pubKey, receiverAddress.pubSpendKey, txKey.key);
       return MoneroCrypto.generateTxProof(
           hash: hash,
           R: pubKey,
-          A: receiverAddress.pubViewKey.key,
-          B: receiverAddress.pubSpendKey.key,
+          A: receiverAddress.pubViewKey,
+          B: receiverAddress.pubSpendKey,
           d: sharedKey,
           r: txKey.key);
     } else {
@@ -200,7 +199,7 @@ class MoneroTransactionHelper {
       return MoneroCrypto.generateTxProof(
           hash: hash,
           R: pubKey,
-          A: receiverAddress.pubViewKey.key,
+          A: receiverAddress.pubViewKey,
           B: null,
           d: sharedKey,
           r: txKey.key);
@@ -216,15 +215,15 @@ class MoneroTransactionHelper {
     if (senderAddress.isSubaddress) {
       return MoneroCrypto.generateTxProof(
           hash: hash,
-          R: senderAddress.pubViewKey.key,
+          R: senderAddress.pubViewKey,
           A: pubKey,
-          B: senderAddress.pubSpendKey.key,
+          B: senderAddress.pubSpendKey,
           d: sharedKey,
           r: secretKey.key);
     } else {
       return MoneroCrypto.generateTxProof(
           hash: hash,
-          R: senderAddress.pubViewKey.key,
+          R: senderAddress.pubViewKey,
           A: pubKey,
           B: null,
           d: sharedKey,
@@ -318,7 +317,7 @@ class MoneroTransactionHelper {
     final inSigLen = allTxKeys.length;
     final RctKey temp = RCT.zero();
     final List<RctKey> sharedSecret = [];
-    RCT.scalarmultKey(temp, receiverAddress.pubViewKey.key, txKey.key);
+    RCT.scalarmultKey(temp, receiverAddress.pubViewKey, txKey.key);
     sharedSecret.add(temp.clone());
     final List<MECSignature> sigs = [];
     sigs.add(_createProof(
@@ -327,7 +326,7 @@ class MoneroTransactionHelper {
         sharedKey: sharedSecret[0],
         hash: prefixHash));
     for (int i = 1; i < inSigLen; i++) {
-      RCT.scalarmultKey(temp, receiverAddress.pubViewKey.key, allTxKeys[i].key);
+      RCT.scalarmultKey(temp, receiverAddress.pubViewKey, allTxKeys[i].key);
       sharedSecret.add(temp.clone());
       sigs.add(_createProof(
           receiverAddress: receiverAddress,
@@ -422,8 +421,8 @@ class MoneroTransactionHelper {
       return MoneroCrypto.verifyTxProof(
           hash: hash,
           R: txPubKey.key,
-          A: address.pubViewKey.key,
-          B: address.pubSpendKey.key,
+          A: address.pubViewKey,
+          B: address.pubSpendKey,
           d: sharedSecret,
           signature: signature,
           version: version.version);
@@ -431,7 +430,7 @@ class MoneroTransactionHelper {
     return MoneroCrypto.verifyTxProof(
         hash: hash,
         R: txPubKey.key,
-        A: address.pubViewKey.key,
+        A: address.pubViewKey,
         B: null,
         d: sharedSecret,
         signature: signature,
@@ -448,16 +447,16 @@ class MoneroTransactionHelper {
     if (address.isSubaddress) {
       return MoneroCrypto.verifyTxProof(
           hash: hash,
-          R: address.pubViewKey.key,
+          R: address.pubViewKey,
           A: txPubKey.key,
-          B: address.pubSpendKey.key,
+          B: address.pubSpendKey,
           d: sharedSecret,
           signature: signature,
           version: version.version);
     }
     return MoneroCrypto.verifyTxProof(
         hash: hash,
-        R: address.pubViewKey.key,
+        R: address.pubViewKey,
         A: txPubKey.key,
         B: null,
         d: sharedSecret,
@@ -513,7 +512,7 @@ class MoneroTransactionHelper {
               amount: amount.$1,
               mask: amount.$2,
               derivation: derivation,
-              outputPublicKey: outPublicKey,
+              outputPublicKey: outPublicKey.key,
               accountIndex: index,
               unlockTime: tx.unlockTime,
               realIndex: realIndex);
@@ -657,8 +656,9 @@ class MoneroTransactionHelper {
     } else {
       ephemeralPublicKey = ephemeralSecretKey.publicKey;
     }
-    assert(out.outputPublicKey == ephemeralPublicKey, "should be equal.");
-    if (out.outputPublicKey != ephemeralPublicKey) {
+    assert(BytesUtils.bytesEqual(out.outputPublicKey, ephemeralPublicKey.key),
+        "should be equal.");
+    if (!BytesUtils.bytesEqual(out.outputPublicKey, ephemeralPublicKey.key)) {
       return null;
     }
     final keyImage = MoneroCrypto.generateKeyImage(
@@ -709,7 +709,7 @@ class MoneroTransactionHelper {
     if (out.type == MoneroOutputType.locked) {
       return MoneroLockedPayment(
           output: out.cast<MoneroLockedOutput>(),
-          txPubkey: txPubKey,
+          txPubkey: txPubKey.key,
           paymentId: paymentId,
           encryptedPaymentid: encryptedPaymentId,
           globalIndex: globalIndex);
@@ -717,7 +717,7 @@ class MoneroTransactionHelper {
     if (out.type == MoneroOutputType.unlockedMultisig) {
       return MoneroUnlockedMultisigPayment(
           output: out.cast<MoneroUnlockedMultisigOutput>(),
-          txPubkey: txPubKey,
+          txPubkey: txPubKey.key,
           paymentId: paymentId,
           encryptedPaymentid: encryptedPaymentId,
           multisigInfos: multisigInfos!,
@@ -725,7 +725,7 @@ class MoneroTransactionHelper {
     }
     return MoneroUnLockedPayment(
         output: out.cast<MoneroUnlockedOutput>(),
-        txPubkey: txPubKey,
+        txPubkey: txPubKey.key,
         paymentId: paymentId,
         encryptedPaymentid: encryptedPaymentId,
         globalIndex: globalIndex);

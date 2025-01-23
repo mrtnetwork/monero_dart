@@ -8,7 +8,7 @@ mixin MoneroServiceProvider
     implements BaseServiceProvider<MoneroRequestDetails> {
   /// Example
   /// @override
-  /// Future<MoneroServiceResponse<T>> doRequest<T>(MoneroRequestDetails params,
+  /// Future<`MoneroServiceResponse<T>`> doRequest<`T`>(MoneroRequestDetails params,
   ///     {Duration? timeout}) async {
   ///   final url = params.toUri(
   ///       params.api == MoneroRequestApiType.wallet ? walletUrl! : daemoUrl!);

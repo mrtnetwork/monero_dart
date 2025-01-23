@@ -1,3 +1,3 @@
-library monero_dart;
+library;
 
 export 'src/monero_base.dart';

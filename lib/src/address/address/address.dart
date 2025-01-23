@@ -7,11 +7,19 @@ part 'integrated_address.dart';
 part 'account_address.dart';
 
 abstract class MoneroAddress extends MoneroSerialization {
-  /// view public key
-  final MoneroPublicKey pubViewKey;
+  final List<int> _pubViewKey;
+  final List<int> _pubSpendKey;
+  List<int> get pubSpendKey => _pubSpendKey;
+  List<int> get pubViewKey => _pubViewKey;
 
-  /// spend public key
-  final MoneroPublicKey pubSpendKey;
+  /// view public key
+  late final MoneroPublicKey publicViewKey =
+      MoneroPublicKey.fromBytes(_pubViewKey);
+
+  late final MoneroPublicKey publicSpendKey =
+      MoneroPublicKey.fromBytes(_pubSpendKey);
+  // /// spend public key
+  // final MoneroPublicKey pubSpendKey;
 
   /// address
   final String address;
@@ -27,12 +35,14 @@ abstract class MoneroAddress extends MoneroSerialization {
   bool get isStdAddress => type != XmrAddressType.subaddress;
   bool get isIntegratedAddress => type == XmrAddressType.integrated;
 
-  const MoneroAddress._(
-      {required this.pubSpendKey,
-      required this.pubViewKey,
+  MoneroAddress._(
+      {required List<int> pubSpendKey,
+      required List<int> pubViewKey,
       required this.address,
       required this.network,
-      required this.type});
+      required this.type})
+      : _pubViewKey = pubViewKey.asImmutableBytes,
+        _pubSpendKey = pubSpendKey.asImmutableBytes;
 
   factory MoneroAddress.fromStruct(Map<String, dynamic> json) {
     return MoneroAddress(json.as("address"));
@@ -46,8 +56,8 @@ abstract class MoneroAddress extends MoneroSerialization {
         "type": decode.type.toString()
       });
     }
-    final psKey = MoneroPublicKey.fromBytes(decode.publicSpendKey);
-    final pvKey = MoneroPublicKey.fromBytes(decode.publicViewKey);
+    final psKey = decode.publicSpendKey;
+    final pvKey = decode.publicViewKey;
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
       throw DartMoneroPluginException("Invalid address network.", details: {
