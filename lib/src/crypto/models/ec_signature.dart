@@ -13,7 +13,7 @@ class MECSignature extends MoneroSerialization {
   factory MECSignature.fromBytes(List<int> bytes) {
     if (bytes.length != 64) {
       throw DartMoneroPluginException("Invalid EcSignature bytes length.",
-          details: {"excepted": 64, "length": bytes.length});
+          details: {"expected": 64, "length": bytes.length});
     }
     return MECSignature(c: bytes.sublist(0, 32), r: bytes.sublist(32));
   }

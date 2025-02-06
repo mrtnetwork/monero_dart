@@ -9,9 +9,9 @@ void main() async {
   test("hash to point", () {
     for (final i in hashToPoint) {
       final hash = BytesUtils.fromHexString(i["hash"]);
-      final excepted = BytesUtils.fromHexString(i["point"]);
+      final expected = BytesUtils.fromHexString(i["point"]);
       final point = MoneroCrypto.hashToPoint(hash);
-      expect(excepted, point);
+      expect(expected, point);
     }
   });
 }

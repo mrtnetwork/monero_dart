@@ -52,7 +52,7 @@ abstract class MoneroAddress extends MoneroSerialization {
     final decode = XmrAddrDecoder().decode(address);
     if (type != null && decode.type != type) {
       throw DartMoneroPluginException("Invalid address type.", details: {
-        "excepted": type.toString(),
+        "expected": type.toString(),
         "type": decode.type.toString()
       });
     }
@@ -61,7 +61,7 @@ abstract class MoneroAddress extends MoneroSerialization {
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
       throw DartMoneroPluginException("Invalid address network.", details: {
-        "excepted": network.toString(),
+        "expected": network.toString(),
         "type": addrNetwork.toString()
       });
     }
@@ -106,7 +106,7 @@ abstract class MoneroAddress extends MoneroSerialization {
   T cast<T extends MoneroAddress>() {
     if (this is! T) {
       throw DartMoneroPluginException("monero address casting failed.",
-          details: {"excepted": "$T", "type": type.name});
+          details: {"expected": "$T", "type": type.name});
     }
     return this as T;
   }

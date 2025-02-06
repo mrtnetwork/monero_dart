@@ -15,9 +15,9 @@ void main() async {
   test("hash to ec", () {
     for (final i in hashToEcVector) {
       final hash = BytesUtils.fromHexString(i["hash"]);
-      final excepted = BytesUtils.fromHexString(i["point"]);
+      final expected = BytesUtils.fromHexString(i["point"]);
       final point = hashToEc(hash);
-      expect(excepted, point);
+      expect(expected, point);
     }
   });
 }

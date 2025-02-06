@@ -18,14 +18,14 @@ class MoneroAccountAddress extends MoneroAddress {
     }
     if (type != null && decode.type != type) {
       throw DartMoneroPluginException("Invalid address type.", details: {
-        "excepted": type.toString(),
+        "expected": type.toString(),
         "type": decode.type.toString()
       });
     }
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
       throw DartMoneroPluginException("Invalid address network.", details: {
-        "excepted": network.toString(),
+        "expected": network.toString(),
         "type": addrNetwork.toString()
       });
     }

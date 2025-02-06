@@ -87,7 +87,7 @@ abstract class TxoutTarget extends MoneroVariantSerialization {
   T cast<T extends TxoutTarget>() {
     if (this is! T) {
       throw DartMoneroPluginException("TxoutTarget casting failed.",
-          details: {"excepted": "$T", "type": runtimeType.toString()});
+          details: {"expected": "$T", "type": runtimeType.toString()});
     }
     return this as T;
   }

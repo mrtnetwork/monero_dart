@@ -51,7 +51,7 @@ abstract class MoneroTxSignatures extends MoneroSerialization {
   T cast<T extends MoneroTxSignatures>() {
     if (this is! T) {
       throw DartMoneroPluginException("MoneroTxSignatures casting failed.",
-          details: {"excepted": "$T", "type": runtimeType.toString()});
+          details: {"expected": "$T", "type": runtimeType.toString()});
     }
     return this as T;
   }
@@ -346,7 +346,7 @@ abstract class EcdhInfo extends MoneroSerialization {
   T cast<T extends EcdhInfo>() {
     if (this is! T) {
       throw DartMoneroPluginException("EcdhInfo casting failed.",
-          details: {"excepted": "$T", "type": runtimeType.toString()});
+          details: {"expected": "$T", "type": runtimeType.toString()});
     }
     return this as T;
   }
@@ -453,7 +453,7 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
   T cast<T extends RCTSignatureBase>() {
     if (this is! T) {
       throw DartMoneroPluginException("RCTSignatureBase casting failed.",
-          details: {"excepted": "$T", "type": runtimeType.toString()});
+          details: {"expected": "$T", "type": runtimeType.toString()});
     }
     return this as T;
   }

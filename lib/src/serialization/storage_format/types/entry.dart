@@ -105,7 +105,7 @@ abstract class MoneroStorageEntry<T> {
     if (entry is! MoneroStorageEntry<T>) {
       throw MoneroSerializationException(
           "Incorrect MoneroStorageEntry<$T> type",
-          details: {"excepted": "$T", "entery": entry.runtimeType});
+          details: {"expected": "$T", "entery": entry.runtimeType});
     }
     return entry;
   }

@@ -36,7 +36,7 @@ void _generateRingSignature() {
       );
       final signatures = gn.expand((e) => e.c + e.r).toList();
 
-      expect(BytesUtils.toHexString(signatures), i["excepted"]);
+      expect(BytesUtils.toHexString(signatures), i["expected"]);
     }
   });
 }

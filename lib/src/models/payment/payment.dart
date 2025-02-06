@@ -147,7 +147,7 @@ abstract class MoneroOutput extends MoneroVariantSerialization {
   T cast<T extends MoneroOutput>() {
     if (this is! T) {
       throw DartMoneroPluginException("Monero output casting failed.",
-          details: {"excepted": "$T", "type": type.name});
+          details: {"expected": "$T", "type": type.name});
     }
     return this as T;
   }
@@ -449,7 +449,7 @@ abstract class MoneroPayment<T extends MoneroOutput>
     }
     if (payment is! MoneroPayment<T>) {
       throw DartMoneroPluginException("Monero payment casting failed.",
-          details: {"excepted": "$T", "type": type.name});
+          details: {"expected": "$T", "type": type.name});
     }
     return payment;
   }
@@ -484,7 +484,7 @@ abstract class MoneroPayment<T extends MoneroOutput>
   E cast<E extends MoneroPayment>() {
     if (this is! E) {
       throw DartMoneroPluginException("Payment casting failed.",
-          details: {"excepted": "$E", "type": type.name});
+          details: {"expected": "$E", "type": type.name});
     }
     return this as E;
   }

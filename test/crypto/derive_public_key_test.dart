@@ -16,10 +16,10 @@ void _drivePublicKeyFast() {
       final derivation = BytesUtils.fromHexString(i["derivation"]);
       final int outIndex = int.parse(i["output_index"]);
       final base = MoneroPublicKey.fromHex(i["base"]);
-      final excepted = BytesUtils.fromHexString(i["excepted"]);
+      final expected = BytesUtils.fromHexString(i["expected"]);
       final result = MoneroCrypto.derivePublicKeyFast(
           derivation: derivation, outIndex: outIndex, basePublicKey: base);
-      expect(excepted, result.key);
+      expect(expected, result.key);
     }
   });
 }
@@ -30,10 +30,10 @@ void _drivePublicKey() {
       final derivation = BytesUtils.fromHexString(i["derivation"]);
       final int outIndex = int.parse(i["output_index"]);
       final base = MoneroPublicKey.fromHex(i["base"]);
-      final excepted = BytesUtils.fromHexString(i["excepted"]);
+      final expected = BytesUtils.fromHexString(i["expected"]);
       final result = MoneroCrypto.derivePublicKey(
           derivation: derivation, outIndex: outIndex, basePublicKey: base);
-      expect(excepted, result.key);
+      expect(expected, result.key);
     }
   });
 }

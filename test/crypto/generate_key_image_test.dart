@@ -12,10 +12,10 @@ void main() async {
           MoneroPublicKey.fromBytes(BytesUtils.fromHexString(i["publicKey"]));
       final secretKey =
           MoneroPrivateKey.fromBytes(BytesUtils.fromHexString(i["secretKey"]));
-      final excepted = BytesUtils.fromHexString(i["keyImage"]);
+      final expected = BytesUtils.fromHexString(i["keyImage"]);
       final keyImage = MoneroCrypto.generateKeyImage(
           pubkey: publicKey, secretKey: secretKey);
-      expect(excepted, keyImage);
+      expect(expected, keyImage);
     }
   });
 }

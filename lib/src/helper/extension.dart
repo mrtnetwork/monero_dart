@@ -6,7 +6,7 @@ extension IntegerListValidator<T> on List<int> {
     if (length != 32) {
       throw DartMoneroPluginException(
           "$operationName failed. incorrect key 32 length.",
-          details: {"excepted": 32, "length": length});
+          details: {"expected": 32, "length": length});
     }
     return this;
   }
@@ -35,7 +35,7 @@ extension ListValidator<T> on List<T> {
     if (this.length != length) {
       throw DartMoneroPluginException(
           "Incorrect ${name == null ? '' : '$name '}array length.",
-          details: {"excepted": length, "length": this.length});
+          details: {"expected": length, "length": this.length});
     }
     return this;
   }
@@ -64,7 +64,7 @@ extension StringValidator on String {
     if (this.length != length) {
       throw DartMoneroPluginException(
           "Incorrect ${name == null ? '' : '$name '}array length.",
-          details: {"excepted": length, "length": this.length});
+          details: {"expected": length, "length": this.length});
     }
     return this;
   }
@@ -87,7 +87,7 @@ extension QuickMap on Map<String, dynamic> {
     } on TypeError {
       throw DartMoneroPluginException("Incorrect value.", details: {
         "key": key,
-        "excepted": "$T",
+        "expected": "$T",
         "value": value.runtimeType,
         "data": this
       });
@@ -163,7 +163,7 @@ extension QuickMap on Map<String, dynamic> {
     } on TypeError {
       throw DartMoneroPluginException("Incorrect value.", details: {
         "key": key,
-        "excepted": "$E",
+        "expected": "$E",
         "value": value.runtimeType,
         "data": this
       });
@@ -189,7 +189,7 @@ extension QuickMap on Map<String, dynamic> {
     } on TypeError {
       throw DartMoneroPluginException("Incorrect value.", details: {
         "key": key,
-        "excepted": "$E",
+        "expected": "$E",
         "value": value.runtimeType,
         "data": this
       });
@@ -241,7 +241,7 @@ extension QuickMap on Map<String, dynamic> {
     } on TypeError {
       throw DartMoneroPluginException("Incorrect value.", details: {
         "key": key,
-        "excepted": "$T",
+        "expected": "$T",
         "value": value.runtimeType,
         "data": this
       });

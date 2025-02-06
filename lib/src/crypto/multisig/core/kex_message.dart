@@ -205,7 +205,7 @@ abstract class MultisigKexMessageSerializable extends MoneroSerialization {
     if (this is! T) {
       throw MoneroMultisigAccountException(
           "MultisigKexMessageSerializable casting failed.",
-          details: {"excepted": "$T", "type": type.name});
+          details: {"expected": "$T", "type": type.name});
     }
     return this as T;
   }

@@ -82,7 +82,7 @@ abstract class MoneroTxin extends MoneroVariantSerialization {
   T cast<T extends MoneroTxin>() {
     if (this is! T) {
       throw DartMoneroPluginException("MoneroTxin casting failed.",
-          details: {"excepted": "$T", "type": type.name});
+          details: {"expected": "$T", "type": type.name});
     }
     return this as T;
   }

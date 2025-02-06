@@ -42,7 +42,7 @@ void _generateSignature() {
         k: BytesUtils.fromHexString(i["random_scalar"]),
       );
       final sigHex = BytesUtils.toHexString([...signature.c, ...signature.r]);
-      expect(sigHex, i["excepted"]);
+      expect(sigHex, i["expected"]);
     }
   });
 }

@@ -100,7 +100,7 @@ abstract class TxExtra extends MoneroVariantSerialization {
   T cast<T extends TxExtra>() {
     if (this is! T) {
       throw DartMoneroPluginException("Casting tx extra failed.",
-          details: {"excepted": "$T", "type": type.name});
+          details: {"expected": "$T", "type": type.name});
     }
     return this as T;
   }

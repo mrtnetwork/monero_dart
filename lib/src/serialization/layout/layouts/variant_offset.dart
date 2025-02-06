@@ -28,10 +28,4 @@ class VariantOffsetLayout extends ExternalOffsetLayout {
   VariantOffsetLayout clone({String? newProperty}) {
     return VariantOffsetLayout(property: newProperty);
   }
-
-  @override
-  LayoutDecodeResult<int> getLenAndSpan(LayoutByteReader bytes,
-      {int offset = 0}) {
-    throw UnimplementedError();
-  }
 }

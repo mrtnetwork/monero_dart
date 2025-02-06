@@ -74,7 +74,7 @@ abstract class RctSigPrunable extends MoneroSerialization {
   T cast<T extends RctSigPrunable>() {
     if (this is! T) {
       throw DartMoneroPluginException("RctSigPrunable casting failed.",
-          details: {"excepted": "$T", "type": runtimeType.toString()});
+          details: {"expected": "$T", "type": runtimeType.toString()});
     }
     return this as T;
   }

@@ -8,15 +8,15 @@ import 'package:test/test.dart';
 void main() {
   test("generate key derivation", () {
     for (final i in testVector) {
-      final excepted = BytesUtils.tryFromHexString(i["excepted"]);
-      if (excepted != null) {
+      final expected = BytesUtils.tryFromHexString(i["expected"]);
+      if (expected != null) {
         final keyOne =
             MoneroPublicKey.fromBytes(BytesUtils.fromHexString(i["keyOne"]));
         final keyTwo =
             MoneroPrivateKey.fromBytes(BytesUtils.fromHexString(i["keyTwo"]));
         final generateKey = MoneroCrypto.generateKeyDerivation(
             pubkey: keyOne, secretKey: keyTwo);
-        expect(generateKey, excepted);
+        expect(generateKey, expected);
       } else {
         expect(() {
           final keyOne =
@@ -32,15 +32,15 @@ void main() {
 
   test("generate key derivation fast", () {
     for (final i in testVector) {
-      final excepted = BytesUtils.tryFromHexString(i["excepted"]);
-      if (excepted != null) {
+      final expected = BytesUtils.tryFromHexString(i["expected"]);
+      if (expected != null) {
         final keyOne =
             MoneroPublicKey.fromBytes(BytesUtils.fromHexString(i["keyOne"]));
         final keyTwo =
             MoneroPrivateKey.fromBytes(BytesUtils.fromHexString(i["keyTwo"]));
         final generateKey = MoneroCrypto.generateKeyDerivationFast(
             pubkey: keyOne, secretKey: keyTwo);
-        expect(generateKey, excepted);
+        expect(generateKey, expected);
       } else {
         expect(() {
           final keyOne =
