@@ -10,6 +10,8 @@ import 'package:monero_dart/src/models/transaction/signature/rct_prunable.dart';
 import 'package:monero_dart/src/models/transaction/signature/signature.dart';
 import 'package:test/test.dart';
 
+import 'tools.dart';
+
 void main() {
   _test();
 }
@@ -85,12 +87,12 @@ void _test() {
     final CtKeyV sc = [], pc = [];
     // CtKey sctmp, pctmp;
     inamounts.add(BigInt.from(6000));
-    Tuple<CtKey, CtKey> f = RCT.ctskpkGen(inamounts.last);
+    Tuple<CtKey, CtKey> f = ctskpkGen(inamounts.last);
     sc.add(f.item1);
     pc.add(f.item2);
     inamounts.add(BigInt.from(8000));
 
-    f = RCT.ctskpkGen(inamounts.last);
+    f = ctskpkGen(inamounts.last);
     sc.add(f.item1);
     pc.add(f.item2);
     final List<BigInt> amounts = [];

@@ -26,10 +26,10 @@
 
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/exception/exception.dart';
+import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/bulletproofs_plus.dart';
 import 'package:monero_dart/src/crypto/ringct/clsag/clsag.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/models/models.dart';
-import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/bulletproofs_plus.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
@@ -149,7 +149,7 @@ class RCTGeneratorUtils {
       final RctKey sv8 = RCT.zero();
       final RctKey sv = RCT.d2h(amounts[i]);
       CryptoOps.scMul(sv8, sv, RCTConst.invEight);
-      RCT.addKeys2(C[i], RCTConst.invEight, sv8, RCTConst.h);
+      C[i] = RCT.addKeys2Var(RCTConst.invEight, sv8, RCTConst.h);
     }
     return BulletproofPlus(
         a: RCT.identity(clone: false),
@@ -217,53 +217,47 @@ class RCTGeneratorUtils {
     for (i = 0; i < destinations.length; i++) {
       final mask = RCT.zero();
       final outSkMask = outSk[i].mask.clone();
-      // if (!bpOrBpp) {
-      //   final s = BoroSigUtils.proveRange(mask, outSkMask, outamounts[i]);
-      //   rangeSig.add(s);
-      // }
       outSk[i] = outSk[i].copyWith(mask: outSkMask);
       final CtKey pk = CtKey(dest: destinations[i].clone(), mask: mask);
       outPk.add(pk);
     }
-
     final keys = amountKeys.map((e) => e.clone()).toList();
-    final KeyV masks =
-        List.generate(outamounts.length, (i) => RCT.genCommitmentMask(keys[i]));
+    final KeyV masks = List.generate(
+        outamounts.length, (i) => RCT.genCommitmentMaskVar(keys[i]));
     final KeyV C = List.generate(outamounts.length, (_) => RCT.zero());
     final prove = _proveRangeBulletproofPlus(C, masks, outamounts, keys);
     bulletProofPlus.add(prove);
     for (i = 0; i < outamounts.length; ++i) {
-      final mask = RCT.scalarmult8_(C[i]);
-      outPk[i] = outPk[i].copyWith(mask: mask);
+      final mask = RCT.scalarmult8PointVar(C[i]);
+      outPk[i] = outPk[i].copyWith(mask: mask.toBytes());
       outSk[i] = outSk[i].copyWith(mask: masks[i]);
     }
-    final RctKey sumout = RCT.zero();
+    RctKey sumout = RCT.zero();
     for (i = 0; i < outSk.length; ++i) {
-      CryptoOps.scAdd(sumout, outSk[i].mask, sumout);
+      sumout = Ed25519Utils.scAddVar(outSk[i].mask, sumout);
       final ecdhT = EcdhTuple(
           mask: outSk[i].mask,
           amount: RCT.d2h(outamounts[i]),
           version: EcdhInfoVersion.v2);
-      final EcdhInfo info = RCT.ecdhEncode(ecdhT, amountKeys[i]);
+      final EcdhInfo info = RCT.ecdhEncodeVar(ecdhT, amountKeys[i]);
       ecdh.add(info);
     }
-    // BigInt txFee = txnFee;
     final KeyV pseudoOuts = List.generate(inamounts.length, (_) => RCT.zero());
     final List<MgSig> mgs = [];
     final List<Clsag> clsag = [];
-    final RctKey sumpouts = RCT.zero();
+    RctKey sumpouts = RCT.zero();
     final KeyV a =
         aResult ?? List.generate(inamounts.length, (_) => RCT.zero());
     if (a.length != inamounts.length) {
       throw const MoneroCryptoException("Invalid a provided.");
     }
     for (i = 0; i < inamounts.length - 1; i++) {
-      RCT.skGen(a[i]);
-      CryptoOps.scAdd(sumpouts, a[i], sumpouts);
-      RCT.genC(pseudoOuts[i], a[i], inamounts[i]);
+      a[i] = RCT.skGen_();
+      sumpouts = Ed25519Utils.scAddVar(a[i], sumpouts);
+      pseudoOuts[i] = RCT.genCVar(a[i], inamounts[i]);
     }
-    CryptoOps.scSub(a[i], sumout, sumpouts);
-    RCT.genC(pseudoOuts[i], a[i], inamounts[i]);
+    a[i] = Ed25519Utils.scSubVar(sumout, sumpouts);
+    pseudoOuts[i] = RCT.genCVar(a[i], inamounts[i]);
     final RCTSignature<S, P> signature = buildSignature(
         type: RCTType.rctTypeBulletproofPlus,
         ecdh: ecdh,
@@ -280,7 +274,7 @@ class RCTGeneratorUtils {
     if (!createLinkable) return signature;
     final RctKey fullMessage = getPreMlsagHash(signature);
     for (i = 0; i < inamounts.length; i++) {
-      final prove = CLSAGUtins.prove(
+      final prove = CLSAGUtils.prove(
           fullMessage,
           signature.signature.mixRing![i],
           inSk[i],
@@ -316,7 +310,6 @@ class RCTGeneratorUtils {
           required KeyV amountKeys,
           required List<int> index,
           required CtKeyV outSk,
-          // required RCTType? rctType,
           KeyV? aResult,
           bool createLinkable = true}) {
     if (inamounts.isEmpty) {
@@ -409,7 +402,7 @@ class RCTGeneratorUtils {
         pseudoOuts: pseudoOuts);
     for (i = 0; i < inamounts.length; i++) {
       final prove =
-          CLSAGUtins.fakeProve(signature.signature.mixRing![i].length);
+          CLSAGUtils.fakeProve(signature.signature.mixRing![i].length);
       clsag.add(prove);
     }
     return buildSignature<S, P>(
@@ -485,9 +478,9 @@ class RCTGeneratorUtils {
       for (int i = 0; i < rv.signature.outPk.length; i++) {
         masks[i] = rv.signature.outPk[i].mask.clone();
       }
-      final RctKey sumOutpks = RCT.addKeysBatch(masks);
+      RctKey sumOutpks = RCT.addKeysBatch(masks);
       final RctKey txnFeeKey = RCT.scalarmultH(RCT.d2h(rv.signature.txnFee));
-      RCT.addKeys(sumOutpks, txnFeeKey, sumOutpks);
+      sumOutpks = RCT.addKeys_(txnFeeKey, sumOutpks);
       final RctKey sumPseudoOuts = RCT.addKeysBatch(pseudoOuts);
       if (!BytesUtils.bytesEqual(sumPseudoOuts, sumOutpks)) {
         return false;
@@ -536,7 +529,7 @@ class RCTGeneratorUtils {
     final message = getPreMlsagHash(rv);
     for (int i = 0; i < rv.signature.mixRing!.length; i++) {
       final cslag = rv.rctSigPrunable!.cast<ClsagPrunable>();
-      final verify = CLSAGUtins.verify(
+      final verify = CLSAGUtils.verify(
           message, cslag.clsag[i], rv.signature.mixRing![i], pseudoOuts[i]);
       if (!verify) return false;
     }
@@ -836,52 +829,6 @@ class RCTGeneratorUtils {
     return index;
   }
 
-  static (BigInt, RctKey) decodeRct(
-      {required RCTSignature sig,
-      required RctKey secretKey,
-      required int outputIndex}) {
-    if (outputIndex >= sig.signature.ecdhInfo.length) {
-      throw const MoneroCryptoException("Bad index");
-    }
-    if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
-      throw const MoneroCryptoException(
-          "Mismatched sizes of publickey and ECDH");
-    }
-    final ecdh = sig.signature.ecdhInfo[outputIndex];
-    final result = RCT.ecdhDecode(ecdh: ecdh, sharedSec: secretKey);
-    final mask = RCT.zero();
-    CryptoOps.scFill(mask, result.mask);
-    final RctKey amount = result.amount;
-    final RctKey c = sig.signature.outPk[outputIndex].mask;
-    final RctKey t = RCT.zero();
-    if (CryptoOps.scCheck(mask) != 0) {
-      throw const MoneroCryptoException("bad ECDH mask.");
-    }
-    if (CryptoOps.scCheck(amount) != 0) {
-      throw const MoneroCryptoException("bad ECDH amount.");
-    }
-
-    RCT.addKeys2(t, mask, amount, RCTConst.h);
-    if (!BytesUtils.bytesEqual(c, t)) {
-      throw const MoneroCryptoException(
-          "amount decoded incorrectly, will be unable to spend");
-    }
-    final bAmount = RCT.h2d(amount);
-    return (bAmount, mask);
-  }
-
-  static (BigInt, RctKey)? decodeRct_(
-      {required RCTSignature sig,
-      required RctKey secretKey,
-      required int outputIndex}) {
-    try {
-      return decodeRct(
-          sig: sig, secretKey: secretKey, outputIndex: outputIndex);
-    } on MoneroCryptoException {
-      return null;
-    }
-  }
-
   static int weightClawBack(RCTSignature signature) {
     final type = signature.signature.type;
     if (signature.rctSigPrunable == null) {
@@ -912,5 +859,97 @@ class RCTGeneratorUtils {
     final int bpSize = 32 * ((isBpp ? 6 : 9) + 2 * nlr);
     final int bpClawback = (bpBase * paddedOutputs - bpSize) * 4 ~/ 5;
     return bpClawback;
+  }
+
+  static (BigInt, RctKey) _decodeRctVar(
+      {required RCTSignature sig,
+      required RctKey secretKey,
+      required int outputIndex}) {
+    if (outputIndex >= sig.signature.ecdhInfo.length) {
+      throw const MoneroCryptoException("Bad index");
+    }
+    if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
+      throw const MoneroCryptoException(
+          "Mismatched sizes of publickey and ECDH");
+    }
+    final ecdh = sig.signature.ecdhInfo[outputIndex];
+    final result = RCT.ecdhDecodeVar(ecdh: ecdh, sharedSec: secretKey);
+    final mask = result.mask.clone();
+    // CryptoOps.scFill(mask, result.mask);
+    final RctKey amount = result.amount;
+    final RctKey c = sig.signature.outPk[outputIndex].mask;
+    // final RctKey t = RCT.zero();
+    if (!Ed25519Utils.scCheckVar(mask)) {
+      throw const MoneroCryptoException("bad ECDH mask.");
+    }
+    if (!Ed25519Utils.scCheckVar(amount)) {
+      throw const MoneroCryptoException("bad ECDH amount.");
+    }
+
+    final t = RCT.addKeys2Var(mask, amount, RCTConst.h);
+    if (!BytesUtils.bytesEqual(c, t)) {
+      throw const MoneroCryptoException(
+          "amount decoded incorrectly, will be unable to spend");
+    }
+    final bAmount = RCT.h2d(amount);
+    return (bAmount, mask);
+  }
+
+  static (BigInt, RctKey)? decodeRctVar(
+      {required RCTSignature sig,
+      required RctKey secretKey,
+      required int outputIndex}) {
+    try {
+      return _decodeRctVar(
+          sig: sig, secretKey: secretKey, outputIndex: outputIndex);
+    } on MoneroCryptoException {
+      return null;
+    }
+  }
+
+  static (BigInt, RctKey) _decodeRct(
+      {required RCTSignature sig,
+      required RctKey secretKey,
+      required int outputIndex}) {
+    if (outputIndex >= sig.signature.ecdhInfo.length) {
+      throw const MoneroCryptoException("Bad index");
+    }
+    if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
+      throw const MoneroCryptoException(
+          "Mismatched sizes of publickey and ECDH");
+    }
+    final ecdh = sig.signature.ecdhInfo[outputIndex];
+    final result = RCT.ecdhDecode(ecdh: ecdh, sharedSec: secretKey);
+    final mask = result.mask.clone();
+    // CryptoOps.scFill(mask, result.mask);
+    final RctKey amount = result.amount;
+    final RctKey c = sig.signature.outPk[outputIndex].mask;
+    // final RctKey t = RCT.zero();
+    if (!Ed25519Utils.scCheck(mask)) {
+      throw const MoneroCryptoException("bad ECDH mask.");
+    }
+    if (!Ed25519Utils.scCheck(amount)) {
+      throw const MoneroCryptoException("bad ECDH amount.");
+    }
+
+    final t = RCT.addKeys2_(mask, amount, RCTConst.h);
+    if (!BytesUtils.bytesEqual(c, t)) {
+      throw const MoneroCryptoException(
+          "amount decoded incorrectly, will be unable to spend");
+    }
+    final bAmount = RCT.h2d(amount);
+    return (bAmount, mask);
+  }
+
+  static (BigInt, RctKey)? decodeRct(
+      {required RCTSignature sig,
+      required RctKey secretKey,
+      required int outputIndex}) {
+    try {
+      return _decodeRct(
+          sig: sig, secretKey: secretKey, outputIndex: outputIndex);
+    } on MoneroCryptoException {
+      return null;
+    }
   }
 }

@@ -75,4 +75,6 @@ class MoneroLayoutConst {
 
   static VariantOffsetLayout variantOffset({String? property}) =>
       VariantOffsetLayout(property: property);
+
+  static final MoneroIntVarInt varint48 = MoneroIntVarInt(LayoutConst.u48());
 }

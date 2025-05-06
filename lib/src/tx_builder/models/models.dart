@@ -242,9 +242,9 @@ class TxDestinationInfo {
 
     if (singleDestionation != null) {
       txPubKey =
-          RCT.scalarmultKey_(singleDestionation!.pubSpendKey, txSecretKey.key);
+          RCT.scalarmultKey(singleDestionation!.pubSpendKey, txSecretKey.key);
     } else {
-      txPubKey = RCT.scalarmultBase_(txSecretKey.key);
+      txPubKey = RCT.scalarmultBase(txSecretKey.key);
     }
     return MoneroPublicKey.fromBytes(txPubKey);
   }

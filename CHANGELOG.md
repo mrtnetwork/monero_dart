@@ -1,3 +1,8 @@
+## 1.0.0
+
+- Update dependencies.
+- Improved performance: transaction generation, signing, and proof creation are now 20× faster.
+
 ## 0.8.0
 
 - Update dependencies.

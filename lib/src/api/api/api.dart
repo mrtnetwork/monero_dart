@@ -75,7 +75,8 @@ class MoneroApi extends MoneroApiInterface {
       required List<MoneroUnLockedPayment> payments,
       required List<MoneroTxDestination> destinations,
       required MoneroAddress changeAddress,
-      MoneroFeePrority priority = MoneroFeePrority.defaultPriority}) async {
+      MoneroFeePrority priority = MoneroFeePrority.defaultPriority,
+      bool fast = true}) async {
     if (payments.toSet().length != payments.length) {
       throw const DartMoneroPluginException(
           "Multiple payment with same keyimage detected.");
@@ -104,6 +105,7 @@ class MoneroApi extends MoneroApiInterface {
         destinations: destinations,
         sources: spendablePayment,
         fee: baseFee.fee,
+        fast: fast,
         fakeTx: true,
         change: change);
     final BigInt fee =
@@ -122,6 +124,7 @@ class MoneroApi extends MoneroApiInterface {
         sources: spendablePayment,
         fee: fee,
         change: change,
+        fast: fast,
         fakeTx: false);
     return tx;
   }
@@ -131,9 +134,10 @@ class MoneroApi extends MoneroApiInterface {
       {required List<String> txHashes,
       required MoneroBaseAccountKeys account,
       bool cleanUpSpent = false}) async {
-    final transactions = await provider.getTxes(txHashes: txHashes);
+    final transactions =
+        await provider.getTxes(txHashes: txHashes, allowMempol: true);
     return unlockTransactionsPayments(
-        transactions: transactions,
+        transactions: transactions.where((e) => e.hasIndices).toList(),
         account: account,
         cleanUpSpent: cleanUpSpent);
   }

@@ -4,17 +4,17 @@ import 'package:monero_dart/src/network/config.dart';
 
 class Gamma {
   final GammaDistribution gammaDistribution;
-  final List<BigInt> rctOffsets;
+  List<BigInt> _rctOffsets;
   final int end;
   final double avarageOutsTime;
   final BigInt numRctOuts;
-  int lowerBound(List<BigInt> sortedList, BigInt value) {
+  int lowerBound(BigInt value) {
     int left = 0;
-    int right = sortedList.length;
+    int right = end;
 
     while (left < right) {
       final int mid = (left + right) ~/ 2;
-      if (sortedList[mid] < value) {
+      if (_rctOffsets[mid] < value) {
         left = mid + 1;
       } else {
         right = mid;
@@ -25,10 +25,11 @@ class Gamma {
 
   Gamma._(
       {required this.gammaDistribution,
-      required this.rctOffsets,
+      required List<BigInt> rctOffsets,
       required this.end,
       required this.avarageOutsTime,
-      required this.numRctOuts});
+      required this.numRctOuts})
+      : _rctOffsets = rctOffsets;
   factory Gamma(
       {required List<BigInt> rctOffsets,
       double shape = MoneroNetworkConst.gammaShape,
@@ -50,6 +51,7 @@ class Gamma {
     final numRctOuts = rctOffsets[end - 1];
     final avgOutputTime = MoneroNetworkConst.difficultyTargetV2 *
         (BigInt.from(blocksConsider) / outputsConsider);
+
     return Gamma._(
         gammaDistribution: GammaDistribution(shape, scale),
         rctOffsets: rctOffsets,
@@ -73,15 +75,19 @@ class Gamma {
       return maxU64;
     }
     outIndex = numRctOuts - BigInt.one - outIndex;
-    final index = lowerBound(rctOffsets.sublist(0, end), outIndex);
+    final index = lowerBound(outIndex);
     if (index == end) {
       throw const MoneroCryptoException("output index not found");
     }
-    final BigInt firstRct = index == 0 ? BigInt.zero : rctOffsets[index - 1];
-    final int nrct = (rctOffsets[index] - firstRct).toInt();
+    final BigInt firstRct = index == 0 ? BigInt.zero : _rctOffsets[index - 1];
+    final int nrct = (_rctOffsets[index] - firstRct).toInt();
     if (nrct == 0) {
       throw const MoneroCryptoException("No RCT values found in the range");
     }
     return firstRct + BigInt.from(gammaDistribution.randomIndex(nrct));
+  }
+
+  void clean() {
+    _rctOffsets = [];
   }
 }

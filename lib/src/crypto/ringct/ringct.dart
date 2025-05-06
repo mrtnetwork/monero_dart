@@ -1,6 +1,5 @@
 export 'bulletproofs_plus/bulletproofs_plus.dart';
-export 'bulletproofs_plus/multiexp.dart';
-
+export 'bulletproofs_plus/multiexp_fast.dart';
 export 'clsag/clsag.dart';
 export 'clsag/multisig.dart';
 

@@ -27,6 +27,12 @@ class MoneroBlock extends MoneroBlockheader {
         bytes: bytes, layout: layout(property: property));
     return MoneroBlock.fromStruct(decode);
   }
+  static List<String> getTxHashes(List<int> bytes, {String? property}) {
+    final json = MoneroSerialization.deserialize(
+        bytes: bytes, layout: layout(property: property));
+    return json.asListBytes("txHashes")!.map(BytesUtils.toHexString).toList();
+  }
+
   factory MoneroBlock.fromStruct(Map<String, dynamic> json) {
     return MoneroBlock(
         majorVersion: json.as("majorVersion"),

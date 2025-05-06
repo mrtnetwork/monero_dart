@@ -32,7 +32,25 @@ import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 
-class CLSAGUtins {
+class CLSAGUtils {
+  static (RctKey, RctKey, RctKey) _clsagPrepare(
+      RctKey p, RctKey z, RctKey H, RctKey a, RctKey aG) {
+    RCT.skpkGen(a, aG);
+    final aH = RCT.scalarmultKey(H, a);
+    final I = RCT.scalarmultKey(H, p);
+    final D = RCT.scalarmultKey(H, z);
+    return (aH, I, D);
+  }
+
+  static void _clsagSign(RctKey c, RctKey a, RctKey p, RctKey z, RctKey muP,
+      RctKey muC, RctKey s) {
+    final RctKey s0PmuP = RCT.zero();
+    CryptoOps.scMul(s0PmuP, muP, p);
+    final RctKey s0AddZMuC = RCT.zero();
+    CryptoOps.scMulAdd(s0AddZMuC, muC, z, s0PmuP);
+    CryptoOps.scMulSub(s, c, s0AddZMuC, a);
+  }
+
   static Clsag generate(RctKey message, KeyV P, RctKey p, KeyV C, RctKey z,
       KeyV cNonZero, RctKey cOffset, int l) {
     final int n = P.length;
@@ -47,30 +65,23 @@ class CLSAGUtins {
     if (l >= n) {
       throw const MoneroCryptoException("Signing index out of range!");
     }
-    // Key images
-    final GroupElementP3 hP3 = GroupElementP3();
-    RCT.hashToP3(hP3, P[l]);
-    final RctKey H = RCT.zero();
-    CryptoOps.geP3Tobytes(H, hP3);
-    final RctKey D = RCT.zero();
+    final RctKey H = RCT.hashToP3Bytes(P[l]);
+
     // Initial values
     final RctKey a = RCT.zero();
     final RctKey aG = RCT.zero();
-    final RctKey aH = RCT.zero();
-    final RctKey sigI = RCT.zero();
-    final RctKey sigD = RCT.zero();
+
     RctKey sigC1 = RCT.zero();
 
-    clsagPrepare(p, z, sigI, D, H, a, aG, aH);
-    final GroupElementDsmp iPrecomp = GroupElementCached.dsmp;
-    final GroupElementDsmp dPrecomp = GroupElementCached.dsmp;
-    RCT.precomp(iPrecomp, sigI);
-    RCT.precomp(dPrecomp, D);
+    final r = _clsagPrepare(p, z, H, a, aG);
+    final RctKey aH = r.$1;
+    final RctKey sigI = r.$2;
+    final RctKey D = r.$3;
+    final List<EDPoint> iPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(sigI));
+    final List<EDPoint> dPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(D));
 
-    // Offset key image
-    RCT.scalarmultKey(sigD, D, RCTConst.invEight);
+    final RctKey sigD = RCT.scalarmultKeyVar(D, RCTConst.invEight);
 
-    // // Aggregation hashes
     final KeyV muPtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
     final KeyV muCtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
     muPtoHash[0] = RCT.strToKey(RCTConst.cslagHashKeyAgg0);
@@ -90,10 +101,9 @@ class CLSAGUtins {
     muCtoHash[2 * n + 2] = sigD;
     muCtoHash[2 * n + 3] = cOffset;
     RctKey muP = RCT.zero(), muC = RCT.zero();
-    muP = RCT.hashToScalarKeys(muPtoHash);
-    muC = RCT.hashToScalarKeys(muCtoHash);
+    muP = RCT.hashToScalarKeysVar(muPtoHash);
+    muC = RCT.hashToScalarKeysVar(muCtoHash);
     final KeyV cToHash = List.generate(2 * n + 5, (_) => RCT.zero());
-    RctKey c = RCT.zero();
     cToHash[0] = RCT.strToKey(RCTConst.cslagHashKeyRound);
     for (int i = 1; i < n + 1; ++i) {
       cToHash[i] = P[i - 1];
@@ -104,7 +114,7 @@ class CLSAGUtins {
 
     cToHash[2 * n + 3] = aG;
     cToHash[2 * n + 4] = aH;
-    c = RCT.hashToScalarKeys(cToHash);
+    RctKey c = RCT.hashToScalarKeysVar(cToHash);
     int i;
     i = (l + 1) % n;
     if (i == 0) {
@@ -112,59 +122,29 @@ class CLSAGUtins {
     }
     final KeyV sigS = List.generate(n, (_) => RCT.zero());
     RctKey cNew = RCT.zero();
-    final RctKey L = RCT.zero();
-    final RctKey R = RCT.zero();
-    final RctKey cP = RCT.zero();
-    final RctKey cC = RCT.zero();
-    final GroupElementDsmp pPrecomp = GroupElementCached.dsmp;
-    final GroupElementDsmp cPrecomp = GroupElementCached.dsmp;
-    final GroupElementDsmp hPrecomp = GroupElementCached.dsmp;
-    final GroupElementP3 hiP3 = GroupElementP3();
+
     while (i != l) {
-      sigS[i] = RCT.skGen_();
+      sigS[i] = RCT.skGenVar();
       cNew = RCT.zero();
-      CryptoOps.scMul(cP, muP, c);
-      CryptoOps.scMul(cC, muC, c);
-
-      // Precompute points
-      RCT.precomp(pPrecomp, P[i]);
-      RCT.precomp(cPrecomp, C[i]);
-
-      // Compute L
-      RCT.addKeysAGbBcC(L, sigS[i], cP, pPrecomp, cC, cPrecomp);
-
-      // // Compute R
-      RCT.hashToP3(hiP3, P[i]);
-      CryptoOps.geDsmPrecomp(hPrecomp, hiP3);
-      RCT.addKeysAAbBcC(R, sigS[i], hPrecomp, cP, iPrecomp, cC, dPrecomp);
+      final cP = Ed25519Utils.scMulVar(muP, c);
+      final cC = Ed25519Utils.scMulVar(muC, c);
+      final pPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(P[i]));
+      final cPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(C[i]));
+      final L = RCT.addKeysAGbBcCVar(sigS[i], cP, pPrecomp, cC, cPrecomp);
+      final hiP3 = RCT.hashToPoint(P[i]);
+      final hPrecomp = CryptoOps.geDsmPrecompVar(hiP3);
+      final R =
+          RCT.addKeysAAbBcCVar(sigS[i], hPrecomp, cP, iPrecomp, cC, dPrecomp);
 
       cToHash[2 * n + 3] = L;
       cToHash[2 * n + 4] = R;
-      cNew = RCT.hashToScalarKeys(cToHash);
+      cNew = RCT.hashToScalarKeysVar(cToHash);
       c = cNew.clone();
       i = (i + 1) % n;
       if (i == 0) sigC1 = c.clone();
     }
-    clsagSign(c, a, p, z, muP, muC, sigS[l]);
+    _clsagSign(c, a, p, z, muP, muC, sigS[l]);
     return Clsag(s: sigS, c1: sigC1, d: sigD, i: sigI);
-    // return sig;
-  }
-
-  static void clsagPrepare(RctKey p, RctKey z, RctKey I, RctKey D, RctKey H,
-      RctKey a, RctKey aG, RctKey aH) {
-    RCT.skpkGen(a, aG);
-    RCT.scalarmultKey(aH, H, a);
-    RCT.scalarmultKey(I, H, p);
-    RCT.scalarmultKey(D, H, z);
-  }
-
-  static void clsagSign(RctKey c, RctKey a, RctKey p, RctKey z, RctKey muP,
-      RctKey muC, RctKey s) {
-    final RctKey s0PmuP = RCT.zero();
-    CryptoOps.scMul(s0PmuP, muP, p);
-    final RctKey s0AddZMuC = RCT.zero();
-    CryptoOps.scMulAdd(s0AddZMuC, muC, z, s0PmuP);
-    CryptoOps.scMulSub(s, c, s0AddZMuC, a);
   }
 
   static bool verify(RctKey message, Clsag sig, CtKeyV pubs, RctKey cOffset) {
@@ -179,12 +159,12 @@ class CLSAGUtins {
       }
 
       for (int i = 0; i < n; i++) {
-        if (CryptoOps.scCheck(sig.s[i]) != 0) {
+        if (!Ed25519Utils.scCheckVar(sig.s[i])) {
           throw const MoneroCryptoException("Bad signature scalar!");
         }
       }
 
-      if (CryptoOps.scCheck(sig.c1) != 0) {
+      if (!Ed25519Utils.scCheckVar(sig.c1)) {
         throw const MoneroCryptoException("Bad signature commitment!");
       }
 
@@ -192,24 +172,17 @@ class CLSAGUtins {
           BytesUtils.bytesEqual(sig.i, RCT.identity(clone: false))) {
         throw const MoneroCryptoException("Bad key image!");
       }
-      final GroupElementP3 cOffsetP3 = GroupElementP3();
-      if (CryptoOps.geFromBytesVartime_(cOffsetP3, cOffset) != 0) {
-        throw const MoneroCryptoException("point conv failed");
-      }
-      final GroupElementCached cOffsetCached = GroupElementCached();
-      CryptoOps.geP3ToCached(cOffsetCached, cOffsetP3);
+      final EDPoint cOffsetCached = RCT.asPoint(cOffset);
       RctKey c = sig.c1.clone();
-      final RctKey d8 = RCT.scalarmult8_(sig.d);
-      if (BytesUtils.bytesEqual(d8, RCT.identity(clone: false))) {
+      final d8 = RCT.scalarmult8PointVar(sig.d);
+      if (d8.isInfinity) {
         throw const MoneroCryptoException("Bad auxiliary key image!");
       }
-      final GroupElementDsmp iPrecomp = GroupElementCached.dsmp;
-      final GroupElementDsmp dPrecomp = GroupElementCached.dsmp;
       if (sig.i == null) {
         throw const MoneroCryptoException("I is required for verification.");
       }
-      RCT.precomp(iPrecomp, sig.i!);
-      RCT.precomp(dPrecomp, d8);
+      final iPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(sig.i!));
+      final dPrecomp = CryptoOps.geDsmPrecompVar(d8);
       final KeyV muPtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
       final KeyV muCtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
       muPtoHash[0] = RCT.strToKey(RCTConst.cslagHashKeyAgg0);
@@ -239,38 +212,22 @@ class CLSAGUtins {
       }
       cToHash[2 * n + 1] = cOffset;
       cToHash[2 * n + 2] = message;
-      final RctKey cP = RCT.zero();
-      final RctKey cC = RCT.zero();
       RctKey cNew = RCT.zero();
-      final RctKey L = RCT.zero();
-      final RctKey R = RCT.zero();
-      final GroupElementDsmp pPrecomp = GroupElementCached.dsmp;
-      final GroupElementDsmp cPrecomp = GroupElementCached.dsmp;
       int i = 0;
-      final GroupElementP3 hash8P3 = GroupElementP3();
-      final GroupElementDsmp hashPrecomp = GroupElementCached.dsmp;
-
-      final GroupElementP3 tempP3 = GroupElementP3();
-      final GroupElementP1P1 tempP1 = GroupElementP1P1();
       while (i < n) {
-        CryptoOps.scZero(cNew);
-        CryptoOps.scMul(cP, muP, c);
-        CryptoOps.scMul(cC, muC, c);
+        final cP = Ed25519Utils.scMulVar(muP, c);
+        final cC = Ed25519Utils.scMulVar(muC, c);
+        final pPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(pubs[i].dest));
+        EDPoint tempP3 = RCT.asPoint(pubs[i].mask);
+        tempP3 = tempP3 + (-cOffsetCached);
+        final cPrecomp = CryptoOps.geDsmPrecompVar(tempP3);
 
-        RCT.precomp(pPrecomp, pubs[i].dest);
+        final L = RCT.addKeysAGbBcCVar(sig.s[i], cP, pPrecomp, cC, cPrecomp);
 
-        if (CryptoOps.geFromBytesVartime_(tempP3, pubs[i].mask) != 0) {
-          throw const MoneroCryptoException("point conv failed");
-        }
-        CryptoOps.geSub(tempP1, tempP3, cOffsetCached);
-        CryptoOps.geP1P1ToP3(tempP3, tempP1);
-        CryptoOps.geDsmPrecomp(cPrecomp, tempP3);
-
-        RCT.addKeysAGbBcC(L, sig.s[i], cP, pPrecomp, cC, cPrecomp);
-
-        RCT.hashToP3(hash8P3, pubs[i].dest);
-        CryptoOps.geDsmPrecomp(hashPrecomp, hash8P3);
-        RCT.addKeysAAbBcC(R, sig.s[i], hashPrecomp, cP, iPrecomp, cC, dPrecomp);
+        final hash8P3 = RCT.hashToPoint(pubs[i].dest);
+        final hashPrecomp = CryptoOps.geDsmPrecompVar(hash8P3);
+        final R = RCT.addKeysAAbBcCVar(
+            sig.s[i], hashPrecomp, cP, iPrecomp, cC, dPrecomp);
 
         cToHash[2 * n + 3] = L;
         cToHash[2 * n + 4] = R;
@@ -278,12 +235,11 @@ class CLSAGUtins {
         if (BytesUtils.bytesEqual(cNew, RCT.zero(clone: false))) {
           throw const MoneroCryptoException("Bad signature hash");
         }
-        // CHECK_AND_ASSERT_MES(!(cNew == rct::zero()), false, "Bad signature hash");
         c = cNew.clone();
 
         i = i + 1;
       }
-      CryptoOps.scSub(cNew, c, sig.c1);
+      cNew = Ed25519Utils.scSubVar(c, sig.c1);
       return CryptoOps.scIsNonZero(cNew) == 0;
     } catch (e) {
       return false;
@@ -312,8 +268,7 @@ class CLSAGUtins {
       final k = pubs[i];
       P.add(k.dest.clone());
       cNonZero.add(k.mask.clone());
-      final RctKey tmp = RCT.zero();
-      RCT.subKeys(tmp, k.mask, cout);
+      final RctKey tmp = RCT.subKeysVar(k.mask, cout);
       C.add(tmp);
     }
     sk[0] = inSk.dest.clone();

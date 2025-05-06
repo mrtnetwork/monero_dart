@@ -39,7 +39,7 @@ class MoneroMultisigUtils {
       RctKey? resultKeyR}) {
     resultKeyL ??= RCT.zero();
     resultKeyR ??= RCT.zero();
-    RCT.scalarmultBase(resultKeyL, secretKey);
+    RCT.scalarmultBase(secretKey, result: resultKeyL);
     MoneroCrypto.generateKeyImageBytes(
         pubkey: pubKey, secretKey: secretKey, resultKey: resultKeyR);
     return resultKeyR;
@@ -65,11 +65,11 @@ class MoneroMultisigUtils {
       {required List<MoneroMultisigOutputInfo> infos,
       required RctKey keyImage,
       required List<RctKey> exclude}) {
-    final RctKey kImage = keyImage.clone();
+    RctKey kImage = keyImage.clone();
     for (final i in infos) {
       for (final p in i.partialKeyImages) {
         if (!BytesUtils.isContains(exclude, p)) {
-          RCT.addKeys(kImage, kImage, p);
+          kImage = RCT.addKeysVar(kImage, p);
           exclude.add(p);
         }
       }
@@ -87,8 +87,8 @@ class MoneroMultisigUtils {
     final sk = RCT.skGen_().asImmutableBytes;
     final klrki = getMultisigKLRki(
         outPybKey: outPubKey, secretKey: sk, keyImage: keyImage);
-    final RctKey L = klrki.L.clone();
-    final RctKey R = klrki.R.clone();
+    RctKey L = klrki.L.clone();
+    RctKey R = klrki.R.clone();
     int signers = 1;
 
     for (final i in infos) {
@@ -98,8 +98,8 @@ class MoneroMultisigUtils {
         }
         usedL.add(lr.l);
         newUsedL.add(lr.l);
-        RCT.addKeys(L, L, lr.l);
-        RCT.addKeys(R, R, lr.r);
+        L = RCT.addKeysVar(L, lr.l);
+        R = RCT.addKeysVar(R, lr.r);
         signers++;
         break;
       }

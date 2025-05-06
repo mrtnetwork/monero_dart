@@ -79,8 +79,8 @@ void _test() {
   // Set C[idx]
   t = RCT.skGen_();
   u = RCT.skGen_();
-  // RctKey sp = pubs[idx].mask.clone();
-  final RctKey sp = RCT.addKeys2_(t, u, RCTConst.h);
+  // final sp = pubs[idx].mask.clone();
+  final sp = RCT.addKeys2_(t, u, RCTConst.h);
   pubs[idx] = CtKey(dest: sI, mask: sp);
   // Set commitment offset
   // final RctKey cout = RCT.zero();
@@ -91,6 +91,7 @@ void _test() {
   final CtKey insk = CtKey(dest: p, mask: t);
   final Clsag prove = CLSAGUtils.prove(message, pubs, insk, t2, cout, idx);
   final bool vr = CLSAGUtils.verify(message, prove, pubs, cout);
+
   test("correct sig", () {
     expect(vr, true);
     expect(BytesUtils.toHexString(prove.i!),

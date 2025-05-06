@@ -101,6 +101,23 @@ class BulletproofPlus extends MoneroSerialization {
   final RctKey d1;
   final List<RctKey> l;
   final List<RctKey> r;
+  @override
+  int get hashCode =>
+      HashCodeGenerator.generateHashCode([v, a, a1, b, r1, s1, d1, l, r]);
+  @override
+  operator ==(other) {
+    if (identical(this, other)) return true;
+    if (other is! BulletproofPlus) return false;
+    return CompareUtils.iterableIsEqual(v, other.v) &&
+        CompareUtils.iterableIsEqual(l, other.l) &&
+        CompareUtils.iterableIsEqual(r, other.r) &&
+        BytesUtils.bytesEqual(a, other.a) &&
+        BytesUtils.bytesEqual(a1, other.a1) &&
+        BytesUtils.bytesEqual(b, other.b) &&
+        BytesUtils.bytesEqual(r1, other.r1) &&
+        BytesUtils.bytesEqual(s1, other.s1) &&
+        BytesUtils.bytesEqual(d1, other.d1);
+  }
 
   Map<String, dynamic> toJson() {
     return {

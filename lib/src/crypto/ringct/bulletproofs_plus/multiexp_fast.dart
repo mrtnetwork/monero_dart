@@ -1,46 +1,42 @@
-import 'package:blockchain_utils/crypto/crypto/cdsa/crypto_ops/crypto_ops.dart';
-import 'package:blockchain_utils/helper/helper.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/crypto/models/multiexp_data.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 
-class StrausCachedData {
-  final List<List<GroupElementCached>> multiples;
+class _StrausData {
+  final List<List<EDPoint>> multiples;
   final int size;
-  GroupElementCached at(int point, int digit) {
+  EDPoint at(int point, int digit) {
     return multiples[point][digit - 1];
   }
 
-  StrausCachedData(
-      {required List<List<GroupElementCached>> multiples, required this.size})
-      : multiples = multiples.map((e) => e.immutable).toList().immutable;
+  _StrausData({required this.multiples, required this.size});
 
-  factory StrausCachedData.init({required List<MultiexpData> data, int n = 0}) {
+  factory _StrausData.init({required List<MultiexpData> data, int n = 0}) {
     if (n == 0) {
       n = data.length;
     }
     if (n > data.length) {
       throw const MoneroCryptoException("Bad cache base data.");
     }
-    final GroupElementP1P1 p1 = GroupElementP1P1();
-    final GroupElementP3 p3 = GroupElementP3();
-    final StrausCachedData cache = StrausCachedData(
+    final _StrausData cache = _StrausData(
         size: n,
         multiples: List.generate(
             n,
-            (_) => List.generate(
-                (1 << Multiexp.strausC) - 1, (_) => GroupElementCached())));
+            (_) => List.generate((1 << Multiexp.strausC) - 1,
+                (_) => EDPoint.infinity(curve: Curves.curveEd25519))));
     for (int j = 0; j < n; ++j) {
-      CryptoOps.geP3ToCached(cache.at(j, 1), data[j].point);
+      cache.multiples[j][0] = data[j].point;
       for (int i = 2; i < (1 << Multiexp.strausC); ++i) {
-        CryptoOps.geAdd(p1, data[j].point, cache.at(j, i - 1));
-        CryptoOps.geP1P1ToP3(p3, p1);
-        CryptoOps.geP3ToCached(cache.at(j, i), p3);
+        final n = data[j].point + cache.at(j, i - 1);
+        cache.multiples[j][i - 1] = n;
       }
     }
-    return cache;
+    return _StrausData(
+        multiples: cache.multiples.map((e) => e.immutable).toImutableList,
+        size: n);
   }
 }
 
@@ -67,7 +63,7 @@ class Multiexp {
     return res;
   }
 
-  static List<GroupElementCached> pippengerInitCache(
+  static List<EDPoint> _getPippenger(
       {required List<MultiexpData> data, int startOffset = 0, int? N}) {
     if (startOffset > data.length) {
       throw const MoneroCryptoException("Bad cache base data");
@@ -79,28 +75,19 @@ class Multiexp {
     if (N > data.length - startOffset) {
       throw const MoneroCryptoException("Bad cache base data");
     }
-    final List<GroupElementCached> cache =
-        List.generate(N, (_) => GroupElementCached());
+    final List<EDPoint> cache = [];
     for (int i = 0; i < N; ++i) {
-      CryptoOps.geP3ToCached(cache[i], data[i + startOffset].point);
+      cache.add(data[i + startOffset].point);
     }
 
     return cache;
   }
 
-  static GroupElementP3 _strausP3(
-      {required List<MultiexpData> data,
-      StrausCachedData? localCache,
-      int? step}) {
+  static EDPoint _strausP3({required List<MultiexpData> data, int? step}) {
     if (step == null || step == 0) {
       step = 192;
     }
-    if (localCache != null && localCache.size < data.length) {
-      throw const MoneroCryptoException("Cache is too small");
-    }
-    localCache ??= StrausCachedData.init(data: data);
-    final GroupElementCached cached = GroupElementCached();
-    final GroupElementP1P1 p1 = GroupElementP1P1();
+    final localCache = _StrausData.init(data: data);
     final digits = List<int>.filled(64 * data.length, 0);
     for (int j = 0; j < data.length; j++) {
       final bytes = data[j].scalar;
@@ -119,10 +106,10 @@ class Multiexp {
     while (startI < 256 && !_isLowerThan(maxScalar, _pow2(startI))) {
       startI += strausC;
     }
-    final GroupElementP3 resp3 = RCTConst.identityP3.clone();
+    EDPoint? resp3;
     for (int startOffset = 0; startOffset < data.length; startOffset += step) {
       final int numPoints = (data.length - startOffset).clamp(0, step);
-      final GroupElementP3 bandP3 = RCTConst.identityP3.clone();
+      EDPoint? bandP3;
       int i = startI;
       if (!(i < strausC)) {
         i -= strausC;
@@ -131,60 +118,46 @@ class Multiexp {
 
           if (digit != 0) {
             final gecCached = localCache.at(j, digit);
-            CryptoOps.geAdd(p1, bandP3, gecCached);
-            CryptoOps.geP1P1ToP3(bandP3, p1);
+            if (bandP3 == null) {
+              bandP3 = gecCached;
+            } else {
+              bandP3 += gecCached;
+            }
           }
         }
       }
       while (!(i < strausC)) {
-        final GroupElementP2 p2 = GroupElementP2();
-        CryptoOps.geP3ToP2(p2, bandP3);
+        EDPoint p1 = bandP3!;
 
         for (int j = 0; j < strausC; ++j) {
-          final GroupElementP1P1 p1 = GroupElementP1P1();
-          CryptoOps.geP2Dbl(p1, p2);
-
+          p1 = p1.doublePoint();
           if (j == strausC - 1) {
-            CryptoOps.geP1P1ToP3(bandP3, p1);
-          } else {
-            CryptoOps.geP1P1ToP2(p2, p1);
+            bandP3 = p1;
           }
         }
         i -= strausC;
         for (int j = startOffset; j < startOffset + numPoints; ++j) {
           final int digit = (digits[j * 64 + i ~/ 4]);
           if (digit != 0) {
-            CryptoOps.geAdd(p1, bandP3, localCache.at(j, digit));
-            CryptoOps.geP1P1ToP3(bandP3, p1);
+            bandP3 = bandP3! + localCache.at(j, digit);
           }
         }
       }
-
-      CryptoOps.geP3ToCached(cached, bandP3);
-      CryptoOps.geAdd(p1, resp3, cached);
-      CryptoOps.geP1P1ToP3(resp3, p1);
+      if (resp3 == null) {
+        resp3 = bandP3;
+      } else {
+        resp3 += bandP3!;
+      }
     }
-    return resp3;
+    return resp3!;
   }
 
-  static void _addCached(GroupElementP3 p3, GroupElementCached other) {
-    final GroupElementP1P1 p1 = GroupElementP1P1();
-    CryptoOps.geAdd(p1, p3, other);
-    CryptoOps.geP1P1ToP3(p3, p1);
+  static EDPoint _addPoint(EDPoint p3, EDPoint other) {
+    return p3 + other;
   }
 
-  static void _addP3(GroupElementP3 p3, GroupElementP3 other) {
-    final GroupElementCached cached = GroupElementCached();
-    CryptoOps.geP3ToCached(cached, other);
-    _addCached(p3, cached);
-  }
-
-  static List<int> straus(
-      {required List<MultiexpData> data,
-      StrausCachedData? localCache,
-      int? step}) {
-    final res = _strausP3(data: data, localCache: localCache, step: step);
-    return CryptoOps.geP3Tobytes_(res);
+  static EDPoint straus({required List<MultiexpData> data, int? step}) {
+    return _strausP3(data: data, step: step);
   }
 
   static int getPippengerC(int n) {
@@ -203,38 +176,27 @@ class Multiexp {
     return k[n >> 3] & (1 << (n & 7));
   }
 
-  static List<int> pippenger(
-      {required List<MultiexpData> data,
-      required List<GroupElementCached>? localCache,
-      int? cacheSize,
-      int? c}) {
-    final GroupElementP3 res = _pippengerP3(
-        data: data, localCache: localCache, cacheSize: cacheSize, c: c);
-    return CryptoOps.geP3Tobytes_(res);
+  static EDPoint pippenger(
+      {required List<MultiexpData> data, int? cacheSize, int? c}) {
+    return _pippengerP3(data: data, cacheSize: cacheSize, c: c);
   }
 
-  static GroupElementP3 _pippengerP3(
-      {required List<MultiexpData> data,
-      required List<GroupElementCached>? localCache,
-      int? cacheSize,
-      int? c}) {
-    cacheSize ??= localCache?.length ?? 0;
+  static EDPoint _pippengerP3(
+      {required List<MultiexpData> data, int? cacheSize, int? c}) {
+    cacheSize ??= 0;
     if (c == null || c == 0) {
       c = getPippengerC(data.length);
     }
-    GroupElementP3 result = RCTConst.identityP3.clone();
+    EDPoint result =
+        EDPoint.fromBytes(curve: Curves.curveEd25519, data: RCT.identity());
     bool resultInit = false;
-    final List<GroupElementP3> buckets =
-        List.generate(1 << c, (_) => GroupElementP3());
+    final List<EDPoint?> buckets = List.filled(1 << c, null);
     final List<bool> bucketsInit = List.filled(1 << 9, false);
-    if (localCache?.isEmpty ?? true) {
-      localCache = pippengerInitCache(data: data);
-    }
+    final localCache = _getPippenger(data: data);
 
     final localCache2 = data.length > cacheSize
-        ? pippengerInitCache(data: data, startOffset: cacheSize)
+        ? _getPippenger(data: data, startOffset: cacheSize)
         : null;
-
     List<int> maxScalar = RCT.zero();
     for (int i = 0; i < data.length; i++) {
       if (_isLowerThan(maxScalar, data[i].scalar)) {
@@ -248,15 +210,13 @@ class Multiexp {
     groups = (groups + c - 1) ~/ c;
     for (int k = groups; k-- > 0;) {
       if (resultInit) {
-        final GroupElementP2 p2 = GroupElementP2();
-        CryptoOps.geP3ToP2(p2, result);
+        EDPoint p2 = result;
         for (int i = 0; i < c; ++i) {
-          final GroupElementP1P1 p1 = GroupElementP1P1();
-          CryptoOps.geP2Dbl(p1, p2);
+          final EDPoint p1 = p2.doublePoint();
           if (i == c - 1) {
-            CryptoOps.geP1P1ToP3(result, p1);
+            result = p1;
           } else {
-            CryptoOps.geP1P1ToP2(p2, p1);
+            p2 = p1;
           }
         }
       }
@@ -280,32 +240,33 @@ class Multiexp {
 
         if (bucketsInit[bucket]) {
           if (i < cacheSize) {
-            _addCached(buckets[bucket], localCache![i]);
+            buckets[bucket] = _addPoint(buckets[bucket]!, localCache[i]);
           } else {
-            _addCached(buckets[bucket], localCache2![i - cacheSize]);
+            buckets[bucket] =
+                _addPoint(buckets[bucket]!, localCache2![i - cacheSize]);
           }
         } else {
-          buckets[bucket] = data[i].point.clone();
+          buckets[bucket] = data[i].point;
           bucketsInit[bucket] = true;
         }
       }
 
-      GroupElementP3 pail = GroupElementP3();
+      EDPoint pail = EDPoint.infinity(curve: Curves.curveEd25519);
       bool pailInit = false;
       for (int i = (1 << c) - 1; i > 0; --i) {
         if (bucketsInit[i]) {
           if (pailInit) {
-            _addP3(pail, buckets[i]);
+            pail = _addPoint(pail, buckets[i]!);
           } else {
-            pail = buckets[i].clone();
+            pail = buckets[i]!;
             pailInit = true;
           }
         }
         if (pailInit) {
           if (resultInit) {
-            _addP3(result, pail);
+            result = _addPoint(result, pail);
           } else {
-            result = pail.clone();
+            result = pail;
             resultInit = true;
           }
         }

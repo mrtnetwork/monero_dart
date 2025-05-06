@@ -52,7 +52,17 @@ class MoneroTransactionPrefix extends MoneroSerialization {
 
   late final List<TxExtra> txExtras = _toTxExtra();
   MoneroPublicKey _getTxExtraPubKey() {
-    // final extras = toTxExtra();
+    final pubKeyExtra = txExtras
+        .firstWhere((e) => e.type == TxExtraTypes.publicKey,
+            orElse: () => throw const DartMoneroPluginException(
+                "Cannot find tx public key extra."))
+        .cast<TxExtraPublicKey>();
+    return MoneroPublicKey.fromBytes(pubKeyExtra.publicKey);
+  }
+
+  late final MoneroPublicKey txPublicKey = _getTxExtraPubKey();
+
+  List<int> txPubkeyBytes() {
     final pubKeyExtra = txExtras
         .firstWhere((e) => e.type == TxExtraTypes.publicKey,
             orElse: () => throw const DartMoneroPluginException(
@@ -60,8 +70,6 @@ class MoneroTransactionPrefix extends MoneroSerialization {
         .cast<TxExtraPublicKey>();
     return pubKeyExtra.publicKey;
   }
-
-  late final MoneroPublicKey txPublicKey = _getTxExtraPubKey();
 
   TxExtraAdditionalPubKeys? _getTxAdditionalPubKeys() {
     try {

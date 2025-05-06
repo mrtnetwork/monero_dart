@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:blockchain_utils/crypto/crypto/cdsa/utils/ed25519_utils.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -21,7 +20,7 @@ void _scalar() {
     for (int i = 0; i < 10000; i++) {
       final rand = QuickCrypto.generateRandom();
       final sc = scReduce(rand);
-      final scOld = Ed25519Utils.scalarReduce(rand);
+      final scOld = Ed25519Utils.scalarReduceVar(rand);
       expect(sc, scOld);
     }
   });

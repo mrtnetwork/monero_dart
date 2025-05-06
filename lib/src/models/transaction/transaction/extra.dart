@@ -112,15 +112,22 @@ class TxExtraPadding extends TxExtra {
 }
 
 class TxExtraPublicKey extends TxExtra {
-  final MoneroPublicKey publicKey;
-  TxExtraPublicKey(this.publicKey) : super(TxExtraTypes.publicKey);
+  final List<int> publicKey;
+  TxExtraPublicKey(List<int> publicKey)
+      : publicKey = publicKey
+            .exceptedLen(Ed25519KeysConst.pubKeyByteLen)
+            .asImmutableBytes,
+        super(TxExtraTypes.publicKey);
   factory TxExtraPublicKey.fromStruct(Map<String, dynamic> json) {
-    return TxExtraPublicKey(
-        MoneroPublicKey.fromBytes(json.asBytes("publicKey")));
+    return TxExtraPublicKey(json.asBytes("publicKey"));
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([LayoutConst.fixedBlob32(property: "publicKey")],
         property: property);
+  }
+
+  MoneroPublicKey asPublicKey() {
+    return MoneroPublicKey.fromBytes(publicKey);
   }
 
   @override
@@ -130,7 +137,7 @@ class TxExtraPublicKey extends TxExtra {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    return {"publicKey": publicKey.key};
+    return {"publicKey": publicKey};
   }
 }
 
@@ -192,15 +199,15 @@ class TxExtraMergeMiningTag extends TxExtra {
 }
 
 class TxExtraAdditionalPubKeys extends TxExtra {
-  final List<MoneroPublicKey> pubKeys;
-  TxExtraAdditionalPubKeys(List<MoneroPublicKey> data)
-      : pubKeys = data.toImutableList,
+  final List<List<int>> pubKeys;
+  TxExtraAdditionalPubKeys(List<List<int>> data)
+      : pubKeys = data
+            .map((e) =>
+                e.exceptedLen(Ed25519KeysConst.pubKeyByteLen).asImmutableBytes)
+            .toImutableList,
         super(TxExtraTypes.additionalPubKeys);
   factory TxExtraAdditionalPubKeys.fromStruct(Map<String, dynamic> json) {
-    return TxExtraAdditionalPubKeys(json
-        .asListBytes("pubKeys")!
-        .map((e) => MoneroPublicKey.fromBytes(e))
-        .toList());
+    return TxExtraAdditionalPubKeys(json.asListBytes("pubKeys")!);
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -216,7 +223,11 @@ class TxExtraAdditionalPubKeys extends TxExtra {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    return {"pubKeys": pubKeys.map((e) => e.key).toList()};
+    return {"pubKeys": pubKeys};
+  }
+
+  List<MoneroPublicKey> asPublicKeys() {
+    return pubKeys.map((e) => MoneroPublicKey.fromBytes(e)).toList();
   }
 }
 

@@ -237,4 +237,11 @@ class MoneroTransaction extends MoneroTransactionPrefix {
         .cast<String>()
         .toList();
   }
+
+  List<List<int>> getPublicKeys() {
+    return [
+      txPubkeyBytes(),
+      if (additionalPubKeys != null) ...additionalPubKeys!.pubKeys
+    ];
+  }
 }

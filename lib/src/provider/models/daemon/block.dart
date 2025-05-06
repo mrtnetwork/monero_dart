@@ -62,6 +62,10 @@ class DaemonBlockCompleteEntryResponse {
     return MoneroBlock.deserialize(BytesUtils.fromHexString(block));
   }
 
+  List<String> txIds() {
+    return MoneroBlock.getTxHashes(BytesUtils.fromHexString(block));
+  }
+
   Map<String, dynamic> toJson() {
     return {
       "pruned": pruned,
@@ -155,9 +159,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
     }
     final txWithIndices = List.generate(blocks.length, (i) {
       final block = blocks[i];
-      final mBlock = block.toBlock();
       final txes = block.getTxes();
-      final txIds = mBlock.txIds();
+      final txIds = block.txIds();
       if (txes.length != txIds.length) {
         throw const DartMoneroPluginException(
             "Invalid response. miss match txes and block tx hashes.");

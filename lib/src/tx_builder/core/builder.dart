@@ -13,35 +13,35 @@ class _MonerTxBuilderConst {
     List<int>? additionalTxPubKey;
     if (additionalSecretKey != null) {
       if (address.isSubaddress) {
-        additionalTxPubKey = RCT.scalarmultKeyFast_(
-            address.pubSpendKey, additionalSecretKey.key);
+        additionalTxPubKey =
+            RCT.scalarmultKeyVar(address.pubSpendKey, additionalSecretKey.key);
       } else {
-        additionalTxPubKey = RCT.scalarmultBaseFast_(additionalSecretKey.key);
+        additionalTxPubKey = RCT.scalarmultBaseVar(additionalSecretKey.key);
       }
     }
     List<int> derivation;
     if (address == changeAddr) {
-      derivation = MoneroCrypto.generateKeyDerivationFast(
+      derivation = MoneroCrypto.generateKeyDerivationVar(
           pubkey: txPublicKey, secretKey: changeAddressViewSecretKey!);
     } else {
       if (address.isSubaddress && additionalSecretKey != null) {
-        derivation = MoneroCrypto.generateKeyDerivationFast(
+        derivation = MoneroCrypto.generateKeyDerivationVar(
             pubkey: address.publicViewKey, secretKey: additionalSecretKey);
       } else {
-        derivation = MoneroCrypto.generateKeyDerivationFast(
+        derivation = MoneroCrypto.generateKeyDerivationVar(
             pubkey: address.publicViewKey, secretKey: txSecretKey);
       }
     }
-    final pk = MoneroCrypto.derivePublicKeyFast(
+    final pk = MoneroCrypto.derivePublicKeyVar(
         derivation: derivation,
         outIndex: outIndex,
         basePublicKey: MoneroPublicKey.fromBytes(address.pubSpendKey));
-    final amountKey = MoneroCrypto.derivationToScalarFast(
+    final amountKey = MoneroCrypto.derivationToScalarVar(
         derivation: derivation, outIndex: outIndex);
     TxoutTarget? key;
     final viewTag =
         MoneroCrypto.deriveViewTag(derivation: derivation, outIndex: outIndex);
-    key = TxoutToTaggedKey(key: pk, viewTag: viewTag);
+    key = TxoutToTaggedKey(key: pk.compressed, viewTag: viewTag);
     return TxEpemeralKeyResult(
         txOut: key,
         amountKey: amountKey,
@@ -104,13 +104,44 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   String get totalOutputAsXMR => MoneroTransactionHelper.toXMR(totalOutput);
   String get txId => transaction.getTxHash();
   MoneroTransaction getFinalTx();
+  MoneroTxProof generateProofVar(
+      {required MoneroAddress receiverAddress, String? message}) {
+    return MoneroTransactionHelper.generateOutProofVar(
+        transaction: transaction,
+        allTxKeys: destinationKeys.allTxKeys,
+        receiverAddress: receiverAddress,
+        message: message);
+  }
+
   MoneroTxProof generateProof(
-      {required MoneroAddress receiverAddress, required String? message}) {
+      {required MoneroAddress receiverAddress, String? message}) {
     return MoneroTransactionHelper.generateOutProof(
         transaction: transaction,
         allTxKeys: destinationKeys.allTxKeys,
         receiverAddress: receiverAddress,
-        message: message ?? '');
+        message: message);
+  }
+
+  MoneroTxProof generateInProof(
+      {required MoneroAccount account,
+      required MoneroAccountIndex index,
+      String? message}) {
+    return MoneroTransactionHelper.generateInProof(
+        transaction: transaction,
+        message: message,
+        account: account,
+        index: index);
+  }
+
+  MoneroTxProof generateInProofVar(
+      {required MoneroAccount account,
+      required MoneroAccountIndex index,
+      String? message}) {
+    return MoneroTransactionHelper.generateInProofVar(
+        transaction: transaction,
+        message: message,
+        account: account,
+        index: index);
   }
 
   MoneroTxBuilder(
@@ -206,8 +237,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       currentDestinations.add(MoneroTxDestination(
           amount: BigInt.zero,
           address: MoneroAccountAddress.fromPubKeys(
-              pubSpendKey: RCT.skpkGen_().item2,
-              pubViewKey: RCT.skpkGen_().item2)));
+              pubSpendKey: RCT.pkGenVar(), pubViewKey: RCT.pkGenVar())));
     }
     final addresses = currentDestinations.map((e) => e.address).toList();
     if (addresses.toSet().length != addresses.length) {
@@ -256,7 +286,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
         fakeTx ? _MonerTxBuilderConst.fakePubKey : cl.getTxPubKey(txKey);
 
     final List<MoneroTxout> vouts = [];
-    extras.add(TxExtraPublicKey(txPubKey));
+    extras.add(TxExtraPublicKey(txPubKey.key));
     List<MoneroPrivateKey>? additionalTxSecretKeys;
     final List<MoneroPublicKey> additionalTxPubKey = [];
     if (cl.needAdditionalTxkeys) {
@@ -293,7 +323,8 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       }
     }
     if (additionalTxPubKey.isNotEmpty) {
-      extras.add(TxExtraAdditionalPubKeys(additionalTxPubKey));
+      extras.add(TxExtraAdditionalPubKeys(
+          additionalTxPubKey.map((e) => e.key).toList()));
     }
     return ComputeDestinationKeys(
         amountKeys: amountKeys,
@@ -311,7 +342,8 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       required BigInt fee,
       KeyV? aResult,
       bool isMultisig = false,
-      bool fakeTx = false}) {
+      bool fakeTx = false,
+      bool fast = false}) {
     final List<int> index = sources.map((e) => e.realOutIndex).toList();
     final CtKeyV inSk =
         sources.map((e) => e.payment.output.toSecretKey).toList();
@@ -334,6 +366,21 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
         outs.length, (_) => CtKey(dest: RCT.zero(), mask: RCT.zero()));
     if (fakeTx) {
       return RCTGeneratorUtils.genFakeRctSimple(
+          message: txHash,
+          inSk: inSk,
+          destinations: destinationPubKeys.map((e) => e.key).toList(),
+          inamounts: inamounts,
+          outamounts: outamounts,
+          txnFee: fee,
+          mixRing: mixRing,
+          amountKeys: destinationKeys.amountKeys,
+          index: index,
+          outSk: outSk,
+          createLinkable: !isMultisig,
+          aResult: aResult);
+    }
+    if (fast) {
+      return RCTGeneratorUtils.genRctSimple(
           message: txHash,
           inSk: inSk,
           destinations: destinationPubKeys.map((e) => e.key).toList(),

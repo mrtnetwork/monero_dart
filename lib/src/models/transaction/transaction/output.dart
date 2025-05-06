@@ -95,6 +95,17 @@ abstract class TxoutTarget extends MoneroVariantSerialization {
   MoneroPublicKey? getPublicKey() {
     switch (type) {
       case TxOutTargetType.txoutToKey:
+        return MoneroPublicKey.fromBytes(cast<TxoutToKey>().key);
+      case TxOutTargetType.txoutToTaggedKey:
+        return MoneroPublicKey.fromBytes(cast<TxoutToTaggedKey>().key);
+      default:
+        return null;
+    }
+  }
+
+  List<int>? getPublicKeyBytes() {
+    switch (type) {
+      case TxOutTargetType.txoutToKey:
         return cast<TxoutToKey>().key;
       case TxOutTargetType.txoutToTaggedKey:
         return cast<TxoutToTaggedKey>().key;
@@ -185,10 +196,12 @@ class TxoutToScriptHash extends TxoutTarget {
 }
 
 class TxoutToKey extends TxoutTarget {
-  final MoneroPublicKey key;
-  TxoutToKey(this.key) : super(TxOutTargetType.txoutToKey);
+  final List<int> key;
+  TxoutToKey(List<int> key)
+      : key = key.exceptedLen(Ed25519KeysConst.pubKeyByteLen),
+        super(TxOutTargetType.txoutToKey);
   factory TxoutToKey.fromStruct(Map<String, dynamic> json) {
-    return TxoutToKey(MoneroPublicKey.fromBytes(json.asBytes("key")));
+    return TxoutToKey(json.asBytes("key"));
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -203,25 +216,25 @@ class TxoutToKey extends TxoutTarget {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    return {"key": key.key};
+    return {"key": key};
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {"key": key.toHex()};
+    return {"key": BytesUtils.toHexString(key)};
   }
 }
 
 class TxoutToTaggedKey extends TxoutTarget {
-  final MoneroPublicKey key;
+  final List<int> key;
   final int viewTag;
-  TxoutToTaggedKey({required this.key, required int viewTag})
+  TxoutToTaggedKey({required List<int> key, required int viewTag})
       : viewTag = viewTag.asUint8,
+        key = key.exceptedLen(Ed25519KeysConst.privKeyByteLen),
         super(TxOutTargetType.txoutToTaggedKey);
   factory TxoutToTaggedKey.fromStruct(Map<String, dynamic> json) {
     return TxoutToTaggedKey(
-        key: MoneroPublicKey.fromBytes(json.asBytes("key")),
-        viewTag: json.as("view_tag"));
+        key: json.asBytes("key"), viewTag: json.as("view_tag"));
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -238,12 +251,12 @@ class TxoutToTaggedKey extends TxoutTarget {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    return {"key": key.key, "view_tag": viewTag};
+    return {"key": key, "view_tag": viewTag};
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {"key": key.toHex(), "view_tag": viewTag};
+    return {"key": BytesUtils.toHexString(key), "view_tag": viewTag};
   }
 }
 

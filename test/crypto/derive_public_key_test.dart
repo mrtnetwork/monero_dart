@@ -1,23 +1,22 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:blockchain_utils/crypto/crypto/cdsa/utils/exp.dart';
 import 'package:monero_dart/src/crypto/monero/crypto.dart';
 import 'package:test/test.dart';
 import 'derive_public_key_test_vector.dart';
 
 void main() async {
-  _drivePublicKeyFast();
+  _drivePublicKeyVar();
   _invalidKeys();
   _drivePublicKey();
 }
 
-void _drivePublicKeyFast() {
+void _drivePublicKeyVar() {
   test("derive public key", () {
     for (final i in derivePublicKeyTestVector) {
       final derivation = BytesUtils.fromHexString(i["derivation"]);
       final int outIndex = int.parse(i["output_index"]);
       final base = MoneroPublicKey.fromHex(i["base"]);
       final expected = BytesUtils.fromHexString(i["expected"]);
-      final result = MoneroCrypto.derivePublicKeyFast(
+      final result = MoneroCrypto.derivePublicKeyVar(
           derivation: derivation, outIndex: outIndex, basePublicKey: base);
       expect(expected, result.key);
     }
@@ -48,7 +47,7 @@ void _invalidKeys() {
           "f3148c3041e634d829e5df463ba3b1d64df282d620d63485e1f10024e003b939");
       return MoneroCrypto.derivePublicKey(
           derivation: derivation, outIndex: outIndex, basePublicKey: base);
-    }, throwsA(isA<SquareRootError>()));
+    }, throwsA(isA<CryptoException>()));
   });
 
   test("derive public key. invalid key 1", () {
@@ -60,7 +59,7 @@ void _invalidKeys() {
           "c2b56e207862958751d49643f23079009092c32bf82179a1295e3b85a385c1c3");
       MoneroCrypto.derivePublicKey(
           derivation: derivation, outIndex: outIndex, basePublicKey: base);
-    }, throwsA(isA<SquareRootError>()));
+    }, throwsA(isA<CryptoException>()));
   });
   test("derive public key. invalid key 1", () {
     expect(() {
@@ -71,7 +70,7 @@ void _invalidKeys() {
           "b611ebd2bcfefc81cb772e35e3dd0204575cb0da644f68d4f9828a2683861e6c");
       MoneroCrypto.derivePublicKey(
           derivation: derivation, outIndex: outIndex, basePublicKey: base);
-    }, throwsA(isA<SquareRootError>()));
+    }, throwsA(isA<CryptoException>()));
   });
   test("derive public key. invalid key 2", () {
     expect(() {
@@ -82,6 +81,6 @@ void _invalidKeys() {
           "431127b1e53e1fcfb299b9a9659fc38be894938306653ff3b218f1c98cf6cb13");
       MoneroCrypto.derivePublicKey(
           derivation: derivation, outIndex: outIndex, basePublicKey: base);
-    }, throwsA(isA<SquareRootError>()));
+    }, throwsA(isA<CryptoException>()));
   });
 }

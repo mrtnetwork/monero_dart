@@ -164,7 +164,7 @@ class CLSAGContext {
     muCParams.addAll(cNonzero);
     muPParams.add(I);
     muCParams.add(I);
-    muPParams.add(RCT.scalarmultKey_(D, RCTConst.invEight));
+    muPParams.add(RCT.scalarmultKey(D, RCTConst.invEight));
     muCParams.add(muPParams.last);
     muPParams.add(cOffset);
     muCParams.add(cOffset);
@@ -189,8 +189,8 @@ class CLSAGContext {
     for (int i = 0; i < n; ++i) {
       final GroupElementDsmp pPrecomp = GroupElementCached.dsmp;
       final GroupElementDsmp cPrecomp = GroupElementCached.dsmp;
-      final RctKey C = RCT.zero();
-      RCT.subKeys(C, cNonzero[i], cOffset);
+      // final RctKey C = RCT.zero();
+      final RctKey C = RCT.subKeysVar(cNonzero[i], cOffset);
       RCT.precomp(pPrecomp, P[i]);
       RCT.precomp(cPrecomp, C);
       final RctKey W = RCT.zero();
@@ -252,10 +252,10 @@ class CLSAGContext {
     final RctKey bI = RCT.identity();
     CryptoOps.scZero(alphaCombinedR);
     for (int i = 0; i < numAlphaComponents; ++i) {
-      RCT.addKeys(_cParams[cParamsLOffset], _cParams[cParamsLOffset],
-          RCT.scalarmultKey_(totalAlphaG[i], bI));
-      RCT.addKeys(_cParams[cParamsROffset], _cParams[cParamsROffset],
-          RCT.scalarmultKey_(totalAlphaH[i], bI));
+      _cParams[cParamsLOffset] = RCT.addKeysVar(
+          _cParams[cParamsLOffset], RCT.scalarmultKey(totalAlphaG[i], bI));
+      _cParams[cParamsROffset] = RCT.addKeysVar(
+          _cParams[cParamsROffset], RCT.scalarmultKey(totalAlphaH[i], bI));
       CryptoOps.scMulAdd(alphaCombinedR, alpha[i], bI, alphaCombinedR);
       CryptoOps.scMul(bI, bI, b);
     }

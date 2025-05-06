@@ -26,48 +26,48 @@
 
 import 'dart:typed_data';
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:blockchain_utils/crypto/crypto/cdsa/utils/ed25519_utils.dart';
+
 import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/models/transaction/signature/signature.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
-import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 
 class RCT {
-  static List<List<List<int>>> keyMInit(int rows, int cols) {
-    final rv = List<List<List<int>>>.filled(cols, []);
-    for (int i = 0; i < cols; i++) {
-      rv[i] = List<List<int>>.generate(rows, (_) => zero());
-    }
-    return rv;
+  /// rands
+  static BigInt randXmrAmount(BigInt upperAmount) {
+    final r = skGen_();
+    final amount = h2d(r);
+    return amount % upperAmount;
   }
 
-  static bool toPointCheckOrder(GroupElementP3 p, List<int> data) {
-    if (CryptoOps.geFromBytesVartime_(p, data) != 0) {
-      return false;
-    }
-    final GroupElementP2 R = GroupElementP2();
-    CryptoOps.geScalarMult(R, RCTConst.l, p);
-    final RctKey tmp = zero();
-    CryptoOps.geToBytes(tmp, R);
-    return BytesUtils.bytesEqual(tmp, identity(clone: false));
+  static List<int> pkGenVar() {
+    final scalar = skGen_();
+    return scalarmultBaseVar(scalar);
   }
 
-  // static bool less32(List<int> k0, List<int> k1) {
-  //   for (int n = 31; n >= 0; --n) {
-  //     if (k0[n] < k1[n]) return true;
-  //     if (k0[n] > k1[n]) return false;
-  //   }
-  //   return false;
-  // }
+  static List<int> pkGen() {
+    final scalar = skGen_();
+    return scalarmultBase(scalar);
+  }
+
+  static void skpkGen(RctKey sk, RctKey pk) {
+    skGen(sk);
+    scalarmultBase(sk, result: pk);
+  }
 
   static List<int> skGen_() {
     while (true) {
       final rand = QuickCrypto.generateRandom();
-      // if (!less32(rand, RCTConst.limit)) {
-      //   continue;
-      // }
       CryptoOps.scReduce32(rand);
+      if (CryptoOps.scIsNonZero(rand) != 0) {
+        return rand;
+      }
+    }
+  }
+
+  static List<int> skGenVar() {
+    while (true) {
+      final rand = Ed25519Utils.scalarReduceVar(QuickCrypto.generateRandom());
       if (CryptoOps.scIsNonZero(rand) != 0) {
         return rand;
       }
@@ -81,11 +81,16 @@ class RCT {
     }
   }
 
-  static GroupElementP3 hashToP3_(List<int> k) {
-    final GroupElementP3 generator = GroupElementP3();
-    hashToP3(generator, k);
-    return generator;
-  }
+  // static bool toPointCheckOrder(GroupElementP3 p, List<int> data) {
+  //   if (CryptoOps.geFromBytesVartime_(p, data) != 0) {
+  //     return false;
+  //   }
+  //   final GroupElementP2 R = GroupElementP2();
+  //   CryptoOps.geScalarMult(R, RCTConst.l, p);
+  //   final RctKey tmp = zero();
+  //   CryptoOps.geToBytes(tmp, R);
+  //   return BytesUtils.bytesEqual(tmp, identity(clone: false));
+  // }
 
   static void hashToP3(GroupElementP3 p3, List<int> k) {
     final hashKey = QuickCrypto.keccack256Hash(k);
@@ -96,46 +101,20 @@ class RCT {
     CryptoOps.geP1P1ToP3(p3, hash8P1p1);
   }
 
-  static BigInt randXmrAmount(BigInt upperAmount) {
-    final r = skGen_();
-    final amount = h2d(r);
-    return amount % upperAmount;
+  static List<int> hashToP3Bytes(List<int> k) {
+    final GroupElementP3 p3 = GroupElementP3();
+    hashToP3(p3, k);
+    return CryptoOps.geP3Tobytes_(p3);
   }
 
-  static List<int> pkGen() {
-    final scalar = skGen_();
-    return _pkGen(scalar);
+  static EDPoint hashToPoint(List<int> k) {
+    return asPoint(hashToP3Bytes(k));
   }
 
-  static List<int> _pkGen(List<int> scalar) {
-    return scalarmultBase_(scalar);
-  }
-
-  static Tuple<List<int>, List<int>> skpkGen_() {
-    final secret = skGen_();
-    final pk = _pkGen(secret);
-    return Tuple(secret, pk);
-  }
-
-  static void skpkGen(RctKey sk, RctKey pk) {
-    skGen(sk);
-    scalarmultBase(pk, sk);
-  }
-
-  static void addKeys(List<int> ab, List<int> a, List<int> b) {
-    final GroupElementP3 b2 = GroupElementP3(), a2 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(b2, b) != 0) {
-      throw const MoneroCryptoException("Invalid pount.");
-    }
-    if (CryptoOps.geFromBytesVartime_(a2, a) != 0) {
-      throw const MoneroCryptoException("Invalid pount.");
-    }
-    final GroupElementCached tmp2 = GroupElementCached();
-    CryptoOps.geP3ToCached(tmp2, b2);
-    final GroupElementP1P1 tmp3 = GroupElementP1P1();
-    CryptoOps.geAdd(tmp3, a2, tmp2);
-    CryptoOps.geP1P1ToP3(a2, tmp3);
-    CryptoOps.geP3Tobytes(ab, a2);
+  static List<int> addKeysVar(List<int> a, List<int> b) {
+    final A = asPoint(a);
+    final B = asPoint(b);
+    return (A + B).toBytes();
   }
 
   static RctKey addKeysBatch(KeyV A) {
@@ -162,22 +141,18 @@ class RCT {
   }
 
   static List<int> addKeys_(List<int> a, List<int> b) {
-    final List<int> ab = zero();
-    addKeys(ab, a, b);
-    return ab;
-  }
-
-  static List<int> pk2rct(List<int> pubkey) {
-    return pubkey;
+    final b2 = Ed25519Utils.asPoint(b);
+    final a2 = Ed25519Utils.asPoint(a);
+    return (b2 + a2).toBytes();
   }
 
   static List<int> addKeys2_(List<int> a, List<int> b, List<int> pB) {
     final RctKey aGbB = zero();
-    addKeys2(aGbB, a, b, pB);
+    _addKeys2(aGbB, a, b, pB);
     return aGbB;
   }
 
-  static void addKeys2(RctKey aGbB, RctKey a, RctKey b, RctKey B) {
+  static void _addKeys2(RctKey aGbB, RctKey a, RctKey b, RctKey B) {
     final GroupElementP2 rv = GroupElementP2();
     final GroupElementP3 b2 = GroupElementP3();
     if (CryptoOps.geFromBytesVartime_(b2, B) != 0) {
@@ -185,17 +160,6 @@ class RCT {
     }
     CryptoOps.geDoubleScalarMultBaseVartime(rv, b, b2, a);
     CryptoOps.geToBytes(aGbB, rv);
-  }
-
-  static void addKeys3(
-      RctKey aAbB, RctKey a, RctKey A, RctKey b, GroupElementDsmp B) {
-    final GroupElementP2 rv = GroupElementP2();
-    final GroupElementP3 a2 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(a2, A) != 0) {
-      throw const MoneroCryptoException("Invalid point");
-    }
-    CryptoOps.geDoubleScalarMultPrecompVartime(rv, a, a2, b, B);
-    CryptoOps.geToBytes(aAbB, rv);
   }
 
   static void addKeys3_(
@@ -212,29 +176,20 @@ class RCT {
   }
 
   static void genC(RctKey c, RctKey a, BigInt amount) {
-    addKeys2(c, a, d2h(amount), RCTConst.h);
+    _addKeys2(c, a, d2h(amount), RCTConst.h);
   }
 
-  static List<int> scalarmultBase_(List<int> a) {
-    final List<int> ag = zero();
+  static RctKey genCVar(RctKey a, BigInt amount) {
+    return addKeys2Var(a, d2h(amount), RCTConst.h);
+  }
+
+  static List<int> scalarmultBase(List<int> a, {List<int>? result}) {
+    final List<int> ag = result ?? zero();
     final GroupElementP3 point = GroupElementP3();
     CryptoOps.scReduce32Copy(ag, a);
     CryptoOps.geScalarMultBase(point, ag);
     CryptoOps.geP3Tobytes(ag, point);
     return ag;
-  }
-
-  static List<int> scalarmultBaseFast_(List<int> a) {
-    final sc = Ed25519Utils.asScalarInt(Ed25519Utils.scalarReduce(a));
-    final data = Curves.generatorED25519 * sc;
-    return data.toBytes();
-  }
-
-  static void scalarmultBase(List<int> ag, List<int> a) {
-    final GroupElementP3 point = GroupElementP3();
-    CryptoOps.scReduce32Copy(ag, a);
-    CryptoOps.geScalarMultBase(point, ag);
-    CryptoOps.geP3Tobytes(ag, point);
   }
 
   static List<int> scalarmultH(List<int> a) {
@@ -245,20 +200,6 @@ class RCT {
     return aP;
   }
 
-  static Tuple<CtKey, CtKey> ctskpkGen(BigInt xmrAmount) {
-    final am = d2h(xmrAmount);
-    final bh = scalarmultH(am);
-    return ctskpkGenfromBh(bh);
-  }
-
-  static Tuple<CtKey, CtKey> ctskpkGenfromBh(List<int> bh) {
-    final sk = skpkGen_();
-    final pk = skpkGen_();
-    final mask = addKeys_(pk.item2, bh);
-    return Tuple(CtKey(dest: sk.item1, mask: pk.item1),
-        CtKey(dest: sk.item2, mask: mask));
-  }
-
   static List<int> commit({
     required BigInt xmrAmount,
     required List<int> mask,
@@ -266,19 +207,18 @@ class RCT {
     return genC_(mask, xmrAmount);
   }
 
-  static List<int> scalarmultKey_(List<int> p, List<int> a) {
+  static List<int> commitVar(
+      {required BigInt xmrAmount, required List<int> mask}) {
+    return genCVar(mask, xmrAmount);
+  }
+
+  static List<int> scalarmultKey(List<int> p, List<int> a) {
     final ap = zero();
-    scalarmultKey(ap, p, a);
+    _scalarmultKey(ap, p, a);
     return ap;
   }
 
-  static List<int> scalarmultKeyFast_(List<int> p, List<int> a) {
-    final ap = zero();
-    scalarmultKeyFast(ap, p, a);
-    return ap;
-  }
-
-  static void scalarmultKey(RctKey ap, List<int> p, List<int> a) {
+  static void _scalarmultKey(RctKey ap, List<int> p, List<int> a) {
     final GroupElementP3 aP3 = GroupElementP3();
     if (CryptoOps.geFromBytesVartime_(aP3, p) != 0) {
       throw const MoneroCryptoException("Invalid scalar key.");
@@ -288,23 +228,10 @@ class RCT {
     CryptoOps.geToBytes(ap, r);
   }
 
-  static void scalarmultKeyFast(RctKey ap, List<int> p, List<int> a) {
-    final point = EDPoint.fromBytes(curve: Curves.curveEd25519, data: p);
+  static RctKey scalarmultKeyVar(List<int> p, List<int> a) {
+    final point = asPoint(p);
     final sc = Ed25519Utils.asScalarInt(a);
-    final key = (point * sc).toBytes();
-    CryptoOps.scFill(ap, key);
-  }
-
-  static void scalarmult8(GroupElementP3 res, List<int> p) {
-    final GroupElementP3 p3 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(p3, p) != 0) {
-      throw const MoneroCryptoException("invalid point");
-    }
-    final GroupElementP2 p2 = GroupElementP2();
-    CryptoOps.geP3ToP2(p2, p3);
-    final GroupElementP1P1 p1 = GroupElementP1P1();
-    CryptoOps.geMul8(p1, p2);
-    CryptoOps.geP1P1ToP3(res, p1);
+    return (point * sc).toBytes();
   }
 
   static RctKey scalarmult8_(RctKey p) {
@@ -322,15 +249,23 @@ class RCT {
     return res;
   }
 
-  static bool isInMainSubgroup(List<int> a) {
-    final GroupElementP3 p = GroupElementP3();
-    return toPointCheckOrder(p, a);
+  static EDPoint scalarmult8PointVar(RctKey p) {
+    EDPoint p3 = asPoint(p);
+    p3 = p3 * BigInt.from(8);
+    return p3;
   }
 
-  static void addKeys1(
-      {required RctKey aGbB, required RctKey a, required RctKey b}) {
-    final ag = scalarmultBase_(a);
-    addKeys(aGbB, ag, b);
+  // static bool isInMainSubgroup(List<int> a) {
+  //   final GroupElementP3 p = GroupElementP3();
+  //   return toPointCheckOrder(p, a);
+  // }
+
+  static List<int> asValidScalar(List<int> sc) {
+    final r = CryptoOps.scCheck(sc);
+    if (r != 0) {
+      throw const MoneroCryptoException("Invalid scalar bytes.");
+    }
+    return sc;
   }
 
   static List<int> genAmountEncodingFactor(List<int> k) {
@@ -353,11 +288,11 @@ class RCT {
         .toUnsigned(64);
   }
 
-  static List<int> zeroCommit(BigInt amount) {
-    final am = d2h(amount);
-    final bh = scalarmultH(am);
-    return addKeys_(RCTConst.g, bh);
-  }
+  // static List<int> zeroCommit(BigInt amount) {
+  //   final am = d2h(amount);
+  //   final bh = scalarmultH(am);
+  //   return addKeys_(RCTConst.g, bh);
+  // }
 
   static List<int> identity({bool clone = true}) {
     if (clone) {
@@ -373,37 +308,25 @@ class RCT {
     return RCTConst.z;
   }
 
-  static Bits bits() {
-    return List<int>.filled(64, 0);
+  static EDPoint asPoint(RctKey key) {
+    return EDPoint.fromBytes(curve: Curves.curveEd25519, data: key);
   }
 
-  static void d2b(Bits amountb, BigInt val) {
-    int i = 0;
-    while (i < 64) {
-      amountb[i++] = (val & BigInt.one).toInt();
-      val >>= 1;
-    }
-  }
-
-  static void subKeys(RctKey ab, RctKey A, RctKey B) {
-    final GroupElementP3 b2 = GroupElementP3(), a2 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(b2, B) != 0) {
-      throw const MoneroCryptoException("Invalid point");
-    }
-    if (CryptoOps.geFromBytesVartime_(a2, A) != 0) {
-      throw const MoneroCryptoException("Invalid point");
-    }
-    final GroupElementCached tmp2 = GroupElementCached();
-    CryptoOps.geP3ToCached(tmp2, b2);
-    final GroupElementP1P1 tmp3 = GroupElementP1P1();
-    CryptoOps.geSub(tmp3, a2, tmp2);
-    CryptoOps.geP1P1ToP3(a2, tmp3);
-    CryptoOps.geP3Tobytes(ab, a2);
+  static RctKey subKeysVar(RctKey A, RctKey B) {
+    final b2 = asPoint(B);
+    final a2 = asPoint(A);
+    final sub = (a2 + (-b2)).toBytes();
+    return sub;
   }
 
   static List<int> genCommitmentMask(List<int> key) {
     final data = <int>[..."commitment_mask".codeUnits, ...key];
     return hashToScalarBytes(data);
+  }
+
+  static List<int> genCommitmentMaskVar(List<int> key) {
+    final data = <int>[..."commitment_mask".codeUnits, ...key];
+    return hashToScalarBytesVar(data);
   }
 
   static void hashToScalar(List<int> res, List<int> data) {
@@ -414,49 +337,48 @@ class RCT {
     }
   }
 
-  static List<int> scalar32Fast(List<int> scalar) {
-    final toint = BigintUtils.fromBytes(scalar, byteOrder: Endian.little);
-    final reduce = toint % Curves.generatorED25519.order!;
-    final tobytes = BigintUtils.toBytes(reduce,
-        order: Endian.little, length: RCTConst.i.length);
-    return tobytes;
-  }
-
-  static List<int> hashToScalarFast_(List<int> data) {
+  static List<int> hashToScalarVar(List<int> data) {
     final h = QuickCrypto.keccack256Hash(data);
-    return scalar32Fast(h);
+    return Ed25519Utils.scalarReduceVar(h);
   }
 
   static List<int> hashToScalar_(List<int> data) {
     final h = QuickCrypto.keccack256Hash(data);
-    CryptoOps.scReduce32(h);
-    return h;
+    return Ed25519Utils.scalarReduceConst(h);
   }
 
   static List<int> hashToScalarKeys(KeyV data) {
     final h = QuickCrypto.keccack256Hash(data.expand((e) => e).toList());
-    CryptoOps.scReduce32(h);
-    return h;
+    return Ed25519Utils.scalarReduceConst(h);
   }
 
-  static void addKeysAGbBcC(RctKey aGbBcC, RctKey a, RctKey b,
-      GroupElementDsmp B, RctKey c, GroupElementDsmp C) {
-    final GroupElementP2 rv = GroupElementP2();
-    CryptoOps.geTripleScalarMultBaseVartime(rv, a, b, B, c, C);
-    CryptoOps.geToBytes(aGbBcC, rv);
+  static List<int> hashToScalarKeysVar(KeyV data) {
+    final h = QuickCrypto.keccack256Hash(data.expand((e) => e).toList());
+    return Ed25519Utils.scalarReduceVar(h);
   }
 
-  static void addKeysAAbBcC(RctKey aAbBcC, RctKey a, GroupElementDsmp A,
-      RctKey b, GroupElementDsmp B, RctKey c, GroupElementDsmp C) {
-    final GroupElementP2 rv = GroupElementP2();
-    CryptoOps.geTripleScalarMultBasePrecompVartime(rv, a, A, b, B, c, C);
-    CryptoOps.geToBytes(aAbBcC, rv);
+  static RctKey addKeysAGbBcCVar(
+      RctKey a, RctKey b, List<EDPoint> B, RctKey c, List<EDPoint> C) {
+    return CryptoOps.geTripleScalarMultBasePointVar(
+            a: a, b: b, bI: B, c: c, cI: C)
+        .toBytes();
+  }
+
+  static RctKey addKeysAAbBcCVar(RctKey a, List<EDPoint> A, RctKey b,
+      List<EDPoint> B, RctKey c, List<EDPoint> C) {
+    return CryptoOps.geTripleScalarMultPrecompPointVar(a, A, b, B, c, C)
+        .toBytes();
   }
 
   static List<int> hashToScalarBytes(List<int> data) {
     final h = QuickCrypto.keccack256Hash(data);
     CryptoOps.scReduce32(h);
     return h;
+  }
+
+  static List<int> hashToScalarBytesVar(List<int> data) {
+    final h = QuickCrypto.keccack256Hash(data);
+    return Ed25519Utils.scalarReduceVar(h);
   }
 
   static void precomp(GroupElementDsmp rv, RctKey b) {
@@ -494,6 +416,25 @@ class RCT {
     }
   }
 
+  static EcdhTuple ecdhDecodeVar(
+      {required EcdhInfo ecdh, required List<int> sharedSec}) {
+    //decode
+    if (ecdh.version == EcdhInfoVersion.v2) {
+      final mask = genCommitmentMaskVar(sharedSec);
+      final amountFactor = genAmountEncodingFactor(sharedSec);
+      final amount = zero()..setAll(0, ecdh.amount);
+      xor8(amount, amountFactor);
+      return EcdhTuple(amount: amount, mask: mask, version: EcdhInfoVersion.v2);
+    } else {
+      final e = ecdh.cast<EcdhInfoV1>();
+      final List<int> sharedSec1 = RCT.hashToScalarVar(sharedSec);
+      final List<int> sharedSec2 = RCT.hashToScalarVar(sharedSec1);
+      final mask = Ed25519Utils.scSubVar(e.mask, sharedSec1);
+      final amount = Ed25519Utils.scSubVar(e.amount, sharedSec2);
+      return EcdhTuple(amount: amount, mask: mask, version: EcdhInfoVersion.v1);
+    }
+  }
+
   static EcdhInfo ecdhEncode(EcdhTuple unmasked, RctKey sharedSec) {
     if (unmasked.version == EcdhInfoVersion.v2) {
       final amount = unmasked.amount.clone();
@@ -510,6 +451,22 @@ class RCT {
     }
   }
 
+  static EcdhInfo ecdhEncodeVar(EcdhTuple unmasked, RctKey sharedSec) {
+    if (unmasked.version == EcdhInfoVersion.v2) {
+      final amount = unmasked.amount.clone();
+      xor8(amount, genAmountEncodingFactor(sharedSec));
+      return EcdhInfoV2(amount.sublist(0, 8));
+    } else {
+      final RctKey sharedSec1 = hashToScalarBytesVar(sharedSec);
+      final RctKey sharedSec2 = hashToScalarBytesVar(sharedSec1);
+      RctKey mask = unmasked.mask.clone();
+      RctKey amount = unmasked.amount.clone();
+      mask = Ed25519Utils.scAddVar(mask, sharedSec1);
+      amount = Ed25519Utils.scAddVar(amount, sharedSec2);
+      return EcdhInfoV1(amount: amount, mask: mask);
+    }
+  }
+
   static RctKey strToKey(String data) {
     List<int> toBytes = data.codeUnits;
     if (toBytes.length > 32) {
@@ -520,5 +477,19 @@ class RCT {
       key[i] = toBytes[i];
     }
     return key;
+  }
+
+  static List<int> scalarmultBaseVar(List<int> a) {
+    final sc = Ed25519Utils.asScalarInt(Ed25519Utils.scalarReduceVar(a));
+    final data = Curves.generatorED25519 * sc;
+    return data.toBytes();
+  }
+
+  static List<int> addKeys2Var(RctKey a, RctKey b, RctKey B) {
+    final aG = Curves.generatorED25519 * Ed25519Utils.asScalarInt(a);
+    final p = asPoint(B);
+    final bP = p * Ed25519Utils.asScalarInt(b);
+    final r = aG + bP;
+    return r.toBytes();
   }
 }

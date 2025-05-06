@@ -466,6 +466,10 @@ enum DaemonKeyImageSpentStatus {
 
 class DaemonIsKeyImageSpentResponse extends DaemonBaseResponse {
   final List<DaemonKeyImageSpentStatus> spentStatus;
+  DaemonIsKeyImageSpentResponse(List<DaemonKeyImageSpentStatus> spentStatus)
+      : spentStatus = spentStatus.immutable,
+        super(
+            credits: BigInt.zero, status: 'OK', topHash: '', untrusted: false);
 
   DaemonIsKeyImageSpentResponse.fromJson(super.json)
       : spentStatus = (json["spent_status"] as List)

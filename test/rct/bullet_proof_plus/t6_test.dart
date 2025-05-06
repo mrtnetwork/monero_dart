@@ -2,13 +2,10 @@ import 'package:blockchain_utils/crypto/quick_crypto.dart';
 import 'package:blockchain_utils/helper/helper.dart';
 import 'package:blockchain_utils/utils/binary/utils.dart';
 import 'package:blockchain_utils/utils/tuple/tuple.dart';
-import 'package:monero_dart/src/crypto/models/ct_key.dart';
-import 'package:monero_dart/src/crypto/ringct/utils/generator.dart';
-import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
-import 'package:monero_dart/src/crypto/types/types.dart';
-import 'package:monero_dart/src/models/transaction/signature/rct_prunable.dart';
-import 'package:monero_dart/src/models/transaction/signature/signature.dart';
+import 'package:monero_dart/monero_dart.dart';
 import 'package:test/test.dart';
+
+import 'tools.dart';
 
 void main() {
   _test();
@@ -86,12 +83,12 @@ void _test() {
     final CtKeyV sc = [], pc = [];
     // CtKey sctmp, pctmp;
     inamounts.add(BigInt.from(6500));
-    Tuple<CtKey, CtKey> f = RCT.ctskpkGen(inamounts.last);
+    Tuple<CtKey, CtKey> f = ctskpkGen(inamounts.last);
     sc.add(f.item1);
     pc.add(f.item2);
     inamounts.add(BigInt.from(9000));
 
-    f = RCT.ctskpkGen(inamounts.last);
+    f = ctskpkGen(inamounts.last);
     sc.add(f.item1);
     pc.add(f.item2);
     final List<BigInt> amounts = [];

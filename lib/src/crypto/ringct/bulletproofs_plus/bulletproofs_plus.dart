@@ -24,87 +24,81 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import 'dart:math';
+// import 'dart:math';
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/models/bullet_proof_data.dart';
-import 'package:monero_dart/src/models/transaction/signature/rct_prunable.dart';
-import 'package:monero_dart/src/crypto/ringct/const/const.dart';
-import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/multiexp.dart';
-import 'package:monero_dart/src/crypto/models/multiexp_data.dart';
-import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
-import 'package:monero_dart/src/serialization/layout/constant/const.dart';
-import 'package:monero_dart/src/crypto/types/types.dart';
+import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/cached/cached_exponet.dart';
+import 'package:monero_dart/src/monero_base.dart';
 
 class BulletproofsPlusGenerator {
   static const int maxN = 64;
   static const int maxM = 16;
+  static final _hPoint = RCT.asPoint(RCTConst.h);
+  static final _gPoint = RCT.asPoint(RCTConst.g);
 
-  static GroupElementP3 getExponent({required RctKey base, required int idx}) {
+  static EDPoint _getExponentBytes({required RctKey base, required int idx}) {
+    final cached = cachedExponet[idx.toString()];
+    if (cached != null) {
+      return RCT.asPoint(BytesUtils.fromHexString(cached));
+    }
     final indexBytes = MoneroLayoutConst.varintInt().serialize(idx);
     final hash = QuickCrypto.keccack256Hash(
         [...base, ...RCTConst.bulletproofPlusHashKey, ...indexBytes]);
 
-    final GroupElementP3 generator = RCT.hashToP3_(hash);
-    final toBytes = CryptoOps.geP3Tobytes_(generator);
-    if (BytesUtils.bytesEqual(toBytes, RCT.identity(clone: false))) {
-      throw const MoneroCryptoException("Exponent is point at infinity");
-    }
-    return generator;
+    return RCT.asPoint(RCT.hashToP3Bytes(hash));
   }
 
-  static GroupElementP3 getGiP3(int index) {
-    return getExponent(base: RCTConst.h, idx: index * 2 + 1);
+  static EDPoint _getGiP3Bytes(int index) {
+    return _getExponentBytes(base: RCTConst.h, idx: index * 2 + 1);
   }
 
-  static GroupElementP3 getHiP3(int index) {
-    return getExponent(base: RCTConst.h, idx: index * 2);
+  static EDPoint _getHiP3Bytes(int index) {
+    return _getExponentBytes(base: RCTConst.h, idx: index * 2);
   }
 
-  static RctKey multiexp({required List<MultiexpData> data, int higiSize = 0}) {
+  static RctKey _multiexp(
+      {required List<MultiexpData> data, int higiSize = 0}) {
     if (higiSize > 0) {
       if (higiSize <= 232 && data.length == higiSize) {
-        return Multiexp.straus(data: data, localCache: null, step: 0);
+        return Multiexp.straus(data: data, step: 0).toBytes();
       }
       return Multiexp.pippenger(
-          data: data,
-          localCache: null,
-          cacheSize: higiSize,
-          c: Multiexp.getPippengerC(data.length));
+              data: data,
+              cacheSize: higiSize,
+              c: Multiexp.getPippengerC(data.length))
+          .toBytes();
     }
     if (data.length <= 95) {
-      return Multiexp.straus(data: data);
+      return Multiexp.straus(data: data).toBytes();
     }
     return Multiexp.pippenger(
-        data: data,
-        localCache: null,
-        cacheSize: 0,
-        c: Multiexp.getPippengerC(data.length));
+            data: data, cacheSize: 0, c: Multiexp.getPippengerC(data.length))
+        .toBytes();
   }
 
-  static List<int> vectorExponent({required KeyV a, required KeyV b}) {
+  static List<int> _vectorExponentVar({required KeyV a, required KeyV b}) {
     if (a.length != b.length) {
       throw const MoneroCryptoException("Incompatible sizes of a and b");
     }
     if (a.length > maxN * maxM) {
       throw const MoneroCryptoException("Incompatible sizes of a and maxN");
     }
-    final List<MultiexpData> multiexpData = [];
+    final List<MultiexpData> multiexpDataVar = [];
     for (int i = 0; i < a.length; i++) {
-      multiexpData.add(MultiexpData(
+      multiexpDataVar.add(MultiexpData(
           scalar: a[i],
-          point: getGiP3(i))); // Assuming MultiexpData has a constructor
-      multiexpData.add(MultiexpData(scalar: b[i], point: getHiP3(i)));
+          point: _getGiP3Bytes(i))); // Assuming MultiexpData has a constructor
+      multiexpDataVar.add(MultiexpData(scalar: b[i], point: _getHiP3Bytes(i)));
     }
-    return multiexp(data: multiexpData, higiSize: a.length * 2);
+    return _multiexp(data: multiexpDataVar, higiSize: a.length * 2);
   }
 
-  static RctKey computeLR(
+  static RctKey _computeLRVar(
       int size,
       RctKey y,
-      List<GroupElementP3> G,
+      List<EDPoint> G,
       int g0,
-      List<GroupElementP3> H,
+      List<EDPoint> H,
       int h0,
       KeyV a,
       int a0,
@@ -128,31 +122,24 @@ class BulletproofsPlusGenerator {
       throw const MoneroCryptoException("size is too large");
     }
     final List<MultiexpData?> multiexpData = List.filled(size * 2 + 2, null);
-    final RctKey temp = RCT.zero();
+    RctKey temp = RCT.zero();
     for (int i = 0; i < size; ++i) {
-      final List<int> scalar = RCT.zero();
-      CryptoOps.scMul(temp, a[a0 + i], y);
-      CryptoOps.scMul(scalar, temp, RCTConst.invEight);
+      temp = Ed25519Utils.scMulVar(a[a0 + i], y);
+      final RctKey scalar =
+          Ed25519Utils.scMulVarBigInt(temp, RCTConst.invEightBig);
       multiexpData[i * 2] = MultiexpData(scalar: scalar, point: G[g0 + i]);
-      final List<int> scalar2 = RCT.zero();
-      CryptoOps.scMul(scalar2, b[b0 + i], RCTConst.invEight);
+      final RctKey scalar2 =
+          Ed25519Utils.scMulVarBigInt(b[b0 + i], RCTConst.invEightBig);
       multiexpData[i * 2 + 1] = MultiexpData(scalar: scalar2, point: H[h0 + i]);
     }
-    // MultiexpData sc = multiexpData[2 * size]!;
-    List<int> scBytes = RCT.zero();
-    CryptoOps.scMul(scBytes, c, RCTConst.invEight);
-    GroupElementP3 hP3 = GroupElementP3();
-    CryptoOps.geFromBytesVartime_(hP3, RCTConst.h);
-    multiexpData[2 * size] = MultiexpData(scalar: scBytes, point: hP3);
-    scBytes = RCT.zero();
-    CryptoOps.scMul(scBytes, d, RCTConst.invEight);
-    hP3 = GroupElementP3();
-    CryptoOps.geFromBytesVartime_(hP3, RCTConst.g);
-    multiexpData[2 * size + 1] = MultiexpData(scalar: scBytes, point: hP3);
-    return multiexp(data: multiexpData.cast(), higiSize: 0);
+    RctKey scBytes = Ed25519Utils.scMulVarBigInt(c, RCTConst.invEightBig);
+    multiexpData[2 * size] = MultiexpData(scalar: scBytes, point: _hPoint);
+    scBytes = Ed25519Utils.scMulVarBigInt(d, RCTConst.invEightBig);
+    multiexpData[2 * size + 1] = MultiexpData(scalar: scBytes, point: _gPoint);
+    return _multiexp(data: multiexpData.cast(), higiSize: 0);
   }
 
-  static KeyV vectorOfScalarPowers(RctKey x, int n) {
+  static KeyV _vectorOfScalarPowers(RctKey x, int n) {
     if (n <= 0) {
       throw const MoneroCryptoException("Need n > 0");
     }
@@ -163,12 +150,12 @@ class BulletproofsPlusGenerator {
     }
     res[1] = x.clone();
     for (int i = 2; i < n; ++i) {
-      CryptoOps.scMul(res[i], res[i - 1], x);
+      res[i] = Ed25519Utils.scMulVar(res[i - 1], x);
     }
     return res;
   }
 
-  static RctKey sumOfEvenPowers(RctKey x, int n) {
+  static RctKey _sumOfEvenPowers(RctKey x, int n) {
     if ((n & (n - 1)) != 0) {
       throw const MoneroCryptoException("Need n to be a power of 2");
     }
@@ -176,223 +163,215 @@ class BulletproofsPlusGenerator {
       throw const MoneroCryptoException("Need n > 0");
     }
 
-    final RctKey x1 = x.clone();
-    CryptoOps.scMul(x1, x1, x1);
+    RctKey x1 = x.clone();
+    x1 = Ed25519Utils.scMulVar(x1, x1);
 
-    final RctKey res = x1.clone();
+    RctKey res = x1.clone();
     while (n > 2) {
-      CryptoOps.scMulAdd(res, x1, res, res);
-      CryptoOps.scMul(x1, x1, x1);
+      res = Ed25519Utils.scMulAddVar(x1, res, res);
+      x1 = Ed25519Utils.scMulVar(x1, x1);
       n ~/= 2;
     }
 
     return res;
   }
 
-  static RctKey sumOfScalarPowers(RctKey x, int n) {
+  static RctKey _sumOfScalarPowers(RctKey x, int n) {
     if (n == 0) {
       throw const MoneroCryptoException("Need n > 0");
     }
 
-    final RctKey res = RCTConst.i.clone();
+    RctKey res = RCTConst.i.clone();
     if (n == 1) {
       return x;
     }
 
     n += 1;
-    final RctKey x1 = x.clone();
+    RctKey x1 = x.clone();
 
     final bool isPowerOf2 = (n & (n - 1)) == 0;
     if (isPowerOf2) {
-      CryptoOps.scAdd(res, res, x1);
+      res = Ed25519Utils.scAddVar(res, x1);
       while (n > 2) {
-        CryptoOps.scMul(x1, x1, x1);
-        CryptoOps.scMulAdd(res, x1, res, res);
+        x1 = Ed25519Utils.scMulVar(x1, x1);
+        res = Ed25519Utils.scMulAddVar(x1, res, res);
         n ~/= 2;
       }
     } else {
-      final RctKey prev = x1.clone();
+      RctKey prev = x1.clone();
       for (int i = 1; i < n; ++i) {
-        if (i > 1) CryptoOps.scMul(prev, prev, x1);
-        CryptoOps.scAdd(res, res, prev);
+        if (i > 1) prev = Ed25519Utils.scMulVar(prev, x1);
+        res = Ed25519Utils.scAddVar(res, prev);
       }
     }
-    CryptoOps.scSub(res, res, RCTConst.i);
+    res = Ed25519Utils.scSubVar(res, RCTConst.i);
     return res;
   }
 
-  static RctKey weightedInnerProduct(List<RctKey> a, List<RctKey> b, RctKey y) {
+  static RctKey _weightedInnerProduct(
+      List<RctKey> a, List<RctKey> b, RctKey y) {
     if (a.length != b.length) {
       throw const MoneroCryptoException("Incompatible sizes of a and b");
     }
-    final RctKey res = RCT.zero();
-    final RctKey yPower = RCTConst.i.clone();
-    final RctKey temp = RCT.zero();
+    RctKey res = RCT.zero();
+    RctKey yPower = RCTConst.i.clone();
+    RctKey temp = RCT.zero();
     for (int i = 0; i < a.length; ++i) {
-      CryptoOps.scMul(temp, a[i], b[i]);
-      CryptoOps.scMul(yPower, yPower, y);
-      CryptoOps.scMulAdd(res, temp, yPower, res);
+      temp = Ed25519Utils.scMulVar(a[i], b[i]);
+      yPower = Ed25519Utils.scMulVar(yPower, y);
+      res = Ed25519Utils.scMulAddVar(temp, yPower, res);
     }
     return res;
   }
 
-  static List<GroupElementP3> hadamardFold(
-      List<GroupElementP3> v, RctKey a, RctKey b) {
+  static List<EDPoint> _hadamardFoldVar(List<EDPoint> v, RctKey a, RctKey b) {
     if (v.length.isOdd) {
       throw const MoneroCryptoException("Vector size should be even");
     }
-    final int sz = v.length ~/ 2;
-    for (int n = 0; n < sz; ++n) {
-      final List<List<GroupElementCached>> c = [
-        GroupElementCached.dsmp,
-        GroupElementCached.dsmp
-      ];
-      CryptoOps.geDsmPrecomp(c[0], v[n]);
-      CryptoOps.geDsmPrecomp(c[1], v[sz + n]);
-      CryptoOps.geDoubleScalarMultPrecompVartime2P3(v[n], a, c[0], b, c[1]);
+    final vC = v.clone();
+    final int size = v.length ~/ 2;
+    for (int n = 0; n < size; ++n) {
+      vC[n] = CryptoOps.geDoubleScalarMultPrecompPointVar(
+          a,
+          CryptoOps.geDsmPrecompVar(v[n]),
+          b,
+          CryptoOps.geDsmPrecompVar(v[size + n]));
     }
-    return v.sublist(0, sz);
+    return vC.sublist(0, size);
   }
 
-  static KeyV vectorAddComponentwise(KeyV a, KeyV b) {
+  static KeyV _vectorAddComponentwise(KeyV a, KeyV b) {
     if (a.length != b.length) {
       throw const MoneroCryptoException("Incompatible sizes of a and b");
     }
     final KeyV res = List<List<int>>.generate(a.length, (_) => RCT.zero());
     for (int i = 0; i < a.length; ++i) {
-      CryptoOps.scAdd(res[i], a[i], b[i]);
+      res[i] = Ed25519Utils.scAddVar(a[i], b[i]);
     }
     return res;
   }
 
-  static KeyV vectorAdd(KeyV a, RctKey b) {
+  static KeyV _vectorAdd(KeyV a, RctKey b) {
     final KeyV res = List<List<int>>.generate(a.length, (_) => RCT.zero());
+    final bBig = Ed25519Utils.scalarAsBig(b);
     for (int i = 0; i < a.length; ++i) {
-      CryptoOps.scAdd(res[i], a[i], b);
+      res[i] = Ed25519Utils.scAddVarBig(a[i], bBig);
     }
     return res;
   }
 
-  static KeyV vectorSubtract(KeyV a, RctKey b) {
+  static KeyV _vectorSubtract(KeyV a, RctKey b) {
     final KeyV res = List<List<int>>.generate(a.length, (_) => RCT.zero());
+    final bBig = Ed25519Utils.scalarAsBig(b);
     for (int i = 0; i < a.length; ++i) {
-      CryptoOps.scSub(res[i], a[i], b);
+      res[i] = Ed25519Utils.scSubVarBigInt(a[i], bBig);
     }
     return res;
   }
 
-  static KeyV vectorScalar(List<RctKey> a, RctKey x) {
+  static KeyV _vectorScalar(List<RctKey> a, RctKey x) {
     final KeyV res = List<List<int>>.generate(a.length, (_) => RCT.zero());
+    final xBig = Ed25519Utils.scalarAsBig(x);
     for (int i = 0; i < a.length; ++i) {
-      CryptoOps.scMul(res[i], a[i], x);
+      res[i] = Ed25519Utils.scMulVarBigInt(a[i], xBig);
     }
     return res;
   }
 
-  static RctKey sm(RctKey y, int n, RctKey x) {
+  static RctKey _sm(RctKey y, int n, RctKey x) {
     while (n-- != 0) {
-      CryptoOps.scMul(y, y, y);
+      y = Ed25519Utils.scMulVar(y, y);
     }
-    CryptoOps.scMul(y, y, x);
+    y = Ed25519Utils.scMulVar(y, x);
     return y;
   }
 
-  static RctKey invert(RctKey x) {
+  static RctKey _invert(RctKey x) {
     if (BytesUtils.bytesEqual(x, RCTConst.z)) {
       throw const MoneroCryptoException("Cannot invert zero.");
     }
 
-    RctKey a1 = RCT.zero(),
-        a10 = RCT.zero(),
-        a100 = RCT.zero(),
-        a11 = RCT.zero(),
-        a101 = RCT.zero(),
-        a111 = RCT.zero(),
-        a1001 = RCT.zero(),
-        a1011 = RCT.zero(),
-        a1111 = RCT.zero();
+    /// Ed25519Utils
+    final RctKey a1 = x.clone();
+    final RctKey a10 = Ed25519Utils.scMulVar(a1, a1);
+    final RctKey a100 = Ed25519Utils.scMulVar(a10, a10);
+    final RctKey a11 = Ed25519Utils.scMulVar(a10, a1);
+    final RctKey a101 = Ed25519Utils.scMulVar(a10, a11);
+    final RctKey a111 = Ed25519Utils.scMulVar(a10, a101);
+    final RctKey a1001 = Ed25519Utils.scMulVar(a10, a111);
+    final RctKey a1011 = Ed25519Utils.scMulVar(a10, a1001);
+    final RctKey a1111 = Ed25519Utils.scMulVar(a100, a1011);
 
-    a1 = x.clone();
-    CryptoOps.scMul(a10, a1, a1);
-    CryptoOps.scMul(a100, a10, a10);
-    CryptoOps.scMul(a11, a10, a1);
-    CryptoOps.scMul(a101, a10, a11);
-    CryptoOps.scMul(a111, a10, a101);
-    CryptoOps.scMul(a1001, a10, a111);
-    CryptoOps.scMul(a1011, a10, a1001);
-    CryptoOps.scMul(a1111, a100, a1011);
+    RctKey inv = Ed25519Utils.scMulVar(a1111, a1);
 
-    RctKey inv = RCT.zero();
-    CryptoOps.scMul(inv, a1111, a1);
-
-    inv = sm(inv, 123 + 3, a101);
-    inv = sm(inv, 2 + 2, a11);
-    inv = sm(inv, 1 + 4, a1111);
-    inv = sm(inv, 1 + 4, a1111);
-    inv = sm(inv, 4, a1001);
-    inv = sm(inv, 2, a11);
-    inv = sm(inv, 1 + 4, a1111);
-    inv = sm(inv, 1 + 3, a101);
-    inv = sm(inv, 3 + 3, a101);
-    inv = sm(inv, 3, a111);
-    inv = sm(inv, 1 + 4, a1111);
-    inv = sm(inv, 2 + 3, a111);
-    inv = sm(inv, 2 + 2, a11);
-    inv = sm(inv, 1 + 4, a1011);
-    inv = sm(inv, 2 + 4, a1011);
-    inv = sm(inv, 6 + 4, a1001);
-    inv = sm(inv, 2 + 2, a11);
-    inv = sm(inv, 3 + 2, a11);
-    inv = sm(inv, 3 + 2, a11);
-    inv = sm(inv, 1 + 4, a1001);
-    inv = sm(inv, 1 + 3, a111);
-    inv = sm(inv, 2 + 4, a1111);
-    inv = sm(inv, 1 + 4, a1011);
-    inv = sm(inv, 3, a101);
-    inv = sm(inv, 2 + 4, a1111);
-    inv = sm(inv, 3, a101);
-    inv = sm(inv, 1 + 2, a11);
+    inv = _sm(inv, 123 + 3, a101);
+    inv = _sm(inv, 2 + 2, a11);
+    inv = _sm(inv, 1 + 4, a1111);
+    inv = _sm(inv, 1 + 4, a1111);
+    inv = _sm(inv, 4, a1001);
+    inv = _sm(inv, 2, a11);
+    inv = _sm(inv, 1 + 4, a1111);
+    inv = _sm(inv, 1 + 3, a101);
+    inv = _sm(inv, 3 + 3, a101);
+    inv = _sm(inv, 3, a111);
+    inv = _sm(inv, 1 + 4, a1111);
+    inv = _sm(inv, 2 + 3, a111);
+    inv = _sm(inv, 2 + 2, a11);
+    inv = _sm(inv, 1 + 4, a1011);
+    inv = _sm(inv, 2 + 4, a1011);
+    inv = _sm(inv, 6 + 4, a1001);
+    inv = _sm(inv, 2 + 2, a11);
+    inv = _sm(inv, 3 + 2, a11);
+    inv = _sm(inv, 3 + 2, a11);
+    inv = _sm(inv, 1 + 4, a1001);
+    inv = _sm(inv, 1 + 3, a111);
+    inv = _sm(inv, 2 + 4, a1111);
+    inv = _sm(inv, 1 + 4, a1011);
+    inv = _sm(inv, 3, a101);
+    inv = _sm(inv, 2 + 4, a1111);
+    inv = _sm(inv, 3, a101);
+    inv = _sm(inv, 1 + 2, a11);
 
     return inv;
   }
 
-  static KeyV invertBatch(KeyV x) {
+  static KeyV _invertBatchVar(KeyV x) {
     final KeyV scratch = [];
 
     RctKey acc = RCT.identity();
     for (int n = 0; n < x.length; ++n) {
       if (BytesUtils.bytesEqual(x[n], RCT.zero(clone: false))) {
-        throw const MoneroCryptoException("Cannot invert zero!");
+        throw const MoneroCryptoException("Cannot _invert zero!");
       }
       scratch.add(acc.clone());
       if (n == 0) {
         acc = x[0].clone();
       } else {
-        CryptoOps.scMul(acc, acc, x[n]);
+        acc = Ed25519Utils.scMulVar(acc, x[n]);
       }
     }
 
-    acc = invert(acc);
-    final RctKey tmp = RCT.zero();
+    acc = _invert(acc);
+    RctKey tmp = RCT.zero(clone: false);
     for (int i = x.length; i-- > 0;) {
-      CryptoOps.scMul(tmp, acc, x[i]);
-      CryptoOps.scMul(x[i], acc, scratch[i]);
+      tmp = Ed25519Utils.scMulVar(acc, x[i]);
+      x[i] = Ed25519Utils.scMulVar(acc, scratch[i]);
       acc = tmp.clone();
     }
     return x;
   }
 
-  static RctKey transcriptUpdateTwo(RctKey transcript, RctKey update) {
-    return RCT.hashToScalarBytes([...transcript, ...update]);
+  static RctKey _transcriptUpdateTwo(RctKey transcript, RctKey update) {
+    return RCT.hashToScalarBytesVar([...transcript, ...update]);
   }
 
-  static RctKey transcriptUpdateThree(
+  static RctKey _transcriptUpdateThree(
       RctKey transcript, RctKey update0, RctKey update1) {
-    return RCT.hashToScalarBytes([...transcript, ...update0, ...update1]);
+    return RCT.hashToScalarBytesVar([...transcript, ...update0, ...update1]);
   }
 
-  static bool isReduced(RctKey scalar) {
-    return CryptoOps.scCheck(scalar) == 0;
+  static bool _isReduced(RctKey scalar) {
+    return Ed25519Utils.scCheckVar(scalar);
   }
 
   static BulletproofPlus bulletproofPlusPROVE(KeyV sv, KeyV gamma) {
@@ -409,12 +388,12 @@ class BulletproofsPlusGenerator {
       throw const MoneroCryptoException("Incompatible sizes of sv and gamma");
     }
     for (final i in sv) {
-      if (!isReduced(i)) {
+      if (!_isReduced(i)) {
         throw const MoneroCryptoException("Invalid sv input");
       }
     }
     for (final i in gamma) {
-      if (!isReduced(i)) {
+      if (!_isReduced(i)) {
         throw const MoneroCryptoException("Invalid gamma input");
       }
     }
@@ -429,20 +408,21 @@ class BulletproofsPlusGenerator {
     }
     final int logMN = logM + logN;
     final int mn = M * N;
-    final KeyV V = List<List<int>>.generate(sv.length, (_) => RCT.zero());
+    final KeyV V = [];
     final KeyV aL = List<List<int>>.generate(mn, (_) => RCT.zero());
     final KeyV aR = List<List<int>>.generate(mn, (_) => RCT.zero());
     final KeyV aL8 = List<List<int>>.generate(mn, (_) => RCT.zero());
     final KeyV aR8 = List<List<int>>.generate(mn, (_) => RCT.zero());
     RctKey temp = RCT.zero();
-    final RctKey temp2 = RCT.zero();
-
+    RctKey temp2 = RCT.zero();
     for (int i = 0; i < sv.length; ++i) {
-      final RctKey gamma8 = RCT.zero(), sv8 = RCT.zero();
-      CryptoOps.scMul(gamma8, gamma[i], RCTConst.invEight);
-      CryptoOps.scMul(sv8, sv[i], RCTConst.invEight);
-      RCT.addKeys2(V[i], gamma8, sv8, RCTConst.h);
+      final RctKey gamma8 =
+          Ed25519Utils.scMulVarBigInt(gamma[i], RCTConst.invEightBig);
+      final RctKey sv8 =
+          Ed25519Utils.scMulVarBigInt(sv[i], RCTConst.invEightBig);
+      V.add(RCT.addKeys2Var(gamma8, sv8, RCTConst.h));
     }
+
     for (int j = 0; j < M; ++j) {
       for (int i = N; i-- > 0;) {
         if (j < sv.length && (sv[j][i ~/ 8] & (1 << (i % 8))) != 0) {
@@ -458,63 +438,67 @@ class BulletproofsPlusGenerator {
     }
     BulletproofPlus tryAgain() {
       RctKey transcript = RCTConst.bulletproofPlusinitialTranscript.clone();
-      transcript = transcriptUpdateTwo(transcript, RCT.hashToScalarKeys(V));
+      transcript = _transcriptUpdateTwo(transcript, RCT.hashToScalarKeys(V));
       final RctKey alpha = RCT.skGen_();
-      final RctKey preA = vectorExponent(a: aL8, b: aR8);
-      final RctKey A = RCT.zero();
-      CryptoOps.scMul(temp, alpha, RCTConst.invEight);
-      RCT.addKeys(A, preA, RCT.scalarmultBase_(temp));
-      final RctKey y = transcriptUpdateTwo(transcript, A);
-
+      final RctKey preA = _vectorExponentVar(a: aL8, b: aR8);
+      temp = Ed25519Utils.scMulVarBigInt(alpha, RCTConst.invEightBig);
+      final RctKey A = RCT.addKeysVar(preA, RCT.scalarmultBaseVar(temp));
+      final RctKey y = _transcriptUpdateTwo(transcript, A);
       if (BytesUtils.bytesEqual(y, RCT.zero(clone: false))) {
         return tryAgain();
       }
-      transcript = RCT.hashToScalar_(y);
-      // RctKey z = transcript.clone();
+      transcript = RCT.hashToScalarVar(y);
       if (BytesUtils.bytesEqual(transcript, RCT.zero(clone: false))) {
         return tryAgain();
       }
-      final RctKey zSquared = RCT.zero();
-      CryptoOps.scMul(zSquared, transcript, transcript);
+      final RctKey zSquared = Ed25519Utils.scMulVar(transcript, transcript);
       final KeyV d = List.generate(mn, (_) => RCT.zero());
       d[0] = zSquared;
       for (int i = 1; i < N; i++) {
-        CryptoOps.scMul(d[i], d[i - 1], RCTConst.two);
+        d[i] = Ed25519Utils.scMulVar(d[i - 1], RCTConst.two);
       }
+
       for (int j = 1; j < M; j++) {
         for (int i = 0; i < N; i++) {
-          CryptoOps.scMul(d[j * N + i], d[(j - 1) * N + i], zSquared);
+          d[j * N + i] = Ed25519Utils.scMulVar(d[(j - 1) * N + i], zSquared);
         }
       }
-      final KeyV yPowers = vectorOfScalarPowers(y, mn + 2);
-      final KeyV aL1 = vectorSubtract(aL, transcript);
-      KeyV aR1 = vectorAdd(aR, transcript);
+
+      final KeyV yPowers = _vectorOfScalarPowers(y, mn + 2);
+
+      final KeyV aL1 = _vectorSubtract(aL, transcript);
+
+      KeyV aR1 = _vectorAdd(aR, transcript);
+
       final KeyV dy = List.generate(mn, (i) => RCT.zero());
 
       for (int i = 0; i < mn; i++) {
-        CryptoOps.scMul(dy[i], d[i], yPowers[mn - i]);
+        dy[i] = Ed25519Utils.scMulVar(d[i], yPowers[mn - i]);
       }
-      aR1 = vectorAddComponentwise(aR1, dy);
-      final RctKey alpha1 = alpha.clone();
+
+      aR1 = _vectorAddComponentwise(aR1, dy);
+
+      RctKey alpha1 = alpha.clone();
       temp = RCTConst.i.clone();
       for (int j = 0; j < sv.length; j++) {
-        CryptoOps.scMul(temp, temp, zSquared);
-        CryptoOps.scMul(temp2, yPowers[mn + 1], temp);
-        CryptoOps.scMulAdd(alpha1, temp2, gamma[j], alpha1);
+        temp = Ed25519Utils.scMulVar(temp, zSquared);
+        temp2 = Ed25519Utils.scMulVar(yPowers[mn + 1], temp);
+        alpha1 = Ed25519Utils.scMulAddVar(temp2, gamma[j], alpha1);
       }
+
       int nprime = mn;
-      List<GroupElementP3> gPrime = List.generate(mn, (_) => GroupElementP3());
-      List<GroupElementP3> hPrime = List.generate(mn, (_) => GroupElementP3());
+      List<EDPoint> gPrime = [];
+      List<EDPoint> hPrime = [];
       KeyV aprime = List.generate(mn, (_) => RCT.zero());
       KeyV bprime = List.generate(mn, (_) => RCT.zero());
-      final RctKey yinv = invert(y);
+      final RctKey yinv = _invert(y);
       final KeyV yinvpow = List.generate(mn, (_) => RCT.zero());
       yinvpow[0] = RCTConst.i.clone();
       for (int i = 0; i < mn; ++i) {
-        gPrime[i] = getGiP3(i);
-        hPrime[i] = getHiP3(i);
+        gPrime.add(_getGiP3Bytes(i));
+        hPrime.add(_getHiP3Bytes(i));
         if (i > 0) {
-          CryptoOps.scMul(yinvpow[i], yinvpow[i - 1], yinv);
+          yinvpow[i] = Ed25519Utils.scMulVar(yinvpow[i - 1], yinv);
         }
         aprime[i] = aL1[i].clone();
         bprime[i] = aR1[i].clone();
@@ -526,99 +510,77 @@ class BulletproofsPlusGenerator {
       // Inner-product rounds
       while (nprime > 1) {
         nprime ~/= 2;
-        final RctKey cL = weightedInnerProduct(
+        final RctKey cL = _weightedInnerProduct(
             aprime.sublist(0, nprime), bprime.sublist(nprime), y);
-        final RctKey cR = weightedInnerProduct(
-            vectorScalar(aprime.sublist(nprime), yPowers[nprime]),
+        final RctKey cR = _weightedInnerProduct(
+            _vectorScalar(aprime.sublist(nprime), yPowers[nprime]),
             bprime.sublist(0, nprime),
             y);
         final RctKey dL = RCT.skGen_();
         final RctKey dR = RCT.skGen_();
-        L[round] = computeLR(nprime, yinvpow[nprime], gPrime, nprime, hPrime, 0,
-            aprime, 0, bprime, nprime, cL, dL);
-        R[round] = computeLR(nprime, yPowers[nprime], gPrime, 0, hPrime, nprime,
-            aprime, nprime, bprime, 0, cR, dR);
+        L[round] = _computeLRVar(nprime, yinvpow[nprime], gPrime, nprime,
+            hPrime, 0, aprime, 0, bprime, nprime, cL, dL);
+        R[round] = _computeLRVar(nprime, yPowers[nprime], gPrime, 0, hPrime,
+            nprime, aprime, nprime, bprime, 0, cR, dR);
 
         final RctKey challenge =
-            transcriptUpdateThree(transcript, L[round], R[round]);
+            _transcriptUpdateThree(transcript, L[round], R[round]);
         transcript = challenge.clone();
         if (BytesUtils.bytesEqual(challenge, RCT.zero(clone: false))) {
           return tryAgain();
         }
-
-        final RctKey cInv = invert(challenge);
-        CryptoOps.scMul(temp, yinvpow[nprime], challenge);
-        gPrime = hadamardFold(gPrime, cInv, temp);
-        hPrime = hadamardFold(hPrime, challenge, cInv);
-
-        CryptoOps.scMul(temp, cInv, yPowers[nprime]);
-        aprime = vectorAddComponentwise(
-            vectorScalar(aprime.sublist(0, nprime), challenge),
-            vectorScalar(aprime.sublist(nprime), temp));
-        bprime = vectorAddComponentwise(
-            vectorScalar(bprime.sublist(0, nprime), cInv),
-            vectorScalar(bprime.sublist(nprime), challenge));
-        final RctKey cSq = RCT.zero();
-        CryptoOps.scMul(cSq, challenge, challenge);
-        final RctKey cSqInv = RCT.zero();
-        CryptoOps.scMul(cSqInv, cInv, cInv);
-        CryptoOps.scMulAdd(alpha1, dL, cSq, alpha1);
-        CryptoOps.scMulAdd(alpha1, dR, cSqInv, alpha1);
+        final RctKey cInv = _invert(challenge);
+        temp = Ed25519Utils.scMulVar(yinvpow[nprime], challenge);
+        gPrime = _hadamardFoldVar(gPrime, cInv, temp);
+        hPrime = _hadamardFoldVar(hPrime, challenge, cInv);
+        temp = Ed25519Utils.scMulVar(cInv, yPowers[nprime]);
+        aprime = _vectorAddComponentwise(
+            _vectorScalar(aprime.sublist(0, nprime), challenge),
+            _vectorScalar(aprime.sublist(nprime), temp));
+        bprime = _vectorAddComponentwise(
+            _vectorScalar(bprime.sublist(0, nprime), cInv),
+            _vectorScalar(bprime.sublist(nprime), challenge));
+        final RctKey cSq = Ed25519Utils.scMulVar(challenge, challenge);
+        final RctKey cSqInv = Ed25519Utils.scMulVar(cInv, cInv);
+        alpha1 = Ed25519Utils.scMulAddVar(dL, cSq, alpha1);
+        alpha1 = Ed25519Utils.scMulAddVar(dR, cSqInv, alpha1);
         ++round;
       }
-      // Final round computations
-
       final RctKey r = RCT.skGen_();
       final RctKey s = RCT.skGen_();
       final RctKey d_ = RCT.skGen_();
       final RctKey eta = RCT.skGen_();
 
       final List<MultiexpData> data = [];
-      final RctKey sc1 = RCT.zero();
-      CryptoOps.scMul(sc1, r, RCTConst.invEight);
+      RctKey sc1 = Ed25519Utils.scMulVarBigInt(r, RCTConst.invEightBig);
       data.add(MultiexpData(scalar: sc1, point: gPrime[0]));
-      CryptoOps.scMul(sc1, s, RCTConst.invEight);
+      sc1 = Ed25519Utils.scMulVarBigInt(s, RCTConst.invEightBig);
       data.add(MultiexpData(scalar: sc1, point: hPrime[0]));
-      CryptoOps.scMul(sc1, d_, RCTConst.invEight);
-      final GroupElementP3 gP3 = GroupElementP3();
-      CryptoOps.geFromBytesVartime_(gP3, RCTConst.g);
-      data.add(MultiexpData(scalar: sc1, point: gP3));
+      sc1 = Ed25519Utils.scMulVarBigInt(d_, RCTConst.invEightBig);
+      data.add(MultiexpData(scalar: sc1, point: _gPoint));
+      temp = Ed25519Utils.scMulVar(r, y);
+      temp = Ed25519Utils.scMulVar(temp, bprime[0]);
+      temp2 = Ed25519Utils.scMulVar(s, y);
+      temp2 = Ed25519Utils.scMulVar(temp2, aprime[0]);
+      temp = Ed25519Utils.scAddVar(temp, temp2);
+      sc1 = Ed25519Utils.scMulVarBigInt(temp, RCTConst.invEightBig);
+      data.add(MultiexpData(scalar: sc1, point: _hPoint));
 
-      CryptoOps.scMul(temp, r, y);
-      CryptoOps.scMul(temp, temp, bprime[0]);
-      CryptoOps.scMul(temp2, s, y);
-      CryptoOps.scMul(temp2, temp2, aprime[0]);
-      CryptoOps.scAdd(temp, temp, temp2);
-      CryptoOps.scMul(sc1, temp, RCTConst.invEight);
-      final GroupElementP3 hP3 = GroupElementP3();
-      CryptoOps.geFromBytesVartime_(hP3, RCTConst.h);
-      data.add(MultiexpData(scalar: sc1, point: hP3));
-
-      final RctKey a1 = multiexp(data: data, higiSize: 0);
-
-      CryptoOps.scMul(temp, r, y);
-      CryptoOps.scMul(temp, temp, s);
-      CryptoOps.scMul(temp, temp, RCTConst.invEight);
-      CryptoOps.scMul(temp2, eta, RCTConst.invEight);
-      final RctKey B = RCT.zero();
-      RCT.addKeys2(B, temp2, temp, RCTConst.h);
-
-      final RctKey e = transcriptUpdateThree(transcript, a1, B);
+      final RctKey a1 = _multiexp(data: data, higiSize: 0);
+      temp = Ed25519Utils.scMulVar(r, y);
+      temp = Ed25519Utils.scMulVar(temp, s);
+      temp = Ed25519Utils.scMulVarBigInt(temp, RCTConst.invEightBig);
+      temp2 = Ed25519Utils.scMulVarBigInt(eta, RCTConst.invEightBig);
+      final RctKey B = RCT.addKeys2Var(temp2, temp, RCTConst.h);
+      final RctKey e = _transcriptUpdateThree(transcript, a1, B);
       if (BytesUtils.bytesEqual(e, RCT.zero(clone: false))) {
         return tryAgain();
       }
-      final RctKey eSq = RCT.zero();
-      CryptoOps.scMul(eSq, e, e);
-
-      final RctKey r1 = RCT.zero();
-      CryptoOps.scMulAdd(r1, aprime[0], e, r);
-
-      final RctKey s1 = RCT.zero();
-      CryptoOps.scMulAdd(s1, bprime[0], e, s);
-
-      final RctKey d1 = RCT.zero();
-      CryptoOps.scMulAdd(d1, d_, e, eta);
-      CryptoOps.scMulAdd(d1, alpha1, eSq, d1);
+      final RctKey eSq = Ed25519Utils.scMulVar(e, e);
+      final RctKey r1 = Ed25519Utils.scMulAddVar(aprime[0], e, r);
+      final RctKey s1 = Ed25519Utils.scMulAddVar(bprime[0], e, s);
+      RctKey d1 = Ed25519Utils.scMulAddVar(d_, e, eta);
+      d1 = Ed25519Utils.scMulAddVar(alpha1, eSq, d1);
       return BulletproofPlus(
           a: A, a1: a1, b: B, r1: r1, d1: d1, s1: s1, l: L, r: R, v: V);
     }
@@ -668,13 +630,13 @@ class BulletproofsPlusGenerator {
     final List<BpPlusProofData> proofData = [];
     List<RctKey> toInvert = [];
     for (final proof in proofs) {
-      if (!isReduced(proof.r1)) {
+      if (!_isReduced(proof.r1)) {
         throw const MoneroCryptoException("Input scalar r1 not in range");
       }
-      if (!isReduced(proof.s1)) {
+      if (!_isReduced(proof.s1)) {
         throw const MoneroCryptoException("Input scalar s1 not in range");
       }
-      if (!isReduced(proof.d1)) {
+      if (!_isReduced(proof.d1)) {
         throw const MoneroCryptoException("Input scalar d1 not in range");
       }
 
@@ -688,15 +650,15 @@ class BulletproofsPlusGenerator {
       if (proof.l.isEmpty) {
         throw const MoneroCryptoException("Empty proof");
       }
-      maxLength = max(maxLength, proof.l.length);
+      maxLength = IntUtils.max(maxLength, proof.l.length);
       RctKey transcript = RCTConst.bulletproofPlusinitialTranscript.clone();
       transcript =
-          transcriptUpdateTwo(transcript, RCT.hashToScalarKeys(proof.v));
-      final y = transcript = transcriptUpdateTwo(transcript, proof.a);
+          _transcriptUpdateTwo(transcript, RCT.hashToScalarKeysVar(proof.v));
+      final y = transcript = _transcriptUpdateTwo(transcript, proof.a);
       if (BytesUtils.bytesEqual(y, RCT.zero(clone: false))) {
         throw const MoneroCryptoException("y == 0");
       }
-      final z = transcript = RCT.hashToScalar_(y);
+      final z = transcript = RCT.hashToScalarVar(y);
       if (BytesUtils.bytesEqual(z, RCT.zero(clone: false))) {
         throw const MoneroCryptoException("z == 0");
       }
@@ -706,7 +668,7 @@ class BulletproofsPlusGenerator {
       if (proof.l.length != 6 + logM) {
         throw const MoneroCryptoException("Proof is not the expected size");
       }
-      maxLogM = max(logM, maxLogM);
+      maxLogM = IntUtils.max(logM, maxLogM);
 
       final int rounds = logM + logN;
       if (rounds <= 0) {
@@ -716,15 +678,15 @@ class BulletproofsPlusGenerator {
           List<RctKey>.generate(rounds, (_) => RCT.zero());
       for (int j = 0; j < rounds; ++j) {
         final update = transcript =
-            transcriptUpdateThree(transcript, proof.l[j], proof.r[j]);
-        challenges[j] = update.clone();
+            _transcriptUpdateThree(transcript, proof.l[j], proof.r[j]);
+        challenges[j] = update;
 
         if (BytesUtils.bytesEqual(challenges[j], RCT.zero(clone: false))) {
           throw const MoneroCryptoException("Some challanges is zoro");
         }
       }
       final e =
-          transcript = transcriptUpdateThree(transcript, proof.a1, proof.b);
+          transcript = _transcriptUpdateThree(transcript, proof.a1, proof.b);
       if (BytesUtils.bytesEqual(e, RCT.zero(clone: false))) {
         throw const MoneroCryptoException("e == 0");
       }
@@ -746,18 +708,19 @@ class BulletproofsPlusGenerator {
       throw const MoneroCryptoException("At least one proof is too large");
     }
     final int maxMN = 1 << maxLength;
-    final RctKey temp = RCT.zero();
-    final RctKey temp2 = RCT.zero();
+    RctKey temp = RCT.zero();
+    RctKey temp2 = RCT.zero();
     List<MultiexpData> data = [];
-    toInvert = invertBatch(toInvert.map((e) => e.clone()).toList());
-    final RctKey gScalar = RCT.zero();
-    final RctKey hScalar = RCT.zero();
+    toInvert = _invertBatchVar(toInvert.map((e) => e.clone()).toList());
+    RctKey gScalar = RCT.zero();
+    RctKey hScalar = RCT.zero();
     final KeyV giScalars = List.generate(maxMN, (_) => RCT.zero());
     final KeyV hiScalars = List.generate(maxMN, (_) => RCT.zero());
 
     int dataIndex = 0;
     KeyV cCache = [];
-    final List<GroupElementP3> proof8V = [], proof8L = [], proof8R = [];
+    final List<EDPoint> proof8V = [], proof8L = [], proof8R = [];
+
     for (final proof in proofs) {
       proof8V.clear();
       proof8L.clear();
@@ -774,78 +737,70 @@ class BulletproofsPlusGenerator {
         weight = RCT.skGen_();
       }
       for (int i = 0; i < proof.v.length; ++i) {
-        final p3 = GroupElementP3();
-        RCT.scalarmult8(p3, proof.v[i]);
-        proof8V.add(p3);
+        proof8V.add(RCT.scalarmult8PointVar(proof.v[i]));
       }
       for (int i = 0; i < proof.l.length; ++i) {
-        final p3 = GroupElementP3();
-        RCT.scalarmult8(p3, proof.l[i]);
-        proof8L.add(p3);
+        proof8L.add(RCT.scalarmult8PointVar(proof.l[i]));
       }
       for (int i = 0; i < proof.r.length; ++i) {
-        final p3 = GroupElementP3();
-        RCT.scalarmult8(p3, proof.r[i]);
-        proof8R.add(p3);
+        proof8R.add(RCT.scalarmult8PointVar(proof.r[i]));
       }
-      final GroupElementP3 proof8A1 = GroupElementP3();
-      final GroupElementP3 proof8B = GroupElementP3();
-      final GroupElementP3 proof8A = GroupElementP3();
-      RCT.scalarmult8(proof8A1, proof.a1);
-      RCT.scalarmult8(proof8B, proof.b);
-      RCT.scalarmult8(proof8A, proof.a);
-      final RctKey yMN = pd.y.clone();
-      final RctKey yMN1 = RCT.zero();
+      final proof8A1 = RCT.scalarmult8PointVar(proof.a1);
+      final proof8B = RCT.scalarmult8PointVar(proof.b);
+      final proof8A = RCT.scalarmult8PointVar(proof.a);
+      RctKey yMN = pd.y.clone();
+      RctKey yMN1 = RCT.zero();
       int tempMN = mn;
       while (tempMN > 1) {
-        CryptoOps.scMul(yMN, yMN, yMN);
+        yMN = Ed25519Utils.scMulVar(yMN, yMN);
         tempMN ~/= 2;
       }
-      CryptoOps.scMul(yMN1, yMN, pd.y);
-      final RctKey eSq = RCT.zero();
-      CryptoOps.scMul(eSq, pd.e, pd.e);
-      final RctKey zSquared = RCT.zero();
-      CryptoOps.scMul(zSquared, pd.z, pd.z);
-      CryptoOps.scSub(temp, RCTConst.z, eSq);
-      CryptoOps.scMul(temp, temp, yMN1);
-      CryptoOps.scMul(temp, temp, weight);
+      yMN1 = Ed25519Utils.scMulVar(yMN, pd.y);
+      final RctKey eSq = Ed25519Utils.scMulVar(pd.e, pd.e);
+      // final RctKey zSquared = RCT.zero();
+      final RctKey zSquared = Ed25519Utils.scMulVar(pd.z, pd.z);
+      temp = Ed25519Utils.scSubVar(RCTConst.z, eSq);
+      temp = Ed25519Utils.scMulVar(temp, yMN1);
+      temp = Ed25519Utils.scMulVar(temp, weight);
       for (int j = 0; j < proof8V.length; j++) {
-        CryptoOps.scMul(temp, temp, zSquared);
+        temp = Ed25519Utils.scMulVar(temp, zSquared);
+
         data.add(MultiexpData(scalar: temp, point: proof8V[j]));
       }
-      CryptoOps.scMul(temp, RCTConst.minusOne, weight);
+      temp = Ed25519Utils.scMulVar(RCTConst.minusOne, weight);
       data.add(MultiexpData(scalar: temp, point: proof8B));
-      CryptoOps.scMul(temp, temp, pd.e);
+      temp = Ed25519Utils.scMulVar(temp, pd.e);
       data.add(MultiexpData(scalar: temp, point: proof8A1));
-      final RctKey mWeightESquared = RCT.zero();
-      CryptoOps.scMul(mWeightESquared, temp, pd.e);
+      // RctKey mWeightESquared = RCT.zero();
+      final RctKey mWeightESquared = Ed25519Utils.scMulVar(temp, pd.e);
       data.add(MultiexpData(scalar: mWeightESquared, point: proof8A));
-      CryptoOps.scMulAdd(gScalar, weight, proof.d1, gScalar);
+      gScalar = Ed25519Utils.scMulAddVar(weight, proof.d1, gScalar);
       final KeyV d = List<List<int>>.generate(mn, (_) => RCT.zero());
       d[0] = zSquared.clone();
       for (int i = 1; i < N; i++) {
-        CryptoOps.scAdd(d[i], d[i - 1], d[i - 1]);
+        d[i] = Ed25519Utils.scAddVar(d[i - 1], d[i - 1]);
       }
 
       for (int j = 1; j < M; j++) {
         for (int i = 0; i < N; i++) {
-          CryptoOps.scMul(d[j * N + i], d[(j - 1) * N + i], zSquared);
+          d[j * N + i] = Ed25519Utils.scMulVar(d[(j - 1) * N + i], zSquared);
         }
       }
-      final RctKey sumD = RCT.zero();
-      CryptoOps.scMul(
-          sumD, RCTConst.twoSixtyFourMinusOne, sumOfEvenPowers(pd.z, 2 * M));
-      final RctKey sumY = sumOfScalarPowers(pd.y, mn);
-      CryptoOps.scSub(temp, zSquared, pd.z);
-      CryptoOps.scMul(temp, temp, sumY);
-      CryptoOps.scMul(temp2, yMN1, pd.z);
-      CryptoOps.scMul(temp2, temp2, sumD);
-      CryptoOps.scAdd(temp, temp, temp2);
-      CryptoOps.scMul(temp, temp, eSq);
-      CryptoOps.scMul(temp2, proof.r1, pd.y);
-      CryptoOps.scMul(temp2, temp2, proof.s1);
-      CryptoOps.scAdd(temp, temp, temp2);
-      CryptoOps.scMulAdd(hScalar, temp, weight, hScalar);
+      // final RctKey sumD = RCT.zero();
+      final sumD = Ed25519Utils.scMulVar(
+          RCTConst.twoSixtyFourMinusOne, _sumOfEvenPowers(pd.z, 2 * M));
+
+      final RctKey sumY = _sumOfScalarPowers(pd.y, mn);
+      temp = Ed25519Utils.scSubVar(zSquared, pd.z);
+      temp = Ed25519Utils.scMulVar(temp, sumY);
+      temp2 = Ed25519Utils.scMulVar(yMN1, pd.z);
+      temp2 = Ed25519Utils.scMulVar(temp2, sumD);
+      temp = Ed25519Utils.scAddVar(temp, temp2);
+      temp = Ed25519Utils.scMulVar(temp, eSq);
+      temp2 = Ed25519Utils.scMulVar(proof.r1, pd.y);
+      temp2 = Ed25519Utils.scMulVar(temp2, proof.s1);
+      temp = Ed25519Utils.scAddVar(temp, temp2);
+      hScalar = Ed25519Utils.scMulAddVar(temp, weight, hScalar);
       final int rounds = pd.logM + logN;
       if (rounds <= 0) {
         throw const MoneroCryptoException("Zero rounds");
@@ -859,64 +814,62 @@ class BulletproofsPlusGenerator {
       for (int j = 1; j < rounds; ++j) {
         final int slots = 1 << (j + 1);
         for (int s = slots; s-- > 0; --s) {
-          CryptoOps.scMul(cCache[s], cCache[s ~/ 2], pd.challenges[j]);
-          CryptoOps.scMul(cCache[s - 1], cCache[s ~/ 2], cInv[j]);
+          cCache[s] = Ed25519Utils.scMulVar(cCache[s ~/ 2], pd.challenges[j]);
+          cCache[s - 1] = Ed25519Utils.scMulVar(cCache[s ~/ 2], cInv[j]);
         }
       }
-      final RctKey eR1WY = RCT.zero();
-      CryptoOps.scMul(eR1WY, pd.e, proof.r1);
-      CryptoOps.scMul(eR1WY, eR1WY, weight);
-      final RctKey eS1W = RCT.zero();
-      CryptoOps.scMul(eS1W, pd.e, proof.s1);
-      CryptoOps.scMul(eS1W, eS1W, weight);
-      final RctKey eSquaredZW = RCT.zero();
-      CryptoOps.scMul(eSquaredZW, eSq, pd.z);
-      CryptoOps.scMul(eSquaredZW, eSquaredZW, weight);
-      final RctKey minusESquaredZW = RCT.zero();
-      CryptoOps.scSub(minusESquaredZW, RCTConst.z, eSquaredZW);
-      final RctKey minusESquaredWY = RCT.zero();
-      CryptoOps.scSub(minusESquaredWY, RCTConst.z, eSq);
-      CryptoOps.scMul(minusESquaredWY, minusESquaredWY, weight);
-      CryptoOps.scMul(minusESquaredWY, minusESquaredWY, yMN);
+      RctKey eR1WY = Ed25519Utils.scMulVar(pd.e, proof.r1);
+      eR1WY = Ed25519Utils.scMulVar(eR1WY, weight);
+      RctKey eS1W = Ed25519Utils.scMulVar(pd.e, proof.s1);
+      eS1W = Ed25519Utils.scMulVar(eS1W, weight);
+      RctKey eSquaredZW = Ed25519Utils.scMulVar(eSq, pd.z);
+      eSquaredZW = Ed25519Utils.scMulVar(eSquaredZW, weight);
+      final RctKey minusESquaredZW =
+          Ed25519Utils.scSubVar(RCTConst.z, eSquaredZW);
+      RctKey minusESquaredWY = Ed25519Utils.scSubVar(RCTConst.z, eSq);
+      minusESquaredWY = Ed25519Utils.scMulVar(minusESquaredWY, weight);
+      minusESquaredWY = Ed25519Utils.scMulVar(minusESquaredWY, yMN);
       for (int i = 0; i < mn; ++i) {
-        final RctKey gSc = eR1WY.clone();
-        final RctKey hSc = RCT.zero();
+        RctKey gSc = eR1WY.clone();
+        RctKey hSc = RCT.zero();
 
         // Use the binary decomposition of the index
-        CryptoOps.scMulAdd(gSc, gSc, cCache[i], eSquaredZW);
-        CryptoOps.scMulAdd(hSc, eS1W, cCache[(~i) & (mn - 1)], minusESquaredZW);
+        gSc = Ed25519Utils.scMulAddVar(gSc, cCache[i], eSquaredZW);
+        hSc = Ed25519Utils.scMulAddVar(
+            eS1W, cCache[(~i) & (mn - 1)], minusESquaredZW);
 
         // Complete the scalar derivation
-        CryptoOps.scAdd(giScalars[i], giScalars[i], gSc);
-        CryptoOps.scMulAdd(hSc, minusESquaredWY, d[i], hSc);
-        CryptoOps.scAdd(hiScalars[i], hiScalars[i], hSc);
+        giScalars[i] = Ed25519Utils.scAddVar(giScalars[i], gSc);
+        hSc = Ed25519Utils.scMulAddVar(minusESquaredWY, d[i], hSc);
+        hiScalars[i] = Ed25519Utils.scAddVar(hiScalars[i], hSc);
 
         // Update iterated values
-        CryptoOps.scMul(eR1WY, eR1WY, yinv);
-        CryptoOps.scMul(minusESquaredWY, minusESquaredWY, yinv);
+        eR1WY = Ed25519Utils.scMulVar(eR1WY, yinv);
+        minusESquaredWY = Ed25519Utils.scMulVar(minusESquaredWY, yinv);
       }
+
       for (int j = 0; j < rounds; ++j) {
-        CryptoOps.scMul(temp, pd.challenges[j], pd.challenges[j]);
-        CryptoOps.scMul(temp, temp, mWeightESquared);
+        temp = Ed25519Utils.scMulVar(pd.challenges[j], pd.challenges[j]);
+        temp = Ed25519Utils.scMulVar(temp, mWeightESquared);
         data.add(MultiexpData(scalar: temp, point: proof8L[j]));
-        CryptoOps.scMul(temp, cInv[j], cInv[j]);
-        CryptoOps.scMul(temp, temp, mWeightESquared);
+        temp = Ed25519Utils.scMulVar(cInv[j], cInv[j]);
+        temp = Ed25519Utils.scMulVar(temp, mWeightESquared);
         data.add(MultiexpData(scalar: temp, point: proof8R[j]));
       }
     }
 
-    data.add(MultiexpData(
-        scalar: gScalar, point: CryptoOps.geFromBytesVartime(RCTConst.g)));
-    data.add(MultiexpData(
-        scalar: hScalar, point: CryptoOps.geFromBytesVartime(RCTConst.h)));
+    data.add(MultiexpData(scalar: gScalar, point: _gPoint));
+    data.add(MultiexpData(scalar: hScalar, point: _hPoint));
 
     final List<MultiexpData?> nd = List.filled(2 * maxMN, null);
     for (int i = 0; i < maxMN; ++i) {
-      nd[i * 2] = MultiexpData(scalar: giScalars[i], point: getGiP3(i));
-      nd[i * 2 + 1] = MultiexpData(scalar: hiScalars[i], point: getHiP3(i));
+      nd[i * 2] = MultiexpData(scalar: giScalars[i], point: _getGiP3Bytes(i));
+      nd[i * 2 + 1] =
+          MultiexpData(scalar: hiScalars[i], point: _getHiP3Bytes(i));
     }
     data = [...nd.cast(), ...data];
-    final mp = multiexp(data: data, higiSize: 2 * maxMN);
+
+    final mp = _multiexp(data: data, higiSize: 2 * maxMN);
     if (BytesUtils.bytesEqual(mp, RCT.identity(clone: false))) {
       return true;
     }

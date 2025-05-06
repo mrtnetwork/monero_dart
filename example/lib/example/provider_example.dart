@@ -4,7 +4,7 @@ import 'package:monero_dart/monero_dart.dart';
 
 MoneroProvider createProvider({String? url}) {
   final provider = MoneroProvider(MoneroHTTPProvider(
-      daemoUrl: "https://stagenet.xmr.ditatompel.com",
+      daemoUrl: "http://stagenet.xmr-tw.org:38081",
       walletUrl: "http://127.0.0.1:1880"));
   return provider;
 }
@@ -43,6 +43,6 @@ class MoneroHTTPProvider implements MoneroServiceProvider {
     final response = await client
         .post(url, headers: params.headers, body: params.body())
         .timeout(timeout ?? defaultRequestTimeout);
-    return params.toResponse(response.body, response.statusCode);
+    return params.parseResponse(response.bodyBytes, response.statusCode);
   }
 }

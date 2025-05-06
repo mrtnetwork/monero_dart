@@ -38,7 +38,9 @@ class QuickMoneroProvider {
   }
 
   Future<List<MoneroTransactionWithOutputIndeces>> getTxes(
-      {required List<String> txHashes, bool validateResponse = true}) async {
+      {required List<String> txHashes,
+      bool validateResponse = true,
+      bool allowMempol = false}) async {
     if (txHashes.isEmpty) {
       throw const DartMoneroPluginException(
           "At least one transaction hash is required to retrieve transactions");
@@ -48,6 +50,12 @@ class QuickMoneroProvider {
     if (validateResponse && txHashes.length != result.length) {
       throw const DartMoneroPluginException(
           "One or more transactions could not be found.");
+    }
+    if (allowMempol) {
+      return result
+          .map((e) => MoneroTransactionWithOutputIndeces.unSafe(
+              transaction: e.toTx(), outputIndices: e.outoutIndices))
+          .toList();
     }
     return result
         .map((e) => MoneroTransactionWithOutputIndeces(
@@ -80,6 +88,9 @@ class QuickMoneroProvider {
 
   Future<DaemonIsKeyImageSpentResponse> keyImagesStatus(List<String> keyImages,
       {bool validateResponse = true}) async {
+    if (keyImages.isEmpty) {
+      return DaemonIsKeyImageSpentResponse([]);
+    }
     final result =
         await provider.request(DaemonRequestIsKeyImageSpent(keyImages));
     if (validateResponse && result.spentStatus.length != keyImages.length) {
@@ -179,11 +190,14 @@ class QuickMoneroProvider {
         bool blackballed = false;
         while (numFound < BigInt.from(outputsCount)) {
           if (BigInt.from(indices.length) == usableOuts) {
-            if (blackballed) break;
+            if (blackballed) {
+              break;
+            }
             blackballed = true;
             usableOuts = numOuts;
           }
           BigInt i;
+
           do {
             i = gamma.pick();
           } while (i >= numOuts);
@@ -218,6 +232,7 @@ class QuickMoneroProvider {
       final outs = await getOuts(outKeysRequests);
       outKeysResponse.addAll(outs.outs);
     }
+
     int base = 0;
     for (final payment in payments) {
       const defaultOutCount =
@@ -225,7 +240,7 @@ class QuickMoneroProvider {
               MoneroNetworkConst.cryptonoteDefaultTxSpendableAge;
       final int outputsCount = baseRequestCount + defaultOutCount;
       final List<OutsEntery> out = [];
-      final mask = RCT.commit(
+      final mask = RCT.commitVar(
           xmrAmount: payment.output.amount, mask: payment.output.mask);
       bool hasRealOut = false;
       for (int n = 0; n < outputsCount; ++n) {
@@ -282,6 +297,8 @@ class QuickMoneroProvider {
 
       base += outputsCount;
     }
+    gamma.clean();
+
     return List.generate(payments.length, (i) {
       final payment = payments[i];
       final sourceOuts = outs[i];

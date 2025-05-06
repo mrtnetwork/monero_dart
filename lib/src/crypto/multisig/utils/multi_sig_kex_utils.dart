@@ -156,7 +156,7 @@ class MoneroMultisigKexUtils {
     participantBaseCommonPrivkeys.sort((key1, key2) {
       return BytesUtils.compareBytes(key1.key, key2.key);
     });
-    final keyBytes = RCT.hashToScalarKeys(
+    final keyBytes = RCT.hashToScalarKeysVar(
         participantBaseCommonPrivkeys.map((e) => e.key).toList());
     return MoneroPrivateKey.fromBytes(keyBytes);
   }
@@ -178,7 +178,7 @@ class MoneroMultisigKexUtils {
       ...sortedKeys.map((e) => e.key),
       salt
     ];
-    return RCT.hashToScalarKeys(data);
+    return RCT.hashToScalarKeysVar(data);
   }
 
   static Tuple<MoneroPublicKey, List<MoneroPrivateKey>>
@@ -203,7 +203,7 @@ class MoneroMultisigKexUtils {
     }
 
     // Initialize aggregate key
-    final RctKey aggregateKey = RCT.identity();
+    RctKey aggregateKey = RCT.identity();
 
     for (final key in finalKeys) {
       // Compute aggregation coefficient
@@ -215,10 +215,10 @@ class MoneroMultisigKexUtils {
       }
 
       // Convert public key (pre-merge operation)
-      final RctKey convertedPubkey = RCT.scalarmultKey_(key.key, coeff);
+      final RctKey convertedPubkey = RCT.scalarmultKeyVar(key.key, coeff);
 
       // Merge converted public key into aggregate key
-      RCT.addKeys(aggregateKey, aggregateKey, convertedPubkey);
+      aggregateKey = RCT.addKeysVar(aggregateKey, convertedPubkey);
     }
     final pubKey = MoneroPublicKey.fromBytes(aggregateKey);
     final List<MoneroPrivateKey> updatedKeys =
@@ -237,10 +237,9 @@ class MoneroMultisigKexUtils {
       // note: must be mul8 (cofactor), otherwise it is possible to leak to a malicious participant if the local
       //       base_privkey is a multiple of 8 or not
       // note2: avoid making temporaries that won't be memwiped
-      final RctKey derivationRct = RCT.zero();
-
-      RCT.scalarmultKey(derivationRct, i.key.key, basePrivateKey.key);
-      RCT.scalarmultKey(derivationRct, derivationRct, RCTConst.eight);
+      RctKey derivationRct =
+          RCT.scalarmultKeyVar(i.key.key, basePrivateKey.key);
+      derivationRct = RCT.scalarmultKeyVar(derivationRct, RCTConst.eight);
 
       // retain mapping between pubkey's origins and the DH derivation
       // note: if working on last kex round, then caller must know how to handle these derivations properly

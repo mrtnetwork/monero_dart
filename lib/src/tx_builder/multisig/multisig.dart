@@ -174,15 +174,13 @@ class MoneroMultisigTxBuilder
       RctKey D = RCT.zero();
       final RctKey z = RCT.zero();
       CryptoOps.scSub(z, sources[i].payment.output.mask, a[i]);
-      final GroupElementP3 hP32 = GroupElementP3();
-      RCT.hashToP3(hP32, signature.signature.mixRing![i][l].dest);
-      final RctKey hL = RCT.zero();
-      CryptoOps.geP3Tobytes(hL, hP32);
-      D = RCT.scalarmultKey_(hL, z);
+      final RctKey hL =
+          RCT.hashToP3Bytes(signature.signature.mixRing![i][l].dest);
+      D = RCT.scalarmultKey(hL, z);
       final clsag = Clsag(
           s: s,
           c1: RCT.zero(),
-          d: RCT.scalarmultKey_(D, RCTConst.invEight),
+          d: RCT.scalarmultKey(D, RCTConst.invEight),
           i: I);
       clsags.add(clsag);
       final context = CLSAGContext.init(
@@ -338,7 +336,7 @@ class MoneroMultisigTxBuilder
     final prunable =
         signature.cast<RCTSignature>().rctSigPrunable!.cast<ClsagPrunable>();
     final KeyV v = List.generate(destinationKeys.outs.length,
-        (i) => RCT.scalarmultKey_(outPk[i].mask, RCTConst.invEight));
+        (i) => RCT.scalarmultKey(outPk[i].mask, RCTConst.invEight));
     final bulletproofPlus = prunable.cast<RctSigPrunableBulletproofPlus>();
     final proof = bulletproofPlus.bulletproofPlus[0];
     bpp.add(proof.copyWith(v: v));
@@ -375,7 +373,7 @@ class MoneroMultisigTxBuilder
       });
       final clsag = Clsag(s: s, c1: RCT.zero(), d: prunable.clsag[i].d, i: I);
       clsags.add(clsag);
-      final RctKey D = RCT.scalarmultKey_(prunable.clsag[i].d, RCTConst.eight);
+      final RctKey D = RCT.scalarmultKey(prunable.clsag[i].d, RCTConst.eight);
       final context = CLSAGContext.init(
           p, cNoneZero, cOffset, message, I, D, l, s, kAlphaComponents);
       clsagContext.add(context);
@@ -509,8 +507,8 @@ class MoneroMultisigTxBuilder
         MoneroPrivateKey? nonce;
         for (final n in multisigNonces) {
           if (usedNonces.contains(n)) continue;
-          final l = RCT.scalarmultBase_(n.key);
-          if (BytesUtils.isContains(_multisigInfo.l[s], l)) {
+          if (BytesUtils.isContains(
+              _multisigInfo.l[s], n.publicKey.compressed)) {
             nonce = n;
             usedNonces.add(nonce);
             break;

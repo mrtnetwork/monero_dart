@@ -139,7 +139,7 @@ void main() async {
       "51yw3EafPkXS6gwhJGGvNn7DzPEEGrgfeJZBvAFjzu8w252Zr1nx4PfVdXi4e6kiiQMBJ8k4JCFby2pANTAjofbo2rWBpbx");
 
   /// generate proof for some receiver
-  final proof = tx.generateProof(
+  final proof = tx.generateProofVar(
       receiverAddress: receiver, message: "everything you want.");
 
   /// https://stagenet.xmrchain.net/search?value=46d5655a4848436e4694c23d69b481abafefbc9c9aa8aa0a0d1fd0336cd579e4

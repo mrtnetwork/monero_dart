@@ -17,6 +17,7 @@ class MoneroRctTxBuilder
       required List<SpendablePayment<MoneroUnLockedPayment>> sources,
       required BigInt fee,
       bool fakeTx = false,
+      bool fast = false,
       MoneroTxDestination? change}) {
     sources = List<SpendablePayment<MoneroUnLockedPayment>>.from(sources)
       ..sort((a, b) => BytesUtils.compareBytes(
@@ -37,6 +38,7 @@ class MoneroRctTxBuilder
         sourceKeys: sourceKeys,
         sources: sources,
         fee: fee,
+        fast: fast,
         fakeTx: fakeTx);
     final transaction = MoneroTxBuilder._buildTx(
         destinationKeys: destinationKeys,
