@@ -41,6 +41,7 @@ jobs:
       - name: Run tests
         run: dart test ./test
       - name: Run tests Web
-        run: dart test ./test -p chrome --timeout=500s
-
+        run: dart test ./test -p chrome --timeout=20m
+      - name: Run tests Web
+        run: dart test ./test -p chrome -c dart2wasm --timeout=20m
 
