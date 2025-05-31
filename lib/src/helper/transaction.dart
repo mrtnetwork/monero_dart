@@ -74,8 +74,8 @@ class MoneroTransactionHelper {
       required List<int> txPubkey,
       required int outIndex,
       required int? viewTag}) {
-    final derivation = MoneroCrypto.generateKeyDerivationBytesVar(
-            pubkey: txPubkey, secretKey: viewSecretKey.key)
+    final derivation = MoneroCrypto.generateKeyDerivationBigVar(
+            pubkey: txPubkey, secretKey: viewSecretKey.privateKey.secret)
         .asImmutableBytes;
     if (hasSameViewTag(
         viewTag: viewTag, derivation: derivation, outIndex: outIndex)) {

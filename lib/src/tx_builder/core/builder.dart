@@ -10,44 +10,11 @@ class _MonerTxBuilderConst {
     MoneroAddress? changeAddr,
     MoneroPrivateKey? additionalSecretKey,
   }) {
-    List<int>? additionalTxPubKey;
-    if (additionalSecretKey != null) {
-      if (address.isSubaddress) {
-        additionalTxPubKey =
-            RCT.scalarmultKeyVar(address.pubSpendKey, additionalSecretKey.key);
-      } else {
-        additionalTxPubKey = RCT.scalarmultBaseVar(additionalSecretKey.key);
-      }
-    }
-    List<int> derivation;
-    if (address == changeAddr) {
-      derivation = MoneroCrypto.generateKeyDerivationVar(
-          pubkey: txPublicKey, secretKey: changeAddressViewSecretKey!);
-    } else {
-      if (address.isSubaddress && additionalSecretKey != null) {
-        derivation = MoneroCrypto.generateKeyDerivationVar(
-            pubkey: address.publicViewKey, secretKey: additionalSecretKey);
-      } else {
-        derivation = MoneroCrypto.generateKeyDerivationVar(
-            pubkey: address.publicViewKey, secretKey: txSecretKey);
-      }
-    }
-    final pk = MoneroCrypto.derivePublicKeyVar(
-        derivation: derivation,
-        outIndex: outIndex,
-        basePublicKey: MoneroPublicKey.fromBytes(address.pubSpendKey));
-    final amountKey = MoneroCrypto.derivationToScalarVar(
-        derivation: derivation, outIndex: outIndex);
-    TxoutTarget? key;
-    final viewTag =
-        MoneroCrypto.deriveViewTag(derivation: derivation, outIndex: outIndex);
-    key = TxoutToTaggedKey(key: pk.compressed, viewTag: viewTag);
+    final key = TxoutToTaggedKey(key: fakePubKey.compressed, viewTag: 12);
     return TxEpemeralKeyResult(
         txOut: key,
-        amountKey: amountKey,
-        additionalTxPubKey: additionalTxPubKey == null
-            ? null
-            : MoneroPublicKey.fromBytes(additionalTxPubKey));
+        amountKey: fakeScalar,
+        additionalTxPubKey: additionalSecretKey == null ? null : fakePubKey);
   }
 
   static const List<int> fakeScalar = [
@@ -361,7 +328,8 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final outs = destinationKeys.toRctOuts;
     final extra = destinationKeys.toExtraBytes();
     final tx = MoneroTransactionPrefix(vin: inputs, vout: outs, extra: extra);
-    final txHash = tx.getTranactionPrefixHash();
+    final txHash =
+        fakeTx ? _MonerTxBuilderConst.fakeScalar : tx.getTranactionPrefixHash();
     final CtKeyV outSk = List.generate(
         outs.length, (_) => CtKey(dest: RCT.zero(), mask: RCT.zero()));
     if (fakeTx) {

@@ -1,13 +1,19 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/models/block/block.dart';
-import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
+import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 class TxWithTxHashResponse {
   final MoneroTransaction transaction;
   final String txHash;
   const TxWithTxHashResponse({required this.transaction, required this.txHash});
+}
+
+class TxPrefixWithTxHashResponse {
+  final MoneroTransactionPrefix transaction;
+  final String txHash;
+  const TxPrefixWithTxHashResponse(
+      {required this.transaction, required this.txHash});
 }
 
 class DaemonTxBlobEntryResponse {
@@ -19,6 +25,11 @@ class DaemonTxBlobEntryResponse {
     return DaemonTxBlobEntryResponse(
         blob: json["blob"], prunableHash: json["prunable_hash"]);
   }
+
+  MoneroTransactionPrefix toPrefixTx() {
+    return MoneroTransactionPrefix.deserialize(BytesUtils.fromHexString(blob));
+  }
+
   MoneroTransaction toTx() {
     return MoneroTransaction.deserialize(BytesUtils.fromHexString(blob));
   }
@@ -52,6 +63,9 @@ class DaemonBlockCompleteEntryResponse {
               return DaemonTxBlobEntryResponse.fromJson(e);
             }).toList() ??
             []);
+  }
+  List<MoneroTransactionPrefix> getPrefixTxes() {
+    return txs.map((e) => e.toPrefixTx()).toList();
   }
 
   List<MoneroTransaction> getTxes() {
@@ -151,6 +165,28 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
             (json["remaining_added_pool_txids"] as List?)?.cast(),
         removedPoolTxids = (json["removed_pool_txids"] as List?)?.cast(),
         super.fromJson();
+
+  List<TxPrefixWithTxHashResponse> toPrefixTxes() {
+    if (blocks.length != outputIndices.length) {
+      throw const DartMoneroPluginException(
+          "Invalid response. miss match blocks and output indices");
+    }
+    final txWithIndices = List.generate(blocks.length, (i) {
+      final block = blocks[i];
+      final txes = block.getPrefixTxes();
+      final txIds = block.txIds();
+      if (txes.length != txIds.length) {
+        throw const DartMoneroPluginException(
+            "Invalid response. miss match txes and block tx hashes.");
+      }
+      final withIndices = List.generate(txes.length, (e) {
+        return TxPrefixWithTxHashResponse(
+            transaction: txes[e], txHash: txIds[e]);
+      });
+      return withIndices;
+    });
+    return txWithIndices.expand((e) => e).toList();
+  }
 
   List<TxWithTxHashResponse> toTxes() {
     if (blocks.length != outputIndices.length) {

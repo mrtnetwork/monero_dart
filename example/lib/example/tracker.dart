@@ -52,14 +52,13 @@ class MoneroChainAccountTracker {
               .toList());
         }
       }
-      _currentHeight += r.blocks.length;
       if (outputs.isNotEmpty) {
         outputs.removeWhere((e) => keyImages.contains(e.keyImage));
       }
     }
 
     final total = outputs.map((e) => e.output.amount).toList();
-    final txes = outputs.map((e) => e.txHash).toList();
+    final txes = outputs.map((e) => e.txHash).toSet();
   }
 }
 

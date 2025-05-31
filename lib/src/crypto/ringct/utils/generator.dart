@@ -137,20 +137,12 @@ class RCTGeneratorUtils {
     return proof;
   }
 
-  static BulletproofPlus _fakeProveRangeBulletproofPlus(
-      KeyV C, KeyV masks, List<BigInt> amounts) {
+  static BulletproofPlus _fakeProveRangeBulletproofPlus(List<BigInt> amounts) {
     int lR = 0;
     while ((1 << lR) < amounts.length) {
       ++lR;
     }
     lR += 6;
-    for (int i = 0; i < amounts.length; ++i) {
-      masks[i] = RCT.identity(clone: false);
-      final RctKey sv8 = RCT.zero();
-      final RctKey sv = RCT.d2h(amounts[i]);
-      CryptoOps.scMul(sv8, sv, RCTConst.invEight);
-      C[i] = RCT.addKeys2Var(RCTConst.invEight, sv8, RCTConst.h);
-    }
     return BulletproofPlus(
         a: RCT.identity(clone: false),
         a1: RCT.identity(clone: false),
@@ -210,9 +202,7 @@ class RCTGeneratorUtils {
     }
     final CtKeyV outPk = [];
     int i;
-    final List<RangeSig> rangeSig = [];
     final List<BulletproofPlus> bulletProofPlus = [];
-    final List<Bulletproof> bulletProof = [];
     final List<EcdhInfo> ecdh = [];
     for (i = 0; i < destinations.length; i++) {
       final mask = RCT.zero();
@@ -243,7 +233,6 @@ class RCTGeneratorUtils {
       ecdh.add(info);
     }
     final KeyV pseudoOuts = List.generate(inamounts.length, (_) => RCT.zero());
-    final List<MgSig> mgs = [];
     final List<Clsag> clsag = [];
     RctKey sumpouts = RCT.zero();
     final KeyV a =
@@ -265,10 +254,10 @@ class RCTGeneratorUtils {
         outPk: outPk,
         message: message,
         mixRing: mixRing,
-        rangeSig: rangeSig,
-        mgs: mgs,
+        rangeSig: [],
+        mgs: [],
         bulletProofPlus: bulletProofPlus,
-        bulletProof: bulletProof,
+        bulletProof: [],
         clsag: clsag,
         pseudoOuts: pseudoOuts);
     if (!createLinkable) return signature;
@@ -290,10 +279,10 @@ class RCTGeneratorUtils {
         outPk: outPk,
         message: message,
         mixRing: mixRing,
-        rangeSig: rangeSig,
-        mgs: mgs,
+        rangeSig: [],
+        mgs: [],
         bulletProofPlus: bulletProofPlus,
-        bulletProof: bulletProof,
+        bulletProof: [],
         clsag: clsag,
         pseudoOuts: pseudoOuts);
   }
@@ -345,10 +334,9 @@ class RCTGeneratorUtils {
     }
     final CtKeyV outPk = [];
     int i;
-    final List<RangeSig> rangeSig = [];
+    // final List<RangeSig> rangeSig = [];
     final List<BulletproofPlus> bulletProofPlus = [];
-    final List<Bulletproof> bulletProof = [];
-    final List<EcdhInfo> ecdh = [];
+
     for (i = 0; i < destinations.length; i++) {
       final mask = RCT.zero();
       final outSkMask = outSk[i].mask.clone();
@@ -356,37 +344,14 @@ class RCTGeneratorUtils {
       final CtKey pk = CtKey(dest: destinations[i].clone(), mask: mask);
       outPk.add(pk);
     }
-    final KeyV masks = List.filled(outamounts.length, RCT.identity());
-    final KeyV C = List.generate(outamounts.length, (_) => RCT.identity());
-    final prove = _fakeProveRangeBulletproofPlus(C, masks, outamounts);
+    // final KeyV masks = List.filled(outamounts.length, RCT.identity());
+    // final KeyV C = List.generate(outamounts.length, (_) => RCT.identity());
+    final prove = _fakeProveRangeBulletproofPlus(outamounts);
     bulletProofPlus.add(prove);
-    final RctKey sumout = RCT.zero();
-    for (i = 0; i < outSk.length; ++i) {
-      CryptoOps.scAdd(sumout, outSk[i].mask, sumout);
-      final ecdhT = EcdhTuple(
-          mask: outSk[i].mask,
-          amount: RCT.d2h(outamounts[i]),
-          version: EcdhInfoVersion.v2);
-      final EcdhInfo info = RCT.ecdhEncode(ecdhT, amountKeys[i]);
-      ecdh.add(info);
-    }
-    // BigInt txFee = txnFee;
+    final List<EcdhInfo> ecdh =
+        List.filled(outSk.length, EcdhInfoV2(RCT.identity().sublist(0, 8)));
     final KeyV pseudoOuts = List.generate(inamounts.length, (_) => RCT.zero());
-    final List<MgSig> mgs = [];
     final List<Clsag> clsag = [];
-    final RctKey sumpouts = RCT.zero();
-    final KeyV a =
-        aResult ?? List.generate(inamounts.length, (_) => RCT.zero());
-    if (a.length != inamounts.length) {
-      throw const MoneroCryptoException("Invalid a provided.");
-    }
-    for (i = 0; i < inamounts.length - 1; i++) {
-      RCT.skGen(a[i]);
-      CryptoOps.scAdd(sumpouts, a[i], sumpouts);
-      RCT.genC(pseudoOuts[i], a[i], inamounts[i]);
-    }
-    CryptoOps.scSub(a[i], sumout, sumpouts);
-    RCT.genC(pseudoOuts[i], a[i], inamounts[i]);
     final RCTSignature<S, P> signature = buildSignature(
         type: RCTType.rctTypeBulletproofPlus,
         ecdh: ecdh,
@@ -394,10 +359,10 @@ class RCTGeneratorUtils {
         outPk: outPk,
         message: message,
         mixRing: mixRing,
-        rangeSig: rangeSig,
-        mgs: mgs,
+        rangeSig: [],
+        mgs: [],
         bulletProofPlus: bulletProofPlus,
-        bulletProof: bulletProof,
+        bulletProof: [],
         clsag: clsag,
         pseudoOuts: pseudoOuts);
     for (i = 0; i < inamounts.length; i++) {
@@ -412,10 +377,10 @@ class RCTGeneratorUtils {
         outPk: outPk,
         message: message,
         mixRing: mixRing,
-        rangeSig: rangeSig,
-        mgs: mgs,
+        rangeSig: [],
+        mgs: [],
         bulletProofPlus: bulletProofPlus,
-        bulletProof: bulletProof,
+        bulletProof: [],
         clsag: clsag,
         pseudoOuts: pseudoOuts);
   }
@@ -644,7 +609,7 @@ class RCTGeneratorUtils {
     int n = 0;
     for (final proof in proofs) {
       final int n2 = _nBulletproofMaxAmounts(proof);
-      if (n2 >= (1 << 32) - 1 - n) {
+      if (n2 >= maxUint32 - n) {
         throw const MoneroCryptoException(
             "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.");
       }
@@ -660,7 +625,7 @@ class RCTGeneratorUtils {
     int n = 0;
     for (final proof in proofs) {
       final int n2 = _nBulletproofPlusMaxAmounts(proof);
-      if (n2 >= (1 << 32) - 1 - n) {
+      if (n2 >= maxUint32 - n) {
         throw const MoneroCryptoException(
             "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.");
       }

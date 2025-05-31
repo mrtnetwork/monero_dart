@@ -1,6 +1,7 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 import 'package:monero_dart/src/exception/exception.dart';
+import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/helper/transaction.dart';
 import 'package:monero_dart/src/models/transaction/transaction/input.dart';
 import 'package:monero_dart/src/models/transaction/transaction/output.dart';
@@ -26,6 +27,36 @@ class MoneroTransactionPrefix extends MoneroSerialization {
         vin = vin.immutable,
         vout = vout.immutable,
         extra = extra.asImmutableBytes;
+  factory MoneroTransactionPrefix.deserialize(List<int> bytes,
+      {bool forcePrunable = false, String? property}) {
+    final decode = MoneroSerialization.deserialize(
+        bytes: bytes, layout: layout(property: property));
+    return MoneroTransactionPrefix.fromStruct(decode);
+  }
+  factory MoneroTransactionPrefix.fromStruct(Map<String, dynamic> json) {
+    // final Map<String, dynamic> signatureJson = json.asMap("signature");
+    final int version = json.as("version");
+
+    // final MoneroTxSignatures sig;
+    // if (version == 1 && signatureJson.isEmpty) {
+    //   sig = const MoneroV1Signature(null);
+    // } else {
+    //   sig = MoneroTxSignatures.fromStruct(json.asMap("signature"));
+    // }
+
+    return MoneroTransactionPrefix(
+        version: version,
+        unlockTime: json.as("unlock_time"),
+        vin: json
+            .asListOfMap("vin")!
+            .map((e) => MoneroTxin.fromStruct(e))
+            .toList(),
+        vout: json
+            .asListOfMap("vout")!
+            .map((e) => MoneroTxout.fromStruct(e))
+            .toList(),
+        extra: json.asBytes("extera"));
+  }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.lazyStruct([

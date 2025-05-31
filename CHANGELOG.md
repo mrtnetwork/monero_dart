@@ -1,3 +1,7 @@
+## 1.1.0
+
+- Faster transaction unlocking.
+
 ## 1.0.0
 
 - Update dependencies.

@@ -140,13 +140,24 @@ class MoneroCrypto {
     return MoneroPublicKey.fromBytes(resultKey);
   }
 
+  static const List<int> _viewTagDomain = [
+    118,
+    105,
+    101,
+    119,
+    95,
+    116,
+    97,
+    103
+  ];
+
   /// Derives a view tag from a derivation and output index.
   static int deriveViewTag(
       {required List<int> derivation, required int outIndex}) {
     derivation.as32Bytes("deriveViewTag");
     final outputIndex = MoneroLayoutConst.varint48.serialize(outIndex);
     final hash = QuickCrypto.keccack256Hash(
-        [..."view_tag".codeUnits, ...derivation, ...outputIndex]);
+        [..._viewTagDomain, ...derivation, ...outputIndex]);
     return hash[0];
   }
 
@@ -219,6 +230,16 @@ class MoneroCrypto {
     final sc = Ed25519Utils.asScalarInt(secretKey);
     final p = RCT.asPoint(pubkey);
     EDPoint se = p * sc;
+    se = se * BigInt.from(8);
+    return se.toBytes();
+  }
+
+  static List<int> generateKeyDerivationBigVar(
+      {required List<int> pubkey,
+      required BigInt secretKey,
+      RctKey? resultKey}) {
+    final p = RCT.asPoint(pubkey);
+    EDPoint se = p * secretKey;
     se = se * BigInt.from(8);
     return se.toBytes();
   }
