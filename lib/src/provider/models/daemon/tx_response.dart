@@ -33,7 +33,7 @@ class TxResponse {
     }
     Map<String, dynamic>? asJson;
     if ((json["as_json"] as String?)?.isNotEmpty ?? false) {
-      asJson = StringUtils.tryToJson(json["as_json"]);
+      asJson = StringUtils.tryToJson<Map<String, dynamic>>(json["as_json"]);
     }
     return TxResponse(
         height: IntUtils.tryParse(json["block_height"]),
