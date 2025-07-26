@@ -27,9 +27,6 @@ void _verifySignature() {
 }
 
 void _generateSignature() {
-  // QuickCrypto.setupRandom((e){
-  //   return
-  // });
   test("generate signature", () {
     for (final i in signatureVector) {
       final List<int> hash = BytesUtils.fromHexString(i["hash"]);

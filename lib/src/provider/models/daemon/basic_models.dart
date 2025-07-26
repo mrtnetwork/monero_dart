@@ -502,6 +502,7 @@ class DaemonSendRawTxResponse extends DaemonBaseResponse {
   final bool sanityCheckFailed;
   final bool txExtraTooBig;
   final bool nonzeroUnlockTime;
+  bool get isSuccess => status == "OK";
 
   DaemonSendRawTxResponse.fromJson(super.json)
       : reason = json['reason'] ?? '',
@@ -518,6 +519,46 @@ class DaemonSendRawTxResponse extends DaemonBaseResponse {
         txExtraTooBig = json['tx_extra_too_big'] ?? false,
         nonzeroUnlockTime = json['nonzero_unlock_time'] ?? false,
         super.fromJson();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'reason': reason,
+      'not_relayed': notRelayed,
+      'low_mixin': lowMixin,
+      'double_spend': doubleSpend,
+      'invalid_input': invalidInput,
+      'invalid_output': invalidOutput,
+      'too_big': tooBig,
+      'overspend': overspend,
+      'fee_too_low': feeTooLow,
+      'too_few_outputs': tooFewOutputs,
+      'sanity_check_failed': sanityCheckFailed,
+      'tx_extra_too_big': txExtraTooBig,
+      'nonzero_unlock_time': nonzeroUnlockTime,
+    };
+  }
+
+  String? getErrorMessage() {
+    if (isSuccess) return null;
+    if (reason.isNotEmpty) return reason;
+
+    final List<String> errors = [];
+
+    if (doubleSpend) errors.add("Transaction is a double spend.");
+    if (feeTooLow) errors.add("Fee is too low.");
+    if (invalidInput) errors.add("Input is invalid.");
+    if (invalidOutput) errors.add("Output is invalid.");
+    if (lowMixin) errors.add("Mixin count is too low.");
+    if (notRelayed) errors.add("Transaction was not relayed.");
+    if (overspend) errors.add("Transaction uses more money than available.");
+    if (tooBig) errors.add("Transaction size is too big.");
+    if (tooFewOutputs) errors.add("Too few outputs.");
+    if (sanityCheckFailed) errors.add("Sanity check failed.");
+    if (txExtraTooBig) errors.add("Extra field in transaction is too big.");
+    if (nonzeroUnlockTime) errors.add("Transaction has non-zero unlock time.");
+
+    return errors.isEmpty ? "Unknown error occurred." : errors.join(' ');
+  }
 }
 
 class DaemonGetTxGlobalOutputIndexesResponse extends DaemonBaseResponse {
