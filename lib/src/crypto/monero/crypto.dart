@@ -240,7 +240,9 @@ class MoneroCrypto {
       RctKey? resultKey}) {
     final p = RCT.asPoint(pubkey);
     EDPoint se = p * secretKey;
+
     se = se * BigInt.from(8);
+
     return se.toBytes();
   }
 
