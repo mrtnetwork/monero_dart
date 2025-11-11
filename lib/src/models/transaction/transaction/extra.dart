@@ -114,9 +114,8 @@ class TxExtraPadding extends TxExtra {
 class TxExtraPublicKey extends TxExtra {
   final List<int> publicKey;
   TxExtraPublicKey(List<int> publicKey)
-      : publicKey = publicKey
-            .exceptedLen(Ed25519KeysConst.pubKeyByteLen)
-            .asImmutableBytes,
+      : publicKey =
+            publicKey.exc(Ed25519KeysConst.pubKeyByteLen).asImmutableBytes,
         super(TxExtraTypes.publicKey);
   factory TxExtraPublicKey.fromStruct(Map<String, dynamic> json) {
     return TxExtraPublicKey(json.asBytes("publicKey"));
@@ -202,8 +201,7 @@ class TxExtraAdditionalPubKeys extends TxExtra {
   final List<List<int>> pubKeys;
   TxExtraAdditionalPubKeys(List<List<int>> data)
       : pubKeys = data
-            .map((e) =>
-                e.exceptedLen(Ed25519KeysConst.pubKeyByteLen).asImmutableBytes)
+            .map((e) => e.exc(Ed25519KeysConst.pubKeyByteLen).asImmutableBytes)
             .toImutableList,
         super(TxExtraTypes.additionalPubKeys);
   factory TxExtraAdditionalPubKeys.fromStruct(Map<String, dynamic> json) {

@@ -101,7 +101,7 @@ class ComputeSourceKeys extends MoneroSerialization {
   })  : total =
             inputs.fold<BigInt>(BigInt.zero, (p, c) => p + c.amount).asUint64,
         inputSecretKeys = inputSecretKeys
-            .map((e) => e.asImmutableBytes.exceptedLen(32))
+            .map((e) => e.asImmutableBytes.exc(32))
             .toImutableList,
         inputs = inputs.immutable;
   factory ComputeSourceKeys.fromStruct(Map<String, dynamic> json) {

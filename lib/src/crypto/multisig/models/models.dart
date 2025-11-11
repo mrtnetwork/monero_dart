@@ -87,7 +87,7 @@ class MoneroMultisigOutputInfo extends MoneroSerialization {
     required List<RctKey> partialKeyImages,
   })  : lr = lr.immutable,
         partialKeyImages = partialKeyImages
-            .map((e) => e.asImmutableBytes.exceptedLen(32))
+            .map((e) => e.asImmutableBytes.exc(32))
             .toImutableList;
   factory MoneroMultisigOutputInfo.fromStruct(Map<String, dynamic> json) {
     return MoneroMultisigOutputInfo(

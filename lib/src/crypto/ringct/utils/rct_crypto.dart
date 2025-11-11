@@ -25,12 +25,12 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import 'dart:typed_data';
-import 'package:blockchain_utils/blockchain_utils.dart';
 
+import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/exception/exception.dart';
-import 'package:monero_dart/src/models/transaction/signature/signature.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
+import 'package:monero_dart/src/models/transaction/signature/signature.dart';
 
 class RCT {
   /// rands
@@ -269,7 +269,7 @@ class RCT {
   }
 
   static List<int> genAmountEncodingFactor(List<int> k) {
-    final data = [..."amount".codeUnits, ...k.exceptedLen(32)];
+    final data = [..."amount".codeUnits, ...k.exc(32)];
     return QuickCrypto.keccack256Hash(data);
   }
 

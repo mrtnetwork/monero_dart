@@ -80,11 +80,11 @@ abstract class MoneroOutput extends MoneroVariantSerialization {
       required BigInt unlockTime,
       required int realIndex})
       : amount = amount.asUint64,
-        mask = mask.asImmutableBytes.exceptedLen(32),
-        derivation = derivation.asImmutableBytes.exceptedLen(32),
+        mask = mask.asImmutableBytes.exc(32),
+        derivation = derivation.asImmutableBytes.exc(32),
         unlockTime = unlockTime.asUint64,
         realIndex = realIndex.asUint32,
-        outputPublicKey = outputPublicKey.exceptedLen(32);
+        outputPublicKey = outputPublicKey.exc(32);
   factory MoneroOutput.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroVariantSerialization.deserialize(
         bytes: bytes, layout: layout(property: property));
@@ -234,11 +234,9 @@ class MoneroUnlockedOutput extends MoneroOutput {
     required super.unlockTime,
     required super.realIndex,
     MoneroOutputType type = MoneroOutputType.unlocked,
-  })  : ephemeralPublicKey =
-            ephemeralPublicKey.asImmutableBytes.exceptedLen(32),
-        ephemeralSecretKey =
-            ephemeralSecretKey.asImmutableBytes.exceptedLen(32),
-        keyImage = keyImage.asImmutableBytes.exceptedLen(32),
+  })  : ephemeralPublicKey = ephemeralPublicKey.asImmutableBytes.exc(32),
+        ephemeralSecretKey = ephemeralSecretKey.asImmutableBytes.exc(32),
+        keyImage = keyImage.asImmutableBytes.exc(32),
         super(type: MoneroOutputType.unlocked);
   factory MoneroUnlockedOutput(
       {required BigInt amount,
@@ -339,7 +337,7 @@ class MoneroUnlockedMultisigOutput extends MoneroUnlockedOutput {
       required super.accountIndex,
       required super.unlockTime,
       required super.realIndex})
-      : multisigKeyImage = multisigKeyImage.asImmutableBytes.exceptedLen(32),
+      : multisigKeyImage = multisigKeyImage.asImmutableBytes.exc(32),
         super._(type: MoneroOutputType.unlockedMultisig);
   factory MoneroUnlockedMultisigOutput.fromStruct(Map<String, dynamic> json) {
     return MoneroUnlockedMultisigOutput(
@@ -423,7 +421,7 @@ abstract class MoneroPayment<T extends MoneroOutput>
     required this.globalIndex,
   })  : paymentId = paymentId?.asImmutableBytes,
         encryptedPaymentid = encryptedPaymentid?.asImmutableBytes,
-        txPubkey = txPubkey.exceptedLen(32, message: "Invalid public key.");
+        txPubkey = txPubkey.exc(32, name: "public key.");
   factory MoneroPayment.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroVariantSerialization.deserialize(
         bytes: bytes, layout: layout(property: property));

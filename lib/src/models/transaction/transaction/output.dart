@@ -198,7 +198,7 @@ class TxoutToScriptHash extends TxoutTarget {
 class TxoutToKey extends TxoutTarget {
   final List<int> key;
   TxoutToKey(List<int> key)
-      : key = key.exceptedLen(Ed25519KeysConst.pubKeyByteLen),
+      : key = key.exc(Ed25519KeysConst.pubKeyByteLen),
         super(TxOutTargetType.txoutToKey);
   factory TxoutToKey.fromStruct(Map<String, dynamic> json) {
     return TxoutToKey(json.asBytes("key"));
@@ -230,7 +230,7 @@ class TxoutToTaggedKey extends TxoutTarget {
   final int viewTag;
   TxoutToTaggedKey({required List<int> key, required int viewTag})
       : viewTag = viewTag.asUint8,
-        key = key.exceptedLen(Ed25519KeysConst.privKeyByteLen),
+        key = key.exc(Ed25519KeysConst.privKeyByteLen),
         super(TxOutTargetType.txoutToTaggedKey);
   factory TxoutToTaggedKey.fromStruct(Map<String, dynamic> json) {
     return TxoutToTaggedKey(

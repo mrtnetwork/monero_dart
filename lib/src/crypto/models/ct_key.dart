@@ -9,8 +9,8 @@ class CtKey extends MoneroSerialization {
   /// The mask key,
   final List<int> mask;
   CtKey({required List<int> dest, required List<int> mask})
-      : dest = dest.asImmutableBytes.exceptedLen(32),
-        mask = mask.asImmutableBytes.exceptedLen(32);
+      : dest = dest.asImmutableBytes.exc(32),
+        mask = mask.asImmutableBytes.exc(32);
   CtKey copyWith({List<int>? dest, List<int>? mask}) {
     return CtKey(dest: dest ?? this.dest, mask: mask ?? this.mask);
   }

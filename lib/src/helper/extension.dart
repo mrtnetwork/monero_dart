@@ -12,35 +12,6 @@ extension IntegerListValidator<T> on List<int> {
   }
 }
 
-extension ListValidator<T> on List<T> {
-  List<T> max(int length, {required String? name}) {
-    if (this.length > length) {
-      throw DartMoneroPluginException(
-          "Incorrect ${name == null ? '' : '$name '}array length.",
-          details: {"maximum": length, "length": this.length});
-    }
-    return this;
-  }
-
-  List<T> min(int length, {required String? name}) {
-    if (this.length < length) {
-      throw DartMoneroPluginException(
-          "Incorrect ${name == null ? '' : '$name '}array length.",
-          details: {"minimum": length, "length": this.length});
-    }
-    return this;
-  }
-
-  List<T> exc(int length, {required String? name}) {
-    if (this.length != length) {
-      throw DartMoneroPluginException(
-          "Incorrect ${name == null ? '' : '$name '}array length.",
-          details: {"expected": length, "length": this.length});
-    }
-    return this;
-  }
-}
-
 extension StringValidator on String {
   String max(int length, {String? name}) {
     if (this.length > length) {
