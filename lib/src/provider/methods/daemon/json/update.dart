@@ -3,8 +3,9 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Update daemon.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#update
-class DaemonRequestUpdate extends MoneroDaemonRequestParam<DaemonUpdateResponse,
-    Map<String, dynamic>> {
+class DaemonRequestUpdate
+    extends
+        MoneroDaemonRequestParam<DaemonUpdateResponse, Map<String, dynamic>> {
   const DaemonRequestUpdate({required this.command, required this.path});
   final String command;
   final String path;

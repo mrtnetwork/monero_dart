@@ -6,8 +6,11 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#add_address_book
 class WalletRequestAddAddressBook
     extends MoneroWalletRequestParam<int, Map<String, dynamic>> {
-  WalletRequestAddAddressBook(
-      {required this.address, this.paymentId, this.description});
+  WalletRequestAddAddressBook({
+    required this.address,
+    this.paymentId,
+    this.description,
+  });
 
   final MoneroAddress address;
 
@@ -19,10 +22,10 @@ class WalletRequestAddAddressBook
   String get method => "add_address_book";
   @override
   Map<String, dynamic> get params => {
-        "address": address.address,
-        "payment_id": paymentId,
-        "description": description
-      };
+    "address": address.address,
+    "payment_id": paymentId,
+    "description": description,
+  };
 
   /// The index of the address book entry.
   @override

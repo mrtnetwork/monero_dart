@@ -3,7 +3,6 @@
 import 'package:blockchain_utils/crypto/quick_crypto.dart';
 import 'package:blockchain_utils/helper/helper.dart';
 import 'package:blockchain_utils/utils/binary/utils.dart';
-import 'package:blockchain_utils/utils/tuple/tuple.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/generator.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
@@ -69,32 +68,30 @@ void _testOne() {
       "dd0a438d652e7ab936c1155accfc8774fef439b647022c3ddb3350e70395f50d",
       "e1a74194f751ab154859ee1952d9a1b4972c382fe0ae68edb02b7acbbd81f805",
       "b8844bebc2d1e0fa25bab53e0ea0e03216eadcaa4a4317006d6103790a878e04",
-      "65977e1881ff254d0c017525984f12b7ce60daebba58bed1ed907a2eb1da870a"
+      "65977e1881ff254d0c017525984f12b7ce60daebba58bed1ed907a2eb1da870a",
     ];
     int index = 0;
 
-    QuickCrypto.setupRandom(
-      (length) {
-        if (index >= rands.length) {
-          index = 0;
-          assert(false, "should not be here!");
-        }
+    QuickCrypto.setupRandom((length) {
+      if (index >= rands.length) {
+        index = 0;
+        assert(false, "should not be here!");
+      }
 
-        return BytesUtils.fromHexString(rands[index++]);
-      },
-    );
+      return BytesUtils.fromHexString(rands[index++]);
+    });
     final List<BigInt> inamounts = [];
     final CtKeyV sc = [], pc = [];
     // CtKey sctmp, pctmp;
     inamounts.add(BigInt.from(6000));
-    Tuple<CtKey, CtKey> f = ctskpkGen(inamounts.last);
-    sc.add(f.item1);
-    pc.add(f.item2);
+    (CtKey, CtKey) f = ctskpkGen(inamounts.last);
+    sc.add(f.$1);
+    pc.add(f.$2);
     inamounts.add(BigInt.from(7000));
 
     f = ctskpkGen(inamounts.last);
-    sc.add(f.item1);
-    pc.add(f.item2);
+    sc.add(f.$1);
+    pc.add(f.$2);
     final List<BigInt> amounts = [];
     final KeyV amountKeys = [];
     // add output 500
@@ -110,89 +107,139 @@ void _testOne() {
     destinations.add(pk.clone());
     final RCTSignature<RCTBulletproofPlus, RctSigPrunableBulletproofPlus> sig =
         RCTGeneratorUtils.genRctSimple_(
-      message: RCT.zero(),
-      inSk: sc,
-      inPk: pc,
-      destinations: destinations,
-      inamounts: inamounts,
-      outamounts: amounts,
-      amountKeys: amountKeys,
-      txnFee: BigInt.zero,
-      mixin: 3,
-    );
+          message: RCT.zero(),
+          inSk: sc,
+          inPk: pc,
+          destinations: destinations,
+          inamounts: inamounts,
+          outamounts: amounts,
+          amountKeys: amountKeys,
+          txnFee: BigInt.zero,
+          mixin: 3,
+        );
 
     final verify = RCTGeneratorUtils.verRctSimple(sig);
     expect(verify, true);
     expect(sig.signature.message, RCT.zero(clone: false));
     expect(sig.signature.mixRing?.length, 2);
-    expect(BytesUtils.toHexString(sig.signature.mixRing![0].first.mask),
-        "4ef28b572bf778530c02988864f1b547a28b29aeb4f2c986e0e32f5ea7ccc0f9");
-    expect(BytesUtils.toHexString(sig.signature.mixRing![0].first.dest),
-        "540e6fc0cab0e3a610f1da976ddea9998cfc9d2dd8e1361668b7705c19f790ec");
-    expect(BytesUtils.toHexString(sig.signature.mixRing![0].last.mask),
-        "a820b048c58d33970389f3df5cd184c75f37bc058b793b6fcc76ae2b140bd167");
-    expect(BytesUtils.toHexString(sig.signature.mixRing![0].last.dest),
-        "86f05e82dc687ace15de4f6ab64d43ded9197fa2e90fd99cc117f2199c34ca3e");
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![0].first.mask),
+      "4ef28b572bf778530c02988864f1b547a28b29aeb4f2c986e0e32f5ea7ccc0f9",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![0].first.dest),
+      "540e6fc0cab0e3a610f1da976ddea9998cfc9d2dd8e1361668b7705c19f790ec",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![0].last.mask),
+      "a820b048c58d33970389f3df5cd184c75f37bc058b793b6fcc76ae2b140bd167",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![0].last.dest),
+      "86f05e82dc687ace15de4f6ab64d43ded9197fa2e90fd99cc117f2199c34ca3e",
+    );
 
     // // ///
-    expect(BytesUtils.toHexString(sig.signature.mixRing![1].first.mask),
-        "7ff437613e0cc229e50796c7acb254707133dd998db1f427bdc855621b7eb2fd");
-    expect(BytesUtils.toHexString(sig.signature.mixRing![1].first.dest),
-        "198414ea61cdb7cf1321fbf4584797690352143064a461202432ff6be28d0451");
-    expect(BytesUtils.toHexString(sig.signature.mixRing![1].last.mask),
-        "77c568ea2bbea116952ce3999bbd99b31ab4564826e1df40c52458429f9f7086");
-    expect(BytesUtils.toHexString(sig.signature.mixRing![1].last.dest),
-        "dea511a7d7d3605d7b02ff6049038f81f108440623756c71615664fe2c23b5d5");
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![1].first.mask),
+      "7ff437613e0cc229e50796c7acb254707133dd998db1f427bdc855621b7eb2fd",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![1].first.dest),
+      "198414ea61cdb7cf1321fbf4584797690352143064a461202432ff6be28d0451",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![1].last.mask),
+      "77c568ea2bbea116952ce3999bbd99b31ab4564826e1df40c52458429f9f7086",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.mixRing![1].last.dest),
+      "dea511a7d7d3605d7b02ff6049038f81f108440623756c71615664fe2c23b5d5",
+    );
     expect(sig.signature.txnFee, BigInt.zero);
     expect(sig.rctSigPrunable!.pseudoOuts.length, 2);
-    expect(BytesUtils.toHexString(sig.rctSigPrunable!.pseudoOuts[0]),
-        "ff6a3868318415d80d58481108a0698338654cf40c3b65b62bc2ecdb7db253e5");
-    expect(BytesUtils.toHexString(sig.rctSigPrunable!.pseudoOuts[1]),
-        "40e612af2893861d24f5812eba8454e9f0658fd9e068d7a1746a7e057de063c7");
+    expect(
+      BytesUtils.toHexString(sig.rctSigPrunable!.pseudoOuts[0]),
+      "ff6a3868318415d80d58481108a0698338654cf40c3b65b62bc2ecdb7db253e5",
+    );
+    expect(
+      BytesUtils.toHexString(sig.rctSigPrunable!.pseudoOuts[1]),
+      "40e612af2893861d24f5812eba8454e9f0658fd9e068d7a1746a7e057de063c7",
+    );
     expect(sig.signature.outPk.length, 2);
-    expect(BytesUtils.toHexString(sig.signature.outPk[0].mask),
-        "21843920f19aaf8fef33717b3e190f13d5c10029ecb94d8ecd89cd8e1a3dec25");
-    expect(BytesUtils.toHexString(sig.signature.outPk[0].dest),
-        "7574564e93668dd3df187abcd1607c02d0e80358f3fb4837a7a3cdef884fae6d");
-    expect(BytesUtils.toHexString(sig.signature.outPk[1].mask),
-        "28504fe8e30934fa2c401bf84ffc80b1f9738fdf833043e40d8c1a9dce45eedb");
-    expect(BytesUtils.toHexString(sig.signature.outPk[1].dest),
-        "81642659730ef8d10f4fa9b18c9dbf45c99ede6ef20f8d3b40ca1305006ca550");
+    expect(
+      BytesUtils.toHexString(sig.signature.outPk[0].mask),
+      "21843920f19aaf8fef33717b3e190f13d5c10029ecb94d8ecd89cd8e1a3dec25",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.outPk[0].dest),
+      "7574564e93668dd3df187abcd1607c02d0e80358f3fb4837a7a3cdef884fae6d",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.outPk[1].mask),
+      "28504fe8e30934fa2c401bf84ffc80b1f9738fdf833043e40d8c1a9dce45eedb",
+    );
+    expect(
+      BytesUtils.toHexString(sig.signature.outPk[1].dest),
+      "81642659730ef8d10f4fa9b18c9dbf45c99ede6ef20f8d3b40ca1305006ca550",
+    );
     expect(sig.signature.ecdhInfo.length, 2);
     final ecdhInfos = sig.signature.ecdhInfo.cast<EcdhInfoV2>();
 
     expect(
-        BytesUtils.toHexString(ecdhInfos[0].amount),
-        "33ad6ebab7c67708000000000000000000000000000000000000000000000000"
-            .substring(0, 16));
+      BytesUtils.toHexString(ecdhInfos[0].amount),
+      "33ad6ebab7c67708000000000000000000000000000000000000000000000000"
+          .substring(0, 16),
+    );
     expect(
-        BytesUtils.toHexString(ecdhInfos[1].amount),
-        "139c6ebab7c67708000000000000000000000000000000000000000000000000"
-            .substring(0, 16));
+      BytesUtils.toHexString(ecdhInfos[1].amount),
+      "139c6ebab7c67708000000000000000000000000000000000000000000000000"
+          .substring(0, 16),
+    );
     expect(sig.rctSigPrunable!.bulletproofPlus.length, 1);
     expect(sig.rctSigPrunable!.bulletproofPlus[0].v.length, 2);
     final bulletProof = sig.rctSigPrunable!.bulletproofPlus[0];
-    expect(BytesUtils.toHexString(bulletProof.v[0]),
-        "7de665bfc6c98a0b4d8d69121646fa6e70d009455d67c6d98995a3fe0c72c8df");
-    expect(BytesUtils.toHexString(bulletProof.v[1]),
-        "f69799725178d91b2ece233b7ccf19d8f558c5970ec39427a1022098ae6e5ef5");
-    expect(BytesUtils.toHexString(bulletProof.a),
-        "d7e4baef566673ef08e10f8889a5da7d2c795339019cc61fd2725995435b6b9c");
-    expect(BytesUtils.toHexString(bulletProof.a1),
-        "8e9c182924bec61d1b0f9a34925266550f0e5d3cae306389daf88cbb7dfbf59a");
-    expect(BytesUtils.toHexString(bulletProof.b),
-        "03e3350db94d7295f3e35aa96b080341464cc20bc872f217b641997826935bb0");
-    expect(BytesUtils.toHexString(bulletProof.r1),
-        "3815596d0707a3f92dfc38ae68b3de68bf8dda965e6e78084f356e4afee9f80b");
-    expect(BytesUtils.toHexString(bulletProof.s1),
-        "75efd30cf2b147633969cfc3d9ab4bb72dc819aa25a417ea0f14da156325b702");
-    expect(BytesUtils.toHexString(bulletProof.d1),
-        "1019556a696ab738948157bf5cbda5f23155fbf79d86ff41619a3e786370360e");
+    expect(
+      BytesUtils.toHexString(bulletProof.v[0]),
+      "7de665bfc6c98a0b4d8d69121646fa6e70d009455d67c6d98995a3fe0c72c8df",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.v[1]),
+      "f69799725178d91b2ece233b7ccf19d8f558c5970ec39427a1022098ae6e5ef5",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.a),
+      "d7e4baef566673ef08e10f8889a5da7d2c795339019cc61fd2725995435b6b9c",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.a1),
+      "8e9c182924bec61d1b0f9a34925266550f0e5d3cae306389daf88cbb7dfbf59a",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.b),
+      "03e3350db94d7295f3e35aa96b080341464cc20bc872f217b641997826935bb0",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.r1),
+      "3815596d0707a3f92dfc38ae68b3de68bf8dda965e6e78084f356e4afee9f80b",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.s1),
+      "75efd30cf2b147633969cfc3d9ab4bb72dc819aa25a417ea0f14da156325b702",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.d1),
+      "1019556a696ab738948157bf5cbda5f23155fbf79d86ff41619a3e786370360e",
+    );
 
     expect(bulletProof.l.length, 7);
-    expect(BytesUtils.toHexString(bulletProof.l.first),
-        "bc3ae0b1f7f767baf928ac4205511cfd579a2b1dd129d1719d59f91f522bbcf9");
-    expect(BytesUtils.toHexString(bulletProof.l.last),
-        "1a5feff4ee83825426c758a6242363bc39fa3fda20ee5376304f04959e1984ae");
+    expect(
+      BytesUtils.toHexString(bulletProof.l.first),
+      "bc3ae0b1f7f767baf928ac4205511cfd579a2b1dd129d1719d59f91f522bbcf9",
+    );
+    expect(
+      BytesUtils.toHexString(bulletProof.l.last),
+      "1a5feff4ee83825426c758a6242363bc39fa3fda20ee5376304f04959e1984ae",
+    );
   });
 }

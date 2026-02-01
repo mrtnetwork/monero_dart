@@ -4,10 +4,17 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 /// Analyzes a string to determine whether it is a valid monero wallet
 /// address and returns the result and the address specifications.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#validate_address
-class WalletRequestValidateAddress extends MoneroWalletRequestParam<
-    WalletRPCValidateAddressResponse, Map<String, dynamic>> {
-  const WalletRequestValidateAddress(
-      {required this.address, this.anyNetType, this.allowOpenAlias});
+class WalletRequestValidateAddress
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCValidateAddressResponse,
+          Map<String, dynamic>
+        > {
+  const WalletRequestValidateAddress({
+    required this.address,
+    this.anyNetType,
+    this.allowOpenAlias,
+  });
 
   /// The address to validate.
   final String address;
@@ -24,10 +31,10 @@ class WalletRequestValidateAddress extends MoneroWalletRequestParam<
   String get method => "validate_address";
   @override
   Map<String, dynamic> get params => {
-        "address": address,
-        "any_net_type": anyNetType,
-        "allow_openalias": allowOpenAlias
-      };
+    "address": address,
+    "any_net_type": anyNetType,
+    "allow_openalias": allowOpenAlias,
+  };
   @override
   WalletRPCValidateAddressResponse onResonse(Map<String, dynamic> result) {
     return WalletRPCValidateAddressResponse.fromJson(result);

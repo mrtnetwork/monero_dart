@@ -56,48 +56,58 @@ class MultisigKexMessage {
         pubKeys = message.msgPubKeys;
         break;
       default:
-        throw MoneroMultisigAccountException("Invalid monero multisig type.",
-            details: {"type": msg.type});
+        throw MoneroMultisigAccountException(
+          "Invalid monero multisig type.",
+          details: {"type": msg.type},
+        );
     }
 
     kexMessage = MultisigKexMessage._(
-        message: msg,
-        round: round,
-        pubKeys: pubKeys.map((e) => MoneroCrypto.asValidPublicKey(e)).toList(),
-        messagePrivateKey: msgPrivateKey,
-        signingPubKey: MoneroCrypto.asValidPublicKey(signingPublicKey));
+      message: msg,
+      round: round,
+      pubKeys: pubKeys.map((e) => MoneroCrypto.asValidPublicKey(e)).toList(),
+      messagePrivateKey: msgPrivateKey,
+      signingPubKey: MoneroCrypto.asValidPublicKey(signingPublicKey),
+    );
     final hash = MoneroMultisigKexUtils.generateMessageHash(
-        msgPrivateKey: msgPrivateKey,
-        signingPubKey: signingPublicKey,
-        msgPubKeys: pubKeys,
-        round: round);
+      msgPrivateKey: msgPrivateKey,
+      signingPubKey: signingPublicKey,
+      msgPubKeys: pubKeys,
+      round: round,
+    );
     final verify = MoneroCrypto.checkSignature(
-        hash: hash, publicKey: signingPublicKey.key, signature: msg.signature);
+      hash: hash,
+      publicKey: signingPublicKey.key,
+      signature: msg.signature,
+    );
     if (!verify) {
       throw const MoneroMultisigAccountException(
-          "Multisig kex message verification failed.");
+        "Multisig kex message verification failed.",
+      );
     }
     return kexMessage;
   }
-  MultisigKexMessage._(
-      {required this.message,
-      required this.round,
-      required List<MoneroPublicKey> pubKeys,
-      required this.messagePrivateKey,
-      required this.signingPubKey})
-      : pubKeys = pubKeys.immutable;
-  factory MultisigKexMessage.generate(
-      {required int round,
-      required MoneroPrivateKey signingPrivateKey,
-      required List<MoneroPublicKey> msgPubKeys,
-      MoneroPrivateKey? msgPrivateKey}) {
+  MultisigKexMessage._({
+    required this.message,
+    required this.round,
+    required List<MoneroPublicKey> pubKeys,
+    required this.messagePrivateKey,
+    required this.signingPubKey,
+  }) : pubKeys = pubKeys.immutable;
+  factory MultisigKexMessage.generate({
+    required int round,
+    required MoneroPrivateKey signingPrivateKey,
+    required List<MoneroPublicKey> msgPubKeys,
+    MoneroPrivateKey? msgPrivateKey,
+  }) {
     if (round <= 0) {
       throw const MoneroMultisigAccountException("Kex round must be > 0.");
     }
     if (round == 1) {
       if (msgPrivateKey == null) {
         throw const MoneroMultisigAccountException(
-            "message private key must not be null in first round.");
+          "message private key must not be null in first round.",
+        );
       }
     } else {
       msgPubKeys =
@@ -105,33 +115,38 @@ class MultisigKexMessage {
     }
     final signingPubKey = signingPrivateKey.publicKey;
     final msgHash = MoneroMultisigKexUtils.generateMessageHash(
-        msgPrivateKey: msgPrivateKey,
-        signingPubKey: signingPubKey,
-        msgPubKeys: msgPubKeys,
-        round: round);
+      msgPrivateKey: msgPrivateKey,
+      signingPubKey: signingPubKey,
+      msgPubKeys: msgPubKeys,
+      round: round,
+    );
     final signature = MoneroCrypto.generateSignature(
-        hash: msgHash,
-        publicKey: signingPubKey.key,
-        secretKey: signingPrivateKey.key);
+      hash: msgHash,
+      publicKey: signingPubKey.key,
+      secretKey: signingPrivateKey.key,
+    );
     MultisigKexMessageSerializable message;
     if (round == 1) {
       message = MultisigKexMessageSerializableRound1(
-          msgPrivateKey: msgPrivateKey!,
-          signingPubKey: signingPubKey,
-          signature: signature);
+        msgPrivateKey: msgPrivateKey!,
+        signingPubKey: signingPubKey,
+        signature: signature,
+      );
     } else {
       message = MultisigKexMessageSerializableRoundN(
-          msgPubKeys: msgPubKeys,
-          round: round,
-          signingPubKey: signingPubKey,
-          signature: signature);
+        msgPubKeys: msgPubKeys,
+        round: round,
+        signingPubKey: signingPubKey,
+        signature: signature,
+      );
     }
     return MultisigKexMessage._(
-        message: message,
-        round: round,
-        pubKeys: msgPubKeys,
-        messagePrivateKey: msgPrivateKey,
-        signingPubKey: signingPubKey);
+      message: message,
+      round: round,
+      pubKeys: msgPubKeys,
+      messagePrivateKey: msgPrivateKey,
+      signingPubKey: signingPubKey,
+    );
   }
 }
 
@@ -147,8 +162,10 @@ class MoneroMultisigType {
     if (message.startsWith(MoneroMultisigConst.multisigKexMsgV2MagicN)) {
       return MoneroMultisigType.general;
     }
-    throw MoneroMultisigAccountException("Unsuported multisig type.",
-        details: {"message": message});
+    throw MoneroMultisigAccountException(
+      "Unsuported multisig type.",
+      details: {"message": message},
+    );
   }
 
   @override
@@ -164,7 +181,8 @@ class MoneroMultisigType {
         return MoneroMultisigConst.multisigKexMsgV2MagicN;
       default:
         throw const MoneroMultisigAccountException(
-            "Invalid monero multisig type.");
+          "Invalid monero multisig type.",
+        );
     }
   }
 }
@@ -196,16 +214,19 @@ abstract class MultisigKexMessageSerializable extends MoneroSerialization {
       case MoneroMultisigType.general:
         return MultisigKexMessageSerializableRoundN.deserialize(bytes);
       default:
-        throw MoneroMultisigAccountException("Invalid monero multisig type.",
-            details: {"type": type.name});
+        throw MoneroMultisigAccountException(
+          "Invalid monero multisig type.",
+          details: {"type": type.name},
+        );
     }
   }
 
   T cast<T extends MultisigKexMessageSerializable>() {
     if (this is! T) {
       throw MoneroMultisigAccountException(
-          "MultisigKexMessageSerializable casting failed.",
-          details: {"expected": "$T", "type": type.name});
+        "MultisigKexMessageSerializable casting failed.",
+        details: {"expected": "$T", "type": type.name},
+      );
     }
     return this as T;
   }
@@ -222,23 +243,29 @@ class MultisigKexMessageSerializableRound1
   MoneroMultisigType get type => MoneroMultisigType.round1;
   @override
   int get round => 1;
-  const MultisigKexMessageSerializableRound1(
-      {required this.msgPrivateKey,
-      required this.signingPubKey,
-      required this.signature});
-  factory MultisigKexMessageSerializableRound1.deserialize(List<int> bytes,
-      {String? property}) {
+  const MultisigKexMessageSerializableRound1({
+    required this.msgPrivateKey,
+    required this.signingPubKey,
+    required this.signature,
+  });
+  factory MultisigKexMessageSerializableRound1.deserialize(
+    List<int> bytes, {
+    String? property,
+  }) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MultisigKexMessageSerializableRound1.fromStruct(decode);
   }
   factory MultisigKexMessageSerializableRound1.fromStruct(
-      Map<String, dynamic> json) {
+    Map<String, dynamic> json,
+  ) {
     return MultisigKexMessageSerializableRound1(
-        msgPrivateKey: MoneroPrivateKey.fromBytes(json.asBytes("private_key")),
-        signingPubKey:
-            MoneroPublicKey.fromBytes(json.asBytes("signing_pubkey")),
-        signature: MECSignature.fromStruct(json.asMap("signature")));
+      msgPrivateKey: MoneroPrivateKey.fromBytes(json.asBytes("private_key")),
+      signingPubKey: MoneroPublicKey.fromBytes(json.asBytes("signing_pubkey")),
+      signature: MECSignature.fromStruct(json.asMap("signature")),
+    );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -258,7 +285,7 @@ class MultisigKexMessageSerializableRound1
     return {
       "private_key": msgPrivateKey.key,
       "signing_pubkey": signingPubKey.key,
-      "signature": signature.toLayoutStruct()
+      "signature": signature.toLayoutStruct(),
     };
   }
 }
@@ -274,37 +301,45 @@ class MultisigKexMessageSerializableRoundN
   final MECSignature signature;
   @override
   MoneroMultisigType get type => MoneroMultisigType.general;
-  MultisigKexMessageSerializableRoundN(
-      {required List<MoneroPublicKey> msgPubKeys,
-      required int round,
-      required this.signingPubKey,
-      required this.signature})
-      : msgPubKeys = msgPubKeys.immutable,
-        round = round.asUint32;
+  MultisigKexMessageSerializableRoundN({
+    required List<MoneroPublicKey> msgPubKeys,
+    required int round,
+    required this.signingPubKey,
+    required this.signature,
+  }) : msgPubKeys = msgPubKeys.immutable,
+       round = round.asU32;
 
-  factory MultisigKexMessageSerializableRoundN.deserialize(List<int> bytes,
-      {String? property}) {
+  factory MultisigKexMessageSerializableRoundN.deserialize(
+    List<int> bytes, {
+    String? property,
+  }) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MultisigKexMessageSerializableRoundN.fromStruct(decode);
   }
   factory MultisigKexMessageSerializableRoundN.fromStruct(
-      Map<String, dynamic> json) {
+    Map<String, dynamic> json,
+  ) {
     return MultisigKexMessageSerializableRoundN(
-        round: json.as("round"),
-        msgPubKeys: json
-            .asListBytes("msg_pubkeys")!
-            .map((e) => MoneroPublicKey.fromBytes(e))
-            .toList(),
-        signingPubKey:
-            MoneroPublicKey.fromBytes(json.asBytes("signing_pubkey")),
-        signature: MECSignature.fromStruct(json.asMap("signature")));
+      round: json.as("round"),
+      msgPubKeys:
+          json
+              .asListBytes("msg_pubkeys")!
+              .map((e) => MoneroPublicKey.fromBytes(e))
+              .toList(),
+      signingPubKey: MoneroPublicKey.fromBytes(json.asBytes("signing_pubkey")),
+      signature: MECSignature.fromStruct(json.asMap("signature")),
+    );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       MoneroLayoutConst.varintInt(property: "round"),
-      MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
-          property: "msg_pubkeys"),
+      MoneroLayoutConst.variantVec(
+        LayoutConst.fixedBlob32(),
+        property: "msg_pubkeys",
+      ),
       LayoutConst.fixedBlob32(property: "signing_pubkey"),
       MECSignature.layout(property: "signature"),
     ]);
@@ -321,7 +356,7 @@ class MultisigKexMessageSerializableRoundN
       "round": round,
       "msg_pubkeys": msgPubKeys.map((e) => e.key).toList(),
       "signing_pubkey": signingPubKey.key,
-      "signature": signature.toLayoutStruct()
+      "signature": signature.toLayoutStruct(),
     };
   }
 }

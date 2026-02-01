@@ -6,10 +6,6 @@ import 'variant.dart';
 class VariantOffsetLayout extends ExternalOffsetLayout {
   VariantOffsetLayout({super.property});
   final MoneroIntVarInt layout = MoneroIntVarInt(LayoutConst.u48());
-  @override
-  bool isCount() {
-    return true;
-  }
 
   @override
   LayoutDecodeResult<int> decode(LayoutByteReader bytes, {int offset = 0}) {

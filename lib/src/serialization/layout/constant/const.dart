@@ -15,8 +15,9 @@ class MoneroLayoutConst {
 
   /// var int bytes. serialize bytes with length as varint.
   /// [...(length as varint),...data]
-  static CustomLayout<Map<String, dynamic>, List<int>> variantBytes(
-      {String? property}) {
+  static CustomLayout<Map<String, dynamic>, List<int>> variantBytes({
+    String? property,
+  }) {
     return variantVec(LayoutConst.u8(), property: property);
   }
 
@@ -24,23 +25,26 @@ class MoneroLayoutConst {
   /// string to bytes.
   static Layout<String> variantString({String? property}) {
     return CustomLayout<List<int>, String>(
-        layout: variantBytes(),
-        decoder: (bytes) {
-          return StringUtils.decode(bytes);
-        },
-        encoder: (src) {
-          return StringUtils.encode(src);
-        },
-        property: property);
+      layout: variantBytes(),
+      decoder: (bytes) {
+        return StringUtils.decode(bytes);
+      },
+      encoder: (src) {
+        return StringUtils.encode(src);
+      },
+      property: property,
+    );
   }
 
   /// vector layout with specify sub layoyt.
   /// this convert length as varint then serialize each object of list.
   static CustomLayout<Map<String, dynamic>, List<T>> variantVec<T>(
-      Layout<T> elementLayout,
-      {String? property}) {
-    final layout = LayoutConst.struct(
-        [LayoutConst.seq(elementLayout, variantOffset(), property: 'values')]);
+    Layout<T> elementLayout, {
+    String? property,
+  }) {
+    final layout = LayoutConst.struct([
+      LayoutConst.seq(elementLayout, variantOffset(), property: 'values'),
+    ]);
     return CustomLayout<Map<String, dynamic>, List<T>>(
       layout: layout,
       encoder: (data) => {"values": data},
@@ -50,16 +54,21 @@ class MoneroLayoutConst {
   }
 
   /// serialize key and value of map.
-  static CustomLayout map(
-      {required Layout keyLayout,
-      required Layout valueLayout,
-      String? property}) {
+  static CustomLayout map({
+    required Layout keyLayout,
+    required Layout valueLayout,
+    String? property,
+  }) {
     final layout = LayoutConst.struct([
       LayoutConst.seq(
-          MapEntryLayout(
-              keyLayout: keyLayout, valueLayout: valueLayout, property: ""),
-          variantOffset(),
-          property: 'values'),
+        MapEntryLayout(
+          keyLayout: keyLayout,
+          valueLayout: valueLayout,
+          property: "",
+        ),
+        variantOffset(),
+        property: 'values',
+      ),
     ]);
     return CustomLayout<Map<String, dynamic>, Map<dynamic, dynamic>>(
       layout: layout,
@@ -76,5 +85,5 @@ class MoneroLayoutConst {
   static VariantOffsetLayout variantOffset({String? property}) =>
       VariantOffsetLayout(property: property);
 
-  static final MoneroIntVarInt varint48 = MoneroIntVarInt(LayoutConst.u48());
+  static MoneroIntVarInt get varint48 => MoneroIntVarInt(LayoutConst.u48());
 }

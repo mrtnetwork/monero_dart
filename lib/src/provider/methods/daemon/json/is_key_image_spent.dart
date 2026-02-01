@@ -4,10 +4,14 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Check if outputs have been spent using the key image associated with the output.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#is_key_image_spent
-class DaemonRequestIsKeyImageSpent extends MoneroDaemonRequestParam<
-    DaemonIsKeyImageSpentResponse, Map<String, dynamic>> {
+class DaemonRequestIsKeyImageSpent
+    extends
+        MoneroDaemonRequestParam<
+          DaemonIsKeyImageSpentResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestIsKeyImageSpent(List<String> keyImages)
-      : keyImages = keyImages.immutable;
+    : keyImages = keyImages.immutable;
 
   final List<String> keyImages;
 

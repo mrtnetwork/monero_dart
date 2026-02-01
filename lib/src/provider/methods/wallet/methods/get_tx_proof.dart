@@ -5,8 +5,11 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_tx_proof
 class WalletRequestGetTxProof
     extends MoneroWalletRequestParam<String, Map<String, dynamic>> {
-  WalletRequestGetTxProof(
-      {required this.txId, required this.address, this.message});
+  WalletRequestGetTxProof({
+    required this.txId,
+    required this.address,
+    this.message,
+  });
 
   /// transaction ids.
   final String txId;
@@ -19,8 +22,11 @@ class WalletRequestGetTxProof
   @override
   String get method => "get_tx_proof";
   @override
-  Map<String, dynamic> get params =>
-      {"txid": txId, "address": address.address, "message": message};
+  Map<String, dynamic> get params => {
+    "txid": txId,
+    "address": address.address,
+    "message": message,
+  };
 
   @override
   String onResonse(Map<String, dynamic> result) {

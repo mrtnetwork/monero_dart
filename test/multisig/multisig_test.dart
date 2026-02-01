@@ -6,13 +6,17 @@ void main() {
   group("multisig", () {
     test("3/5", () {
       final addr = _createMultisigAccountsM3N5();
-      expect(addr[0].primaryAddress().address,
-          "56NApw2yuPPCSZR3eQDGdvJJ8QyDSLtJQeSma1p9oVbjiSxNmwQvameWUjB7KJtztYZZt6BVmVmLsWc4tbF5g2R5Q1yYWRL");
+      expect(
+        addr[0].primaryAddress().address,
+        "56NApw2yuPPCSZR3eQDGdvJJ8QyDSLtJQeSma1p9oVbjiSxNmwQvameWUjB7KJtztYZZt6BVmVmLsWc4tbF5g2R5Q1yYWRL",
+      );
     });
     test("1/2", () {
       final addr = _createMultisigAccountsM1N2();
-      expect(addr[0].primaryAddress().address,
-          "5AoMqeai86EJh7YzQ9y9ZWHzSCR4QsbdtJidYq7PWxDjPWRKFoSdPXNQoK8r9Xo6PG33DScGPG4MiCrUtre6qMa8R9bSo8q");
+      expect(
+        addr[0].primaryAddress().address,
+        "5AoMqeai86EJh7YzQ9y9ZWHzSCR4QsbdtJidYq7PWxDjPWRKFoSdPXNQoK8r9Xo6PG33DScGPG4MiCrUtre6qMa8R9bSo8q",
+      );
     });
   });
 }
@@ -28,10 +32,15 @@ List<MoneroMultisigAccountKeys> _createMultisigAccountsM1N2() {
   /// 1 signer requirment for building tx
 
   /// initialize multisig account for each wallet
-  final List<MoneroMultisigAccount> accounts = wallets
-      .map((e) => MoneroMultisigAccount.initialize(
-          privateSpendKey: e.privateSpendKey, privateViewKey: e.privVkey))
-      .toList();
+  final List<MoneroMultisigAccount> accounts =
+      wallets
+          .map(
+            (e) => MoneroMultisigAccount.initialize(
+              privateSpendKey: e.privateSpendKey,
+              privateViewKey: e.privVkey,
+            ),
+          )
+          .toList();
 
   /// get each account next round kex message
   final messages =
@@ -69,13 +78,18 @@ List<MoneroMultisigAccountKeys> _createMultisigAccountsM1N2() {
     expect(accounts[i].threshold, threshold);
     expect(accounts[0].toAddress(), accounts[i].toAddress());
     expect(
-        CompareUtils.iterableIsEqual(accounts[0].signers, accounts[i].signers),
-        true);
+      CompareUtils.iterableIsEqual(accounts[0].signers, accounts[i].signers),
+      true,
+    );
   }
 
   return accounts
-      .map((e) => MoneroMultisigAccountKeys(
-          multisigAccount: e, network: MoneroNetwork.stagenet))
+      .map(
+        (e) => MoneroMultisigAccountKeys(
+          multisigAccount: e,
+          network: MoneroNetwork.stagenet,
+        ),
+      )
       .toList();
 }
 
@@ -90,10 +104,15 @@ List<MoneroMultisigAccountKeys> _createMultisigAccountsM3N5() {
   /// 3 signer requirment for building tx
 
   /// initialize multisig account for each wallet
-  final List<MoneroMultisigAccount> accounts = wallets
-      .map((e) => MoneroMultisigAccount.initialize(
-          privateSpendKey: e.privateSpendKey, privateViewKey: e.privVkey))
-      .toList();
+  final List<MoneroMultisigAccount> accounts =
+      wallets
+          .map(
+            (e) => MoneroMultisigAccount.initialize(
+              privateSpendKey: e.privateSpendKey,
+              privateViewKey: e.privVkey,
+            ),
+          )
+          .toList();
 
   /// get each account next round kex message
   final messages =
@@ -131,39 +150,46 @@ List<MoneroMultisigAccountKeys> _createMultisigAccountsM3N5() {
     expect(accounts[i].threshold, threshold);
     expect(accounts[0].toAddress(), accounts[i].toAddress());
     expect(
-        CompareUtils.iterableIsEqual(accounts[0].signers, accounts[i].signers),
-        true);
+      CompareUtils.iterableIsEqual(accounts[0].signers, accounts[i].signers),
+      true,
+    );
   }
 
   return accounts
-      .map((e) => MoneroMultisigAccountKeys(
-              multisigAccount: e,
-              network: MoneroNetwork.stagenet,
-              indexes: [
-                MoneroAccountIndex.primary,
-                MoneroAccountIndex.minor1,
-                ...List.generate(15, (i) => MoneroAccountIndex(minor: i + 2))
-              ]))
+      .map(
+        (e) => MoneroMultisigAccountKeys(
+          multisigAccount: e,
+          network: MoneroNetwork.stagenet,
+          indexes: [
+            MoneroAccountIndex.primary,
+            MoneroAccountIndex.minor1,
+            ...List.generate(15, (i) => MoneroAccountIndex(minor: i + 2)),
+          ],
+        ),
+      )
       .toList();
 }
 
 MoneroAccount acc3() {
   final mn = Mnemonic.fromString(
-      "corrode dove tuesday voted geek using sizes bagpipe wildly muppet sushi opened ionic sober ravine slid obvious fictional obtains entrance rabbits usual beyond revamp sober");
+    "corrode dove tuesday voted geek using sizes bagpipe wildly muppet sushi opened ionic sober ravine slid obvious fictional obtains entrance rabbits usual beyond revamp sober",
+  );
   final seed = MoneroSeedGenerator(mn).generate();
   return MoneroAccount.fromSeed(seed, coinType: MoneroCoins.moneroStagenet);
 }
 
 MoneroAccount acc2() {
   final mn = Mnemonic.fromString(
-      "fully nucleus meeting hefty cider shocking mocked rustled fancy wield atom lemon hairy estate last malady pedantic wobbly orphans ginger rover tyrant doctor pioneer hairy");
+    "fully nucleus meeting hefty cider shocking mocked rustled fancy wield atom lemon hairy estate last malady pedantic wobbly orphans ginger rover tyrant doctor pioneer hairy",
+  );
   final seed = MoneroSeedGenerator(mn).generate();
   return MoneroAccount.fromSeed(seed, coinType: MoneroCoins.moneroStagenet);
 }
 
 MoneroAccount acc1() {
   final mn = Mnemonic.fromString(
-      "rumble avoid oncoming upbeat obvious cedar itself riots today guest enraged enjoy shackles smuggled kennel boil skirting voted elbow swagger zigzags solved negative hiding kennel");
+    "rumble avoid oncoming upbeat obvious cedar itself riots today guest enraged enjoy shackles smuggled kennel boil skirting voted elbow swagger zigzags solved negative hiding kennel",
+  );
   final seed = MoneroSeedGenerator(mn).generate();
   return MoneroAccount.fromSeed(seed, coinType: MoneroCoins.moneroStagenet);
 }

@@ -3,13 +3,18 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Generate a block and specify the address to receive the coinbase reward.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#generateblocks
-class DaemonRequestGenerateBlocks extends MoneroDaemonRequestParam<
-    DaemonGenerateBlockResponse, Map<String, dynamic>> {
-  DaemonRequestGenerateBlocks(
-      {required this.amountOfBlocks,
-      required this.walletAddress,
-      required this.prevBlock,
-      required this.startingNonce});
+class DaemonRequestGenerateBlocks
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGenerateBlockResponse,
+          Map<String, dynamic>
+        > {
+  DaemonRequestGenerateBlocks({
+    required this.amountOfBlocks,
+    required this.walletAddress,
+    required this.prevBlock,
+    required this.startingNonce,
+  });
 
   /// number of blocks to be generated.
   final int amountOfBlocks;
@@ -25,11 +30,11 @@ class DaemonRequestGenerateBlocks extends MoneroDaemonRequestParam<
   String get method => "generateblocks";
   @override
   Map<String, dynamic> get params => {
-        "amount_of_blocks": amountOfBlocks,
-        "wallet_address": walletAddress,
-        "prev_block": prevBlock,
-        "starting_nonce": startingNonce
-      };
+    "amount_of_blocks": amountOfBlocks,
+    "wallet_address": walletAddress,
+    "prev_block": prevBlock,
+    "starting_nonce": startingNonce,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override

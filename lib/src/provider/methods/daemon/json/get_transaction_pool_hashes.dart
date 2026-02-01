@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Get hashes from transaction pool.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_transaction_pool_hashes
-class DaemonRequestGetTransactionPoolHashes extends MoneroDaemonRequestParam<
-    DaemonGetTransactionPoolHashesResponse, Map<String, dynamic>> {
+class DaemonRequestGetTransactionPoolHashes
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetTransactionPoolHashesResponse,
+          Map<String, dynamic>
+        > {
   const DaemonRequestGetTransactionPoolHashes();
 
   @override
@@ -16,7 +20,8 @@ class DaemonRequestGetTransactionPoolHashes extends MoneroDaemonRequestParam<
 
   @override
   DaemonGetTransactionPoolHashesResponse onResonse(
-      Map<String, dynamic> result) {
+    Map<String, dynamic> result,
+  ) {
     return DaemonGetTransactionPoolHashesResponse.fromJson(result);
   }
 }

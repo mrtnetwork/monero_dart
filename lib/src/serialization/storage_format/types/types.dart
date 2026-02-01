@@ -1,8 +1,12 @@
 import 'package:monero_dart/src/serialization/exception/exception.dart';
 
 class MoneroStorageTypes {
-  const MoneroStorageTypes._(this.name, this._value,
-      {this.isPrimitive = true, this.isInteger = true});
+  const MoneroStorageTypes._(
+    this.name,
+    this._value, {
+    this.isPrimitive = true,
+    this.isInteger = true,
+  });
 
   // Fields to hold the string name and the associated value
   final String name;
@@ -13,7 +17,8 @@ class MoneroStorageTypes {
   int get flag {
     if (this == MoneroStorageTypes.unknown) {
       throw const MoneroSerializationException(
-          "Unknown type: No associated flag found.");
+        "Unknown type: No associated flag found.",
+      );
     }
     return _value;
   }
@@ -27,19 +32,39 @@ class MoneroStorageTypes {
   static const MoneroStorageTypes uint32 = MoneroStorageTypes._("UINT32", 0x6);
   static const MoneroStorageTypes uint16 = MoneroStorageTypes._("UINT16", 0x7);
   static const MoneroStorageTypes uint8 = MoneroStorageTypes._("UINT8", 0x8);
-  static const MoneroStorageTypes double =
-      MoneroStorageTypes._("DOUBLE", 0x9, isInteger: false);
-  static const MoneroStorageTypes string =
-      MoneroStorageTypes._("STRING", 0xa, isInteger: false);
-  static const MoneroStorageTypes boolType =
-      MoneroStorageTypes._("BOOL", 0xb, isInteger: false);
-  static const MoneroStorageTypes object =
-      MoneroStorageTypes._("OBJECT", 0xc, isPrimitive: false, isInteger: false);
-  static const MoneroStorageTypes array =
-      MoneroStorageTypes._("ARRAY", 0xd, isPrimitive: false, isInteger: false);
+  static const MoneroStorageTypes double = MoneroStorageTypes._(
+    "DOUBLE",
+    0x9,
+    isInteger: false,
+  );
+  static const MoneroStorageTypes string = MoneroStorageTypes._(
+    "STRING",
+    0xa,
+    isInteger: false,
+  );
+  static const MoneroStorageTypes boolType = MoneroStorageTypes._(
+    "BOOL",
+    0xb,
+    isInteger: false,
+  );
+  static const MoneroStorageTypes object = MoneroStorageTypes._(
+    "OBJECT",
+    0xc,
+    isPrimitive: false,
+    isInteger: false,
+  );
+  static const MoneroStorageTypes array = MoneroStorageTypes._(
+    "ARRAY",
+    0xd,
+    isPrimitive: false,
+    isInteger: false,
+  );
   static const MoneroStorageTypes unknown = MoneroStorageTypes._(
-      "Unknown", 0x00,
-      isPrimitive: false, isInteger: false);
+    "Unknown",
+    0x00,
+    isPrimitive: false,
+    isInteger: false,
+  );
   static const List<MoneroStorageTypes> values = [
     int64,
     int32,
@@ -52,14 +77,17 @@ class MoneroStorageTypes {
     string,
     boolType,
     object,
-    array
+    array,
   ];
   static MoneroStorageTypes fromFlag(int flag) {
     return values.firstWhere(
       (e) => e.flag == flag,
-      orElse: () => throw MoneroSerializationException(
-          "Invalid storage type: Unable to determine the correct type from the provided flag.",
-          details: {"flag": flag}),
+      orElse:
+          () =>
+              throw MoneroSerializationException(
+                "Invalid storage type: Unable to determine the correct type from the provided flag.",
+                details: {"flag": flag},
+              ),
     );
   }
 

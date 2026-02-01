@@ -5,5 +5,5 @@ class MultiexpData {
   final RctKey scalar;
   final EDPoint point;
   MultiexpData({required List<int> scalar, required this.point})
-      : scalar = scalar.asImmutableBytes;
+    : scalar = scalar.asImmutableBytes;
 }

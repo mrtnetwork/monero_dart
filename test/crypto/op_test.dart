@@ -9,7 +9,9 @@ void main() {
 void _test() {
   test("description", () {
     final rct = RCT.scalarmultKey(
-        RCT.scalarmultKey(RCTConst.h, RCTConst.invEight), RCTConst.eight);
+      RCT.scalarmultKey(RCTConst.h, RCTConst.invEight),
+      RCTConst.eight,
+    );
     expect(rct, RCTConst.h);
   });
   test("scalarmult8/identity", () {

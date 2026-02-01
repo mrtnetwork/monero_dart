@@ -4,10 +4,7 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#set_tx_notes
 class WalletRequestSetTxNotes
     extends MoneroWalletRequestParam<void, Map<String, dynamic>> {
-  WalletRequestSetTxNotes({
-    required this.txIds,
-    required this.notes,
-  });
+  WalletRequestSetTxNotes({required this.txIds, required this.notes});
 
   /// transaction ids
   final List<String> txIds;

@@ -3,10 +3,15 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Send all dust outputs back to the wallet's, to make them easier to spend (and mix).
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#sweep_dust
-class WalletRequestSweepDust extends MoneroWalletRequestParam<
-    WalletRPCSweepResponse, Map<String, dynamic>> {
-  WalletRequestSweepDust(
-      {this.getTxKeys, this.doNotRelay, this.getTxHex, this.getTxMetadata});
+class WalletRequestSweepDust
+    extends
+        MoneroWalletRequestParam<WalletRPCSweepResponse, Map<String, dynamic>> {
+  WalletRequestSweepDust({
+    this.getTxKeys,
+    this.doNotRelay,
+    this.getTxHex,
+    this.getTxMetadata,
+  });
 
   /// Return the transaction keys after sending.
   final bool? getTxKeys;
@@ -26,11 +31,11 @@ class WalletRequestSweepDust extends MoneroWalletRequestParam<
   String get method => "sweep_dust";
   @override
   Map<String, dynamic> get params => {
-        "get_tx_keys": getTxKeys,
-        "do_not_relay": doNotRelay,
-        "get_tx_hex": getTxHex,
-        "get_tx_metadata": getTxMetadata,
-      };
+    "get_tx_keys": getTxKeys,
+    "do_not_relay": doNotRelay,
+    "get_tx_hex": getTxHex,
+    "get_tx_metadata": getTxMetadata,
+  };
 
   @override
   WalletRPCSweepResponse onResonse(Map<String, dynamic> result) {

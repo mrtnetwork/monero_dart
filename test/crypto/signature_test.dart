@@ -17,10 +17,14 @@ void _verifySignature() {
       final List<int> hash = BytesUtils.fromHexString(i["hash"]);
       final List<int> pub = BytesUtils.fromHexString(i["public_key"]);
       final sig = MECSignature(
-          c: BytesUtils.fromHexString(i["c"]),
-          r: BytesUtils.fromHexString(i["r"]));
+        c: BytesUtils.fromHexString(i["c"]),
+        r: BytesUtils.fromHexString(i["r"]),
+      );
       final verify = MoneroCrypto.checkSignature(
-          hash: hash, publicKey: pub, signature: sig);
+        hash: hash,
+        publicKey: pub,
+        signature: sig,
+      );
       expect(i["v"], verify);
     }
   });

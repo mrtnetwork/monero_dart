@@ -1,7 +1,7 @@
 /// the network config constants.
 class MoneroNetworkConst {
   /// transaction default unlock time
-  static final BigInt unlockTime = BigInt.zero;
+  static BigInt get unlockTime => BigInt.zero;
 
   /// current monero tx version.
   static const int currentVersion = 2;

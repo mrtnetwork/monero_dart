@@ -3,8 +3,9 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Limit number of Incoming peers.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#in_peers
-class DaemonRequestInPeers extends MoneroDaemonRequestParam<
-    DaemonInPeersResponse, Map<String, dynamic>> {
+class DaemonRequestInPeers
+    extends
+        MoneroDaemonRequestParam<DaemonInPeersResponse, Map<String, dynamic>> {
   const DaemonRequestInPeers({this.set = true, required this.inPeers});
   final bool set;
 

@@ -15,9 +15,7 @@ abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
   Object get params => {};
 
   /// request headers.
-  Map<String, String> get headers => {
-        'Content-Type': 'application/json',
-      };
+  Map<String, String> get headers => {'Content-Type': 'application/json'};
 
   /// type of request
   DemonRequestType get encodingType => DemonRequestType.json;
@@ -30,19 +28,22 @@ abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
     // final p = params;
     final body = switch (encodingType) {
       DemonRequestType.binary ||
-      DemonRequestType.json =>
-        (params as Map<String, dynamic>),
+      DemonRequestType.json => (params as Map<String, dynamic>),
       DemonRequestType.jsonRPC => ServiceProviderUtils.buildJsonRPCParams(
-          params: params, method: method, requestId: requestID)
+        params: params,
+        method: method,
+        requestId: requestID,
+      ),
     };
     return MoneroRequestDetails(
-        requestID: requestID,
-        method: method,
-        headers: headers,
-        jsonBody: body,
-        requestType: encodingType,
-        type: requestType,
-        api: MoneroRequestApiType.daemon);
+      requestID: requestID,
+      method: method,
+      headers: headers,
+      jsonBody: body,
+      requestType: encodingType,
+      type: requestType,
+      api: MoneroRequestApiType.daemon,
+    );
   }
 }
 
@@ -55,14 +56,18 @@ abstract class MoneroWalletRequestParam<RESULT, RESPONSE>
   @override
   MoneroRequestDetails buildRequest(int requestID) {
     return MoneroRequestDetails(
-        requestID: requestID,
+      requestID: requestID,
+      method: method,
+      headers: headers,
+      jsonBody: ServiceProviderUtils.buildJsonRPCParams(
+        params: params,
         method: method,
-        headers: headers,
-        jsonBody: ServiceProviderUtils.buildJsonRPCParams(
-            params: params, method: method, requestId: requestID),
-        requestType: encodingType,
-        type: requestType,
-        api: MoneroRequestApiType.wallet);
+        requestId: requestID,
+      ),
+      requestType: encodingType,
+      type: requestType,
+      api: MoneroRequestApiType.wallet,
+    );
   }
 }
 
@@ -126,7 +131,7 @@ class MoneroRequestDetails extends BaseServiceRequestParams {
       "type": type.name,
       "body": jsonBody,
       "api": api.name,
-      "request_type": requestType.name
+      "request_type": requestType.name,
     };
   }
 }

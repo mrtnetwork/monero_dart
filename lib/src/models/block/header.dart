@@ -13,7 +13,7 @@ abstract class MoneroBlockheader extends MoneroSerialization {
     required BigInt timestamp,
     required List<int> hash,
     required int nonce,
-  })  : timestamp = timestamp.asUint64,
-        hash = hash.asImmutableBytes,
-        nonce = nonce.asUint32;
+  }) : timestamp = timestamp.asU64,
+       hash = hash.asImmutableBytes,
+       nonce = nonce.asU32;
 }

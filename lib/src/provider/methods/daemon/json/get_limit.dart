@@ -3,8 +3,9 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Get daemon bandwidth limits.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_limit
-class DaemonRequestGetLimit extends MoneroDaemonRequestParam<
-    DaemonLimitResponse, Map<String, dynamic>> {
+class DaemonRequestGetLimit
+    extends
+        MoneroDaemonRequestParam<DaemonLimitResponse, Map<String, dynamic>> {
   const DaemonRequestGetLimit();
 
   @override

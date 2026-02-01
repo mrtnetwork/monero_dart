@@ -10,38 +10,51 @@ import 'package:monero_dart/src/serialization/layout/serialization/serialization
 class MoneroBlock extends MoneroBlockheader {
   final MoneroTransaction minerTx;
   final List<List<int>> txHashes;
-  MoneroBlock(
-      {required super.majorVersion,
-      required super.minorVersion,
-      required super.timestamp,
-      required super.hash,
-      required super.nonce,
-      required this.minerTx,
-      required List<List<int>> txHashes})
-      : txHashes = txHashes
-            .map((e) => e.asImmutableBytes.exc(32, name: "tx hash"))
-            .toList()
-            .immutable;
+  MoneroBlock({
+    required super.majorVersion,
+    required super.minorVersion,
+    required super.timestamp,
+    required super.hash,
+    required super.nonce,
+    required this.minerTx,
+    required List<List<int>> txHashes,
+  }) : txHashes =
+           txHashes
+               .map(
+                 (e) => e.asImmutableBytes.exc(
+                   length: 32,
+                   operation: "MoneroBlock",
+                   name: "tx hash",
+                   reason: "Invalid tx hash bytes length.",
+                 ),
+               )
+               .toList()
+               .immutable;
   factory MoneroBlock.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroBlock.fromStruct(decode);
   }
   static List<String> getTxHashes(List<int> bytes, {String? property}) {
     final json = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return json.asListBytes("txHashes")!.map(BytesUtils.toHexString).toList();
   }
 
   factory MoneroBlock.fromStruct(Map<String, dynamic> json) {
     return MoneroBlock(
-        majorVersion: json.as("majorVersion"),
-        minorVersion: json.as("minorVersion"),
-        timestamp: json.as("timestamp"),
-        hash: json.asBytes("hash"),
-        nonce: json.as("nonce"),
-        minerTx: MoneroTransaction.fromStruct(json.asMap("minerTx")),
-        txHashes: json.asListBytes("txHashes")!);
+      majorVersion: json.as("majorVersion"),
+      minorVersion: json.as("minorVersion"),
+      timestamp: json.as("timestamp"),
+      hash: json.asBytes("hash"),
+      nonce: json.as("nonce"),
+      minerTx: MoneroTransaction.fromStruct(json.asMap("minerTx")),
+      txHashes: json.asListBytes("txHashes")!,
+    );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -51,8 +64,10 @@ class MoneroBlock extends MoneroBlockheader {
       LayoutConst.fixedBlob32(property: "hash"),
       LayoutConst.u32(property: "nonce"),
       MoneroTransaction.layout(property: "minerTx", forcePrunable: false),
-      MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
-          property: "txHashes")
+      MoneroLayoutConst.variantVec(
+        LayoutConst.fixedBlob32(),
+        property: "txHashes",
+      ),
     ], property: property);
   }
 
@@ -70,7 +85,7 @@ class MoneroBlock extends MoneroBlockheader {
       "hash": hash,
       "nonce": nonce,
       "minerTx": minerTx.toLayoutStruct(),
-      "txHashes": txHashes
+      "txHashes": txHashes,
     };
   }
 

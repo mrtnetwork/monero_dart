@@ -16,21 +16,26 @@ class MoneroTransactionPrefix extends MoneroSerialization {
   final List<MoneroTxin> vin;
   final List<MoneroTxout> vout;
   final List<int> extra;
-  MoneroTransactionPrefix(
-      {int version = MoneroNetworkConst.currentVersion,
-      BigInt? unlockTime,
-      required List<MoneroTxin> vin,
-      required List<MoneroTxout> vout,
-      required List<int> extra})
-      : version = version.asUint32,
-        unlockTime = unlockTime?.asUint64 ?? MoneroNetworkConst.unlockTime,
-        vin = vin.immutable,
-        vout = vout.immutable,
-        extra = extra.asImmutableBytes;
-  factory MoneroTransactionPrefix.deserialize(List<int> bytes,
-      {bool forcePrunable = false, String? property}) {
+  MoneroTransactionPrefix({
+    int version = MoneroNetworkConst.currentVersion,
+    BigInt? unlockTime,
+    required List<MoneroTxin> vin,
+    required List<MoneroTxout> vout,
+    required List<int> extra,
+  }) : version = version.asU32,
+       unlockTime = unlockTime?.asU64 ?? MoneroNetworkConst.unlockTime,
+       vin = vin.immutable,
+       vout = vout.immutable,
+       extra = extra.asImmutableBytes;
+  factory MoneroTransactionPrefix.deserialize(
+    List<int> bytes, {
+    bool forcePrunable = false,
+    String? property,
+  }) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroTransactionPrefix.fromStruct(decode);
   }
   factory MoneroTransactionPrefix.fromStruct(Map<String, dynamic> json) {
@@ -45,35 +50,58 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     // }
 
     return MoneroTransactionPrefix(
-        version: version,
-        unlockTime: json.as("unlock_time"),
-        vin: json
-            .asListOfMap("vin")!
-            .map((e) => MoneroTxin.fromStruct(e))
-            .toList(),
-        vout: json
-            .asListOfMap("vout")!
-            .map((e) => MoneroTxout.fromStruct(e))
-            .toList(),
-        extra: json.asBytes("extera"));
+      version: version,
+      unlockTime: json.as("unlock_time"),
+      vin:
+          json
+              .asListOfMap("vin")!
+              .map((e) => MoneroTxin.fromStruct(e))
+              .toList(),
+      vout:
+          json
+              .asListOfMap("vout")!
+              .map((e) => MoneroTxout.fromStruct(e))
+              .toList(),
+      extra: json.asBytes("extera"),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.lazyStruct([
-      LazyLayout(layout: MoneroLayoutConst.varintInt, property: "version"),
-      LazyLayout(
-          layout: MoneroLayoutConst.varintBigInt, property: "unlock_time"),
-      LazyLayout(
-          layout: ({property}) => MoneroLayoutConst.variantVec(
+      LazyStructLayoutBuilder(
+        layout:
+            (property, params) =>
+                MoneroLayoutConst.varintInt(property: property),
+        property: "version",
+      ),
+      LazyStructLayoutBuilder(
+        layout:
+            (property, params) =>
+                MoneroLayoutConst.varintBigInt(property: property),
+        property: "unlock_time",
+      ),
+      LazyStructLayoutBuilder(
+        layout:
+            (property, params) => MoneroLayoutConst.variantVec(
               MoneroTxin.layout(),
-              property: property),
-          property: "vin"),
-      LazyLayout(
-          layout: ({property}) => MoneroLayoutConst.variantVec(
+              property: property,
+            ),
+        property: "vin",
+      ),
+      LazyStructLayoutBuilder(
+        layout:
+            (property, params) => MoneroLayoutConst.variantVec(
               MoneroTxout.layout(),
-              property: property),
-          property: "vout"),
-      LazyLayout(layout: MoneroLayoutConst.variantBytes, property: "extera"),
+              property: property,
+            ),
+        property: "vout",
+      ),
+      LazyStructLayoutBuilder(
+        layout:
+            (property, params) =>
+                MoneroLayoutConst.variantBytes(property: property),
+        property: "extera",
+      ),
     ], property: property);
   }
 
@@ -83,22 +111,34 @@ class MoneroTransactionPrefix extends MoneroSerialization {
 
   late final List<TxExtra> txExtras = _toTxExtra();
   MoneroPublicKey _getTxExtraPubKey() {
-    final pubKeyExtra = txExtras
-        .firstWhere((e) => e.type == TxExtraTypes.publicKey,
-            orElse: () => throw const DartMoneroPluginException(
-                "Cannot find tx public key extra."))
-        .cast<TxExtraPublicKey>();
+    final pubKeyExtra =
+        txExtras
+            .firstWhere(
+              (e) => e.type == TxExtraTypes.publicKey,
+              orElse:
+                  () =>
+                      throw const DartMoneroPluginException(
+                        "Cannot find tx public key extra.",
+                      ),
+            )
+            .cast<TxExtraPublicKey>();
     return MoneroPublicKey.fromBytes(pubKeyExtra.publicKey);
   }
 
   late final MoneroPublicKey txPublicKey = _getTxExtraPubKey();
 
   List<int> txPubkeyBytes() {
-    final pubKeyExtra = txExtras
-        .firstWhere((e) => e.type == TxExtraTypes.publicKey,
-            orElse: () => throw const DartMoneroPluginException(
-                "Cannot find tx public key extra."))
-        .cast<TxExtraPublicKey>();
+    final pubKeyExtra =
+        txExtras
+            .firstWhere(
+              (e) => e.type == TxExtraTypes.publicKey,
+              orElse:
+                  () =>
+                      throw const DartMoneroPluginException(
+                        "Cannot find tx public key extra.",
+                      ),
+            )
+            .cast<TxExtraPublicKey>();
     return pubKeyExtra.publicKey;
   }
 
@@ -160,7 +200,7 @@ class MoneroTransactionPrefix extends MoneroSerialization {
       "unlock_time": unlockTime,
       "vin": vin.map((e) => e.toVariantLayoutStruct()).toList(),
       "vout": vout.map((e) => e.toLayoutStruct()).toList(),
-      "extera": extra
+      "extera": extra,
     };
   }
 }

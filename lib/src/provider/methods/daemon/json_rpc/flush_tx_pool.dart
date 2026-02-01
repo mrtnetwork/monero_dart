@@ -7,7 +7,7 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 class DaemonRequestFlushTxPool
     extends MoneroDaemonRequestParam<DaemonBaseResponse, Map<String, dynamic>> {
   DaemonRequestFlushTxPool({List<String> txids = const []})
-      : txids = txids.immutable;
+    : txids = txids.immutable;
 
   /// list of transactions IDs to flush from pool (all tx ids flushed if empty).
   final List<String> txids;

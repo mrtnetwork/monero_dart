@@ -10,11 +10,13 @@ class _MonerTxBuilderConst {
     MoneroAddress? changeAddr,
     MoneroPrivateKey? additionalSecretKey,
   }) {
-    final key = TxoutToTaggedKey(key: fakePubKey.compressed, viewTag: 12);
+    final fakePk = fakePubKey;
+    final key = TxoutToTaggedKey(key: fakePk.compressed, viewTag: 12);
     return TxEpemeralKeyResult(
-        txOut: key,
-        amountKey: fakeScalar,
-        additionalTxPubKey: additionalSecretKey == null ? null : fakePubKey);
+      txOut: key,
+      amountKey: fakeScalar,
+      additionalTxPubKey: additionalSecretKey == null ? null : fakePk,
+    );
   }
 
   static const List<int> fakeScalar = [
@@ -49,10 +51,11 @@ class _MonerTxBuilderConst {
     47,
     16,
     5,
-    13
+    13,
   ];
-  static final MoneroPublicKey fakePubKey = MoneroPublicKey.fromHex(
-      "5540ce412a435b535772cf0f8aa8686ae4bd948931304b401188171627d75a4c");
+  static MoneroPublicKey get fakePubKey => MoneroPublicKey.fromHex(
+    "5540ce412a435b535772cf0f8aa8686ae4bd948931304b401188171627d75a4c",
+  );
 }
 
 abstract class MoneroTxBuilder<T extends SpendablePayment>
@@ -71,53 +74,64 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   String get totalOutputAsXMR => MoneroTransactionHelper.toXMR(totalOutput);
   String get txId => transaction.getTxHash();
   MoneroTransaction getFinalTx();
-  MoneroTxProof generateProofVar(
-      {required MoneroAddress receiverAddress, String? message}) {
+  MoneroTxProof generateProofVar({
+    required MoneroAddress receiverAddress,
+    String? message,
+  }) {
     return MoneroTransactionHelper.generateOutProofVar(
-        transaction: transaction,
-        allTxKeys: destinationKeys.allTxKeys,
-        receiverAddress: receiverAddress,
-        message: message);
+      transaction: transaction,
+      allTxKeys: destinationKeys.allTxKeys,
+      receiverAddress: receiverAddress,
+      message: message,
+    );
   }
 
-  MoneroTxProof generateProof(
-      {required MoneroAddress receiverAddress, String? message}) {
+  MoneroTxProof generateProof({
+    required MoneroAddress receiverAddress,
+    String? message,
+  }) {
     return MoneroTransactionHelper.generateOutProof(
-        transaction: transaction,
-        allTxKeys: destinationKeys.allTxKeys,
-        receiverAddress: receiverAddress,
-        message: message);
+      transaction: transaction,
+      allTxKeys: destinationKeys.allTxKeys,
+      receiverAddress: receiverAddress,
+      message: message,
+    );
   }
 
-  MoneroTxProof generateInProof(
-      {required MoneroAccount account,
-      required MoneroAccountIndex index,
-      String? message}) {
+  MoneroTxProof generateInProof({
+    required MoneroAccount account,
+    required MoneroAccountIndex index,
+    String? message,
+  }) {
     return MoneroTransactionHelper.generateInProof(
-        transaction: transaction,
-        message: message,
-        account: account,
-        index: index);
+      transaction: transaction,
+      message: message,
+      account: account,
+      index: index,
+    );
   }
 
-  MoneroTxProof generateInProofVar(
-      {required MoneroAccount account,
-      required MoneroAccountIndex index,
-      String? message}) {
+  MoneroTxProof generateInProofVar({
+    required MoneroAccount account,
+    required MoneroAccountIndex index,
+    String? message,
+  }) {
     return MoneroTransactionHelper.generateInProofVar(
-        transaction: transaction,
-        message: message,
-        account: account,
-        index: index);
+      transaction: transaction,
+      message: message,
+      account: account,
+      index: index,
+    );
   }
 
-  MoneroTxBuilder(
-      {required this.sourceKeys,
-      required this.destinationKeys,
-      required this.transaction,
-      required this.destinations,
-      required this.sources,
-      required this.change});
+  MoneroTxBuilder({
+    required this.sourceKeys,
+    required this.destinationKeys,
+    required this.transaction,
+    required this.destinations,
+    required this.sources,
+    required this.change,
+  });
 
   BigInt weight() {
     final size = BigInt.from(transaction.serialize().length);
@@ -126,28 +140,32 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     return size + BigInt.from(clawback);
   }
 
-  static RctKey _createTxSecretKeySeed(
-      {required List<SpendablePayment<MoneroUnLockedPayment>> sources,
-      String domain = "multisig_tx_privkeys_seed",
-      required bool fakeTx}) {
+  static RctKey _createTxSecretKeySeed({
+    required List<SpendablePayment<MoneroUnLockedPayment>> sources,
+    String domain = "multisig_tx_privkeys_seed",
+    required bool fakeTx,
+  }) {
     if (fakeTx) return _MonerTxBuilderConst.fakeScalar;
     final entropy = RCT.skGen_();
     final List<int> data = [
       ...domain.codeUnits,
       ...entropy,
-      ...sources.map((e) => e.payment.keyImage).expand((e) => e)
+      ...sources.map((e) => e.payment.keyImage).expand((e) => e),
     ];
     return QuickCrypto.keccack256Hash(data).asImmutableBytes;
   }
 
-  static List<MoneroPrivateKey> _makeTxSecretKeys(
-      {required RctKey seed,
-      required int length,
-      String domain = "multisig_tx_privkeys",
-      required bool fakeTx}) {
+  static List<MoneroPrivateKey> _makeTxSecretKeys({
+    required RctKey seed,
+    required int length,
+    String domain = "multisig_tx_privkeys",
+    required bool fakeTx,
+  }) {
     if (fakeTx) {
       return List.filled(
-          length, MoneroPrivateKey.fromBytes(_MonerTxBuilderConst.fakeScalar));
+        length,
+        MoneroPrivateKey.fromBytes(_MonerTxBuilderConst.fakeScalar),
+      );
     }
     final data = [seed, QuickCrypto.keccack256Hash(domain.codeUnits)];
 
@@ -173,63 +191,83 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     return res;
   }
 
-  static ComputeSourceKeys _computeSourceKeys(
-      {required List<SpendablePayment<MoneroUnLockedPayment>> sources}) {
-    final List<TxinToKey> inputs = sources.map((e) {
-      return TxinToKey(
-          amount: e.payment.output.amount,
-          keyOffsets: absoluteOutputOffsetsToRelative(
-              e.outs.map((i) => i.index).toList()),
-          keyImage: e.payment.keyImage);
-    }).toList();
+  static ComputeSourceKeys _computeSourceKeys({
+    required List<SpendablePayment<MoneroUnLockedPayment>> sources,
+  }) {
+    final List<TxinToKey> inputs =
+        sources.map((e) {
+          return TxinToKey(
+            amount: e.payment.output.amount,
+            keyOffsets: absoluteOutputOffsetsToRelative(
+              e.outs.map((i) => i.index).toList(),
+            ),
+            keyImage: e.payment.keyImage,
+          );
+        }).toList();
     final inputSecretKeys =
         sources.map((e) => e.payment.output.ephemeralSecretKey).toList();
     return ComputeSourceKeys._(
-        inputSecretKeys: inputSecretKeys, inputs: inputs);
+      inputSecretKeys: inputSecretKeys,
+      inputs: inputs,
+    );
   }
 
-  static ComputeDestinationKeys _computeDestinationKeys(
-      {required MoneroBaseAccountKeys account,
-      required List<MoneroTxDestination> destinations,
-      required ComputeSourceKeys sources,
-      required BigInt fee,
-      MoneroTxDestination? change,
-      required RctKey txSeed,
-      required bool fakeTx}) {
+  static ComputeDestinationKeys _computeDestinationKeys({
+    required MoneroBaseAccountKeys account,
+    required List<MoneroTxDestination> destinations,
+    required ComputeSourceKeys sources,
+    required BigInt fee,
+    MoneroTxDestination? change,
+    required RctKey txSeed,
+    required bool fakeTx,
+  }) {
     final List<MoneroTxDestination> currentDestinations = [
       ...destinations,
-      if (change != null) change
+      if (change != null) change,
     ];
     if (currentDestinations.length == 1) {
-      currentDestinations.add(MoneroTxDestination(
+      currentDestinations.add(
+        MoneroTxDestination(
           amount: BigInt.zero,
           address: MoneroAccountAddress.fromPubKeys(
-              pubSpendKey: RCT.pkGenVar(), pubViewKey: RCT.pkGenVar())));
+            pubSpendKey: RCT.pkGenVar(),
+            pubViewKey: RCT.pkGenVar(),
+          ),
+        ),
+      );
     }
     final addresses = currentDestinations.map((e) => e.address).toList();
     if (addresses.toSet().length != addresses.length) {
       throw const DartMoneroPluginException(
-          "Invalid transaction: multiple outputs cannot be sent to the same address.");
+        "Invalid transaction: multiple outputs cannot be sent to the same address.",
+      );
     }
     final BigInt inAmounts = sources.total;
-    final BigInt outAmounts =
-        currentDestinations.fold<BigInt>(BigInt.zero, (p, c) => p + c.amount);
+    final BigInt outAmounts = currentDestinations.fold<BigInt>(
+      BigInt.zero,
+      (p, c) => p + c.amount,
+    );
     if (inAmounts != outAmounts + fee) {
       throw const DartMoneroPluginException(
-          "Transaction validation failed: The sum of input amounts does not match the sum of output amounts plus the transaction fee. Ensure the inputs cover all outputs and the required fee.");
+        "Transaction validation failed: The sum of input amounts does not match the sum of output amounts plus the transaction fee. Ensure the inputs cover all outputs and the required fee.",
+      );
     }
 
     final cl = TxDestinationInfo(
-        destinations: currentDestinations, changeAddr: change?.address);
+      destinations: currentDestinations,
+      changeAddr: change?.address,
+    );
     final txKeys = _makeTxSecretKeys(
-        seed: txSeed,
-        length: cl.needAdditionalTxkeys ? currentDestinations.length + 1 : 1,
-        fakeTx: fakeTx);
+      seed: txSeed,
+      length: cl.needAdditionalTxkeys ? currentDestinations.length + 1 : 1,
+      fakeTx: fakeTx,
+    );
     final txKey = txKeys[0];
     final List<RctKey> amountKeys = [];
     final List<TxExtra> extras = [];
-    final unknowDsts =
-        currentDestinations.where((e) => e.address != change?.address);
+    final unknowDsts = currentDestinations.where(
+      (e) => e.address != change?.address,
+    );
     if (unknowDsts.length == 1) {
       final dst = unknowDsts.elementAt(0);
       List<int> paymentId = List<int>.filled(8, 0);
@@ -238,16 +276,19 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
           paymentId = dst.address.cast<MoneroIntegratedAddress>().paymentId;
         }
         paymentId = MoneroTransactionHelper.encryptPaymentId(
-            paymentId: paymentId,
-            pubKey: unknowDsts.first.address.publicViewKey,
-            secretKey: txKey);
+          paymentId: paymentId,
+          pubKey: unknowDsts.first.address.publicViewKey,
+          secretKey: txKey,
+        );
       }
       final extra = TxExtraNonce.encryptedPaymentId(paymentId);
       extras.add(extra);
-    } else if (currentDestinations
-        .any((e) => e.address.type == XmrAddressType.integrated)) {
+    } else if (currentDestinations.any(
+      (e) => e.address.type == XmrAddressType.integrated,
+    )) {
       throw const MoneroCryptoException(
-          "Integrated address detected in multi-transfer transaction.");
+        "Integrated address detected in multi-transfer transaction.",
+      );
     }
     final MoneroPublicKey txPubKey =
         fakeTx ? _MonerTxBuilderConst.fakePubKey : cl.getTxPubKey(txKey);
@@ -290,27 +331,30 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       }
     }
     if (additionalTxPubKey.isNotEmpty) {
-      extras.add(TxExtraAdditionalPubKeys(
-          additionalTxPubKey.map((e) => e.key).toList()));
+      extras.add(
+        TxExtraAdditionalPubKeys(additionalTxPubKey.map((e) => e.key).toList()),
+      );
     }
     return ComputeDestinationKeys(
-        amountKeys: amountKeys,
-        extras: extras,
-        txPubKey: txPubKey,
-        additionalTxPubKey: additionalTxPubKey,
-        outs: vouts,
-        allTxKeys: txKeys);
+      amountKeys: amountKeys,
+      extras: extras,
+      txPubKey: txPubKey,
+      additionalTxPubKey: additionalTxPubKey,
+      outs: vouts,
+      allTxKeys: txKeys,
+    );
   }
 
-  static RCTSignature _buildSignature(
-      {required ComputeDestinationKeys destinationKeys,
-      required ComputeSourceKeys sourceKeys,
-      required List<SpendablePayment<MoneroUnLockedPayment>> sources,
-      required BigInt fee,
-      KeyV? aResult,
-      bool isMultisig = false,
-      bool fakeTx = false,
-      bool fast = false}) {
+  static RCTSignature _buildSignature({
+    required ComputeDestinationKeys destinationKeys,
+    required ComputeSourceKeys sourceKeys,
+    required List<SpendablePayment<MoneroUnLockedPayment>> sources,
+    required BigInt fee,
+    KeyV? aResult,
+    bool isMultisig = false,
+    bool fakeTx = false,
+    bool fast = false,
+  }) {
     final List<int> index = sources.map((e) => e.realOutIndex).toList();
     final CtKeyV inSk =
         sources.map((e) => e.payment.output.toSecretKey).toList();
@@ -319,7 +363,9 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
 
     final CtKeyM mixRing = List.generate(sources.length, (i) {
       return List.generate(
-          sources[i].outs.length, (n) => sources[i].outs[n].key);
+        sources[i].outs.length,
+        (n) => sources[i].outs[n].key,
+      );
     });
     final List<BigInt> inamounts = sourceKeys.amounts;
     final List<BigInt> outamounts = destinationKeys.amounts;
@@ -331,38 +377,11 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final txHash =
         fakeTx ? _MonerTxBuilderConst.fakeScalar : tx.getTranactionPrefixHash();
     final CtKeyV outSk = List.generate(
-        outs.length, (_) => CtKey(dest: RCT.zero(), mask: RCT.zero()));
+      outs.length,
+      (_) => CtKey(dest: RCT.zero(), mask: RCT.zero()),
+    );
     if (fakeTx) {
       return RCTGeneratorUtils.genFakeRctSimple(
-          message: txHash,
-          inSk: inSk,
-          destinations: destinationPubKeys.map((e) => e.key).toList(),
-          inamounts: inamounts,
-          outamounts: outamounts,
-          txnFee: fee,
-          mixRing: mixRing,
-          amountKeys: destinationKeys.amountKeys,
-          index: index,
-          outSk: outSk,
-          createLinkable: !isMultisig,
-          aResult: aResult);
-    }
-    if (fast) {
-      return RCTGeneratorUtils.genRctSimple(
-          message: txHash,
-          inSk: inSk,
-          destinations: destinationPubKeys.map((e) => e.key).toList(),
-          inamounts: inamounts,
-          outamounts: outamounts,
-          txnFee: fee,
-          mixRing: mixRing,
-          amountKeys: destinationKeys.amountKeys,
-          index: index,
-          outSk: outSk,
-          createLinkable: !isMultisig,
-          aResult: aResult);
-    }
-    return RCTGeneratorUtils.genRctSimple(
         message: txHash,
         inSk: inSk,
         destinations: destinationPubKeys.map((e) => e.key).toList(),
@@ -374,18 +393,52 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
         index: index,
         outSk: outSk,
         createLinkable: !isMultisig,
-        aResult: aResult);
+        aResult: aResult,
+      );
+    }
+    if (fast) {
+      return RCTGeneratorUtils.genRctSimple(
+        message: txHash,
+        inSk: inSk,
+        destinations: destinationPubKeys.map((e) => e.key).toList(),
+        inamounts: inamounts,
+        outamounts: outamounts,
+        txnFee: fee,
+        mixRing: mixRing,
+        amountKeys: destinationKeys.amountKeys,
+        index: index,
+        outSk: outSk,
+        createLinkable: !isMultisig,
+        aResult: aResult,
+      );
+    }
+    return RCTGeneratorUtils.genRctSimple(
+      message: txHash,
+      inSk: inSk,
+      destinations: destinationPubKeys.map((e) => e.key).toList(),
+      inamounts: inamounts,
+      outamounts: outamounts,
+      txnFee: fee,
+      mixRing: mixRing,
+      amountKeys: destinationKeys.amountKeys,
+      index: index,
+      outSk: outSk,
+      createLinkable: !isMultisig,
+      aResult: aResult,
+    );
   }
 
-  static MoneroTransaction _buildTx(
-      {required ComputeDestinationKeys destinationKeys,
-      required ComputeSourceKeys sourceKeys,
-      required RCTSignature signature}) {
+  static MoneroTransaction _buildTx({
+    required ComputeDestinationKeys destinationKeys,
+    required ComputeSourceKeys sourceKeys,
+    required RCTSignature signature,
+  }) {
     final extra = destinationKeys.toExtraBytes();
     return MoneroTransaction(
-        vin: sourceKeys.toRctInputs,
-        vout: destinationKeys.toRctOuts,
-        extra: extra,
-        signature: signature);
+      vin: sourceKeys.toRctInputs,
+      vout: destinationKeys.toRctOuts,
+      extra: extra,
+      signature: signature,
+    );
   }
 }

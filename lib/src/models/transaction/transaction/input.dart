@@ -9,24 +9,38 @@ class MoneroTxinType {
   final String name;
   final int variantId;
   const MoneroTxinType._({required this.name, required this.variantId});
-  static const MoneroTxinType txinGen =
-      MoneroTxinType._(name: "TxinGen", variantId: 0xff);
-  static const MoneroTxinType txinToScript =
-      MoneroTxinType._(name: "TxinToScript", variantId: 0x0);
-  static const MoneroTxinType txinToScriptHash =
-      MoneroTxinType._(name: "TxinToScriptHash", variantId: 0x1);
-  static const MoneroTxinType txinToKey =
-      MoneroTxinType._(name: "TxinToKey", variantId: 0x2);
+  static const MoneroTxinType txinGen = MoneroTxinType._(
+    name: "TxinGen",
+    variantId: 0xff,
+  );
+  static const MoneroTxinType txinToScript = MoneroTxinType._(
+    name: "TxinToScript",
+    variantId: 0x0,
+  );
+  static const MoneroTxinType txinToScriptHash = MoneroTxinType._(
+    name: "TxinToScriptHash",
+    variantId: 0x1,
+  );
+  static const MoneroTxinType txinToKey = MoneroTxinType._(
+    name: "TxinToKey",
+    variantId: 0x2,
+  );
   static const List<MoneroTxinType> values = [
     txinGen,
     txinToScript,
     txinToScriptHash,
-    txinToKey
+    txinToKey,
   ];
   static MoneroTxinType fromName(String? name) {
-    return values.firstWhere((e) => e.name == name,
-        orElse: () => throw DartMoneroPluginException("Invalid Txin type.",
-            details: {"type": name}));
+    return values.firstWhere(
+      (e) => e.name == name,
+      orElse:
+          () =>
+              throw DartMoneroPluginException(
+                "Invalid Txin type.",
+                details: {"type": name},
+              ),
+    );
   }
 }
 
@@ -47,28 +61,34 @@ abstract class MoneroTxin extends MoneroVariantSerialization {
       case MoneroTxinType.txinToKey:
         return TxinToKey.fromStruct(decode.value);
       default:
-        throw DartMoneroPluginException("Invalid Txin.",
-            details: {"type": type, "data": decode.value});
+        throw DartMoneroPluginException(
+          "Invalid Txin.",
+          details: {"type": type, "data": decode.value},
+        );
     }
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.lazyEnum([
       LazyVariantModel(
-          layout: TxinGen.layout,
-          property: MoneroTxinType.txinGen.name,
-          index: MoneroTxinType.txinGen.variantId),
+        layout: TxinGen.layout,
+        property: MoneroTxinType.txinGen.name,
+        index: MoneroTxinType.txinGen.variantId,
+      ),
       LazyVariantModel(
-          layout: TxinToScript.layout,
-          property: MoneroTxinType.txinToScript.name,
-          index: MoneroTxinType.txinToScript.variantId),
+        layout: TxinToScript.layout,
+        property: MoneroTxinType.txinToScript.name,
+        index: MoneroTxinType.txinToScript.variantId,
+      ),
       LazyVariantModel(
-          layout: TxinToScriptHash.layout,
-          property: MoneroTxinType.txinToScriptHash.name,
-          index: MoneroTxinType.txinToScriptHash.variantId),
+        layout: TxinToScriptHash.layout,
+        property: MoneroTxinType.txinToScriptHash.name,
+        index: MoneroTxinType.txinToScriptHash.variantId,
+      ),
       LazyVariantModel(
-          layout: TxinToKey.layout,
-          property: MoneroTxinType.txinToKey.name,
-          index: MoneroTxinType.txinToKey.variantId),
+        layout: TxinToKey.layout,
+        property: MoneroTxinType.txinToKey.name,
+        index: MoneroTxinType.txinToKey.variantId,
+      ),
     ], property: property);
   }
 
@@ -81,8 +101,10 @@ abstract class MoneroTxin extends MoneroVariantSerialization {
   String get variantName => type.name;
   T cast<T extends MoneroTxin>() {
     if (this is! T) {
-      throw DartMoneroPluginException("MoneroTxin casting failed.",
-          details: {"expected": "$T", "type": type.name});
+      throw DartMoneroPluginException(
+        "MoneroTxin casting failed.",
+        details: {"expected": "$T", "type": type.name},
+      );
     }
     return this as T;
   }
@@ -100,26 +122,29 @@ class TxinToKey extends MoneroTxin {
   final List<BigInt> keyOffsets;
   final List<int> keyImage;
 
-  TxinToKey(
-      {required BigInt amount,
-      required List<BigInt> keyOffsets,
-      required List<int> keyImage})
-      : amount = amount.asUint64,
-        keyOffsets = keyOffsets.map((e) => e.asUint64).toList().immutable,
-        keyImage = keyImage.asImmutableBytes,
-        super(MoneroTxinType.txinToKey);
+  TxinToKey({
+    required BigInt amount,
+    required List<BigInt> keyOffsets,
+    required List<int> keyImage,
+  }) : amount = amount.asU64,
+       keyOffsets = keyOffsets.map((e) => e.asU64).toList().immutable,
+       keyImage = keyImage.asImmutableBytes,
+       super(MoneroTxinType.txinToKey);
   factory TxinToKey.fromStruct(Map<String, dynamic> json) {
     return TxinToKey(
-        amount: json.as("amount"),
-        keyImage: json.asBytes("k_image"),
-        keyOffsets: json.asListBig("key_offsets")!);
+      amount: json.as("amount"),
+      keyImage: json.asBytes("k_image"),
+      keyOffsets: json.asListBig("key_offsets")!,
+    );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       MoneroLayoutConst.varintBigInt(property: "amount"),
-      MoneroLayoutConst.variantVec(MoneroLayoutConst.varintBigInt(),
-          property: "key_offsets"),
-      LayoutConst.fixedBlob32(property: "k_image")
+      MoneroLayoutConst.variantVec(
+        MoneroLayoutConst.varintBigInt(),
+        property: "key_offsets",
+      ),
+      LayoutConst.fixedBlob32(property: "k_image"),
     ], property: property);
   }
 
@@ -129,9 +154,10 @@ class TxinToKey extends MoneroTxin {
     List<int>? keyImage,
   }) {
     return TxinToKey(
-        amount: amount ?? this.amount,
-        keyOffsets: keyOffsets ?? this.keyOffsets,
-        keyImage: keyImage ?? this.keyImage);
+      amount: amount ?? this.amount,
+      keyOffsets: keyOffsets ?? this.keyOffsets,
+      keyImage: keyImage ?? this.keyImage,
+    );
   }
 
   @override
@@ -149,7 +175,7 @@ class TxinToKey extends MoneroTxin {
     return {
       "amount": amount.toString(),
       "keyOffsets": keyOffsets.map((e) => e.toString()).toList(),
-      "keyImage": BytesUtils.toHexString(keyImage)
+      "keyImage": BytesUtils.toHexString(keyImage),
     };
   }
 }
@@ -160,15 +186,15 @@ class TxinToScriptHash extends MoneroTxin {
   final TxoutToScript script;
   final List<int> sigset;
 
-  TxinToScriptHash(
-      {required List<int> prev,
-      required BigInt prevout,
-      required this.script,
-      required List<int> sigset})
-      : prev = prev.asImmutableBytes,
-        prevout = prevout.asUint64,
-        sigset = sigset.asImmutableBytes,
-        super(MoneroTxinType.txinToScriptHash);
+  TxinToScriptHash({
+    required List<int> prev,
+    required BigInt prevout,
+    required this.script,
+    required List<int> sigset,
+  }) : prev = prev.asImmutableBytes,
+       prevout = prevout.asU64,
+       sigset = sigset.asImmutableBytes,
+       super(MoneroTxinType.txinToScriptHash);
   factory TxinToScriptHash.fromStruct(Map<String, dynamic> json) {
     return TxinToScriptHash(
       prev: json.asBytes("prev"),
@@ -218,14 +244,14 @@ class TxinToScript extends MoneroTxin {
   final BigInt prevout;
   final List<int> sigset;
 
-  TxinToScript(
-      {required List<int> prev,
-      required BigInt prevout,
-      required List<int> sigset})
-      : prev = prev.asImmutableBytes,
-        prevout = prevout.asUint64,
-        sigset = sigset.asImmutableBytes,
-        super(MoneroTxinType.txinToScript);
+  TxinToScript({
+    required List<int> prev,
+    required BigInt prevout,
+    required List<int> sigset,
+  }) : prev = prev.asImmutableBytes,
+       prevout = prevout.asU64,
+       sigset = sigset.asImmutableBytes,
+       super(MoneroTxinType.txinToScript);
   factory TxinToScript.fromStruct(Map<String, dynamic> json) {
     return TxinToScript(
       prev: json.asBytes("prev"),
@@ -264,9 +290,7 @@ class TxinToScript extends MoneroTxin {
 
 class TxinGen extends MoneroTxin {
   final BigInt height;
-  TxinGen(BigInt height)
-      : height = height.asUint64,
-        super(MoneroTxinType.txinGen);
+  TxinGen(BigInt height) : height = height.asU64, super(MoneroTxinType.txinGen);
   factory TxinGen.fromStruct(Map<String, dynamic> json) {
     return TxinGen(json.as("height"));
   }

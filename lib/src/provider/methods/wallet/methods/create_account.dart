@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Create a new account with an optional label.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#create_account
-class WalletRequestCreateAccount extends MoneroWalletRequestParam<
-    WalletRPCCreateAccountResponse, Map<String, dynamic>> {
+class WalletRequestCreateAccount
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCCreateAccountResponse,
+          Map<String, dynamic>
+        > {
   WalletRequestCreateAccount({this.label});
 
   final String? label;

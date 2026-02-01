@@ -3,20 +3,22 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Same as transfer, but can split into more than one tx if necessary.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#transfer_split
-class WalletRequestTransferSplit extends MoneroWalletRequestParam<
-    WalletRPCSweepResponse, Map<String, dynamic>> {
-  WalletRequestTransferSplit(
-      {required this.destinations,
-      this.accountIndex,
-      this.subaddrIndices,
-      this.priority,
-      this.paymentId,
-      required this.ringSize,
-      required this.unlockTime,
-      this.getTxKeys,
-      this.doNotRelay,
-      this.getTxHex,
-      this.getTxMetadata});
+class WalletRequestTransferSplit
+    extends
+        MoneroWalletRequestParam<WalletRPCSweepResponse, Map<String, dynamic>> {
+  WalletRequestTransferSplit({
+    required this.destinations,
+    this.accountIndex,
+    this.subaddrIndices,
+    this.priority,
+    this.paymentId,
+    required this.ringSize,
+    required this.unlockTime,
+    this.getTxKeys,
+    this.doNotRelay,
+    this.getTxHex,
+    this.getTxMetadata,
+  });
 
   /// Destination public address.
   final List<WalletRPCTransferDestinationParam> destinations;
@@ -55,18 +57,18 @@ class WalletRequestTransferSplit extends MoneroWalletRequestParam<
   String get method => "transfer_split";
   @override
   Map<String, dynamic> get params => {
-        "destinations": destinations.map((e) => e.toJson()).toList(),
-        "account_index": accountIndex,
-        "subaddr_indices": subaddrIndices,
-        "payment_id": paymentId,
-        "priority": priority,
-        "ring_size": ringSize,
-        "unlock_time": unlockTime,
-        "get_tx_keys": getTxKeys,
-        "do_not_relay": doNotRelay,
-        "get_tx_hex": getTxHex,
-        "get_tx_metadata": getTxMetadata,
-      };
+    "destinations": destinations.map((e) => e.toJson()).toList(),
+    "account_index": accountIndex,
+    "subaddr_indices": subaddrIndices,
+    "payment_id": paymentId,
+    "priority": priority,
+    "ring_size": ringSize,
+    "unlock_time": unlockTime,
+    "get_tx_keys": getTxKeys,
+    "do_not_relay": doNotRelay,
+    "get_tx_hex": getTxHex,
+    "get_tx_metadata": getTxMetadata,
+  };
 
   @override
   WalletRPCSweepResponse onResonse(Map<String, dynamic> result) {

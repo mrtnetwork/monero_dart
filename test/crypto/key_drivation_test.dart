@@ -9,22 +9,30 @@ void main() {
     for (final i in testVector) {
       final expected = BytesUtils.tryFromHexString(i["expected"]);
       if (expected != null) {
-        final keyOne =
-            MoneroPublicKey.fromBytes(BytesUtils.fromHexString(i["keyOne"]));
-        final keyTwo =
-            MoneroPrivateKey.fromBytes(BytesUtils.fromHexString(i["keyTwo"]));
+        final keyOne = MoneroPublicKey.fromBytes(
+          BytesUtils.fromHexString(i["keyOne"]),
+        );
+        final keyTwo = MoneroPrivateKey.fromBytes(
+          BytesUtils.fromHexString(i["keyTwo"]),
+        );
         final generateKey = MoneroCrypto.generateKeyDerivation(
-            pubkey: keyOne, secretKey: keyTwo);
+          pubkey: keyOne,
+          secretKey: keyTwo,
+        );
         expect(generateKey, expected);
       } else {
         expect(() {
-          final keyOne =
-              MoneroPublicKey.fromBytes(BytesUtils.fromHexString(i["keyOne"]));
-          final keyTwo =
-              MoneroPrivateKey.fromBytes(BytesUtils.fromHexString(i["keyTwo"]));
+          final keyOne = MoneroPublicKey.fromBytes(
+            BytesUtils.fromHexString(i["keyOne"]),
+          );
+          final keyTwo = MoneroPrivateKey.fromBytes(
+            BytesUtils.fromHexString(i["keyTwo"]),
+          );
           return MoneroCrypto.generateKeyDerivation(
-              pubkey: keyOne, secretKey: keyTwo);
-        }, throwsA(isA<CryptoException>()));
+            pubkey: keyOne,
+            secretKey: keyTwo,
+          );
+        }, throwsA(isA<ArgumentException>()));
       }
     }
   });
@@ -33,22 +41,30 @@ void main() {
     for (final i in testVector) {
       final expected = BytesUtils.tryFromHexString(i["expected"]);
       if (expected != null) {
-        final keyOne =
-            MoneroPublicKey.fromBytes(BytesUtils.fromHexString(i["keyOne"]));
-        final keyTwo =
-            MoneroPrivateKey.fromBytes(BytesUtils.fromHexString(i["keyTwo"]));
+        final keyOne = MoneroPublicKey.fromBytes(
+          BytesUtils.fromHexString(i["keyOne"]),
+        );
+        final keyTwo = MoneroPrivateKey.fromBytes(
+          BytesUtils.fromHexString(i["keyTwo"]),
+        );
         final generateKey = MoneroCrypto.generateKeyDerivationVar(
-            pubkey: keyOne, secretKey: keyTwo);
+          pubkey: keyOne,
+          secretKey: keyTwo,
+        );
         expect(generateKey, expected);
       } else {
         expect(() {
-          final keyOne =
-              MoneroPublicKey.fromBytes(BytesUtils.fromHexString(i["keyOne"]));
-          final keyTwo =
-              MoneroPrivateKey.fromBytes(BytesUtils.fromHexString(i["keyTwo"]));
+          final keyOne = MoneroPublicKey.fromBytes(
+            BytesUtils.fromHexString(i["keyOne"]),
+          );
+          final keyTwo = MoneroPrivateKey.fromBytes(
+            BytesUtils.fromHexString(i["keyTwo"]),
+          );
           return MoneroCrypto.generateKeyDerivation(
-              pubkey: keyOne, secretKey: keyTwo);
-        }, throwsA(isA<CryptoException>()));
+            pubkey: keyOne,
+            secretKey: keyTwo,
+          );
+        }, throwsA(isA<ArgumentException>()));
       }
     }
   });

@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Get a list of incoming payments using a given payment id.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_payments
-class WalletRequestGetPayments extends MoneroWalletRequestParam<
-    List<WalletRPCPaymentResponse>, Map<String, dynamic>> {
+class WalletRequestGetPayments
+    extends
+        MoneroWalletRequestParam<
+          List<WalletRPCPaymentResponse>,
+          Map<String, dynamic>
+        > {
   WalletRequestGetPayments(this.paymentId);
 
   /// Payment ID used to find the payments (16 characters hex).

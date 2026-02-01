@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Retrieve information about incoming and outgoing connections to your node.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_connections
-class DaemonRequestGetConnections extends MoneroDaemonRequestParam<
-    DaemonGetConnectionsResponse, Map<String, dynamic>> {
+class DaemonRequestGetConnections
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetConnectionsResponse,
+          Map<String, dynamic>
+        > {
   const DaemonRequestGetConnections();
 
   @override

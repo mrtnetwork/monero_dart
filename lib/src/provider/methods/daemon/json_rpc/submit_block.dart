@@ -6,7 +6,7 @@ import 'package:monero_dart/src/provider/core/core.dart';
 class DaemonRequestSubmitBlock
     extends MoneroDaemonRequestParam<String, String> {
   DaemonRequestSubmitBlock(List<String> blockBlobData)
-      : blockBlobData = blockBlobData.immutable;
+    : blockBlobData = blockBlobData.immutable;
 
   ///  array of strings; list of block blobs which have been mined.
   ///  See get_block_template to get a blob on which to mine.

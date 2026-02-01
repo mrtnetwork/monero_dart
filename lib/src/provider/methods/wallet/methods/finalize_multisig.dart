@@ -5,8 +5,10 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#finalize_multisig
 class WalletRequestFinalizeMultisig
     extends MoneroWalletRequestParam<MoneroAddress, Map<String, dynamic>> {
-  WalletRequestFinalizeMultisig(
-      {required this.multisigInfo, required this.password});
+  WalletRequestFinalizeMultisig({
+    required this.multisigInfo,
+    required this.password,
+  });
 
   /// If true, export all outputs. Otherwise, export outputs since the last export.
   final List<String> multisigInfo;
@@ -16,8 +18,10 @@ class WalletRequestFinalizeMultisig
   @override
   String get method => "finalize_multisig";
   @override
-  Map<String, dynamic> get params =>
-      {"multisig_info": multisigInfo, "password": password};
+  Map<String, dynamic> get params => {
+    "multisig_info": multisigInfo,
+    "password": password,
+  };
 
   /// multisig wallet address.
   @override

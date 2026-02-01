@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Gives an estimation on fees per byte.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_fee_estimate
-class DaemonRequestGetFeeEstimate extends MoneroDaemonRequestParam<
-    DaemonGetEstimateFeeResponse, Map<String, dynamic>> {
+class DaemonRequestGetFeeEstimate
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetEstimateFeeResponse,
+          Map<String, dynamic>
+        > {
   const DaemonRequestGetFeeEstimate(this.graceBlocks);
   final int graceBlocks;
   @override

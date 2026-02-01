@@ -163,7 +163,12 @@ class RCT {
   }
 
   static void addKeys3_(
-      RctKey aAbB, RctKey a, GroupElementDsmp A, RctKey b, GroupElementDsmp B) {
+    RctKey aAbB,
+    RctKey a,
+    GroupElementDsmp A,
+    RctKey b,
+    GroupElementDsmp B,
+  ) {
     final GroupElementP2 rv = GroupElementP2();
     CryptoOps.geDoubleScalarMultPrecompVartime2(rv, a, A, b, B);
     CryptoOps.geToBytes(aAbB, rv);
@@ -207,8 +212,10 @@ class RCT {
     return genC_(mask, xmrAmount);
   }
 
-  static List<int> commitVar(
-      {required BigInt xmrAmount, required List<int> mask}) {
+  static List<int> commitVar({
+    required BigInt xmrAmount,
+    required List<int> mask,
+  }) {
     return genCVar(mask, xmrAmount);
   }
 
@@ -269,23 +276,35 @@ class RCT {
   }
 
   static List<int> genAmountEncodingFactor(List<int> k) {
-    final data = [..."amount".codeUnits, ...k.exc(32)];
+    final data = [
+      ..."amount".codeUnits,
+      ...k.exc(
+        length: 32,
+        operation: "genAmountEncodingFactor",
+        name: "k",
+        reason: "Invalid bytes length.",
+      ),
+    ];
     return QuickCrypto.keccack256Hash(data);
   }
 
   static List<int> d2hInt(int v) {
-    return BigintUtils.toBytes(BigInt.from(v),
-        length: 32, order: Endian.little);
+    return BigintUtils.toBytes(
+      BigInt.from(v),
+      length: 32,
+      order: Endian.little,
+    );
   }
 
   static List<int> d2h(BigInt amount) {
-    return BigintUtils.toBytes(amount.asUint64,
-        length: 32, order: Endian.little);
+    return BigintUtils.toBytes(amount.asU64, length: 32, order: Endian.little);
   }
 
   static BigInt h2d(List<int> amoutBytes) {
-    return BigintUtils.fromBytes(amoutBytes, byteOrder: Endian.little)
-        .toUnsigned(64);
+    return BigintUtils.fromBytes(
+      amoutBytes,
+      byteOrder: Endian.little,
+    ).toUnsigned(64);
   }
 
   // static List<int> zeroCommit(BigInt amount) {
@@ -358,16 +377,37 @@ class RCT {
   }
 
   static RctKey addKeysAGbBcCVar(
-      RctKey a, RctKey b, List<EDPoint> B, RctKey c, List<EDPoint> C) {
+    RctKey a,
+    RctKey b,
+    List<EDPoint> B,
+    RctKey c,
+    List<EDPoint> C,
+  ) {
     return CryptoOps.geTripleScalarMultBasePointVar(
-            a: a, b: b, bI: B, c: c, cI: C)
-        .toBytes();
+      a: a,
+      b: b,
+      bI: B,
+      c: c,
+      cI: C,
+    ).toBytes();
   }
 
-  static RctKey addKeysAAbBcCVar(RctKey a, List<EDPoint> A, RctKey b,
-      List<EDPoint> B, RctKey c, List<EDPoint> C) {
-    return CryptoOps.geTripleScalarMultPrecompPointVar(a, A, b, B, c, C)
-        .toBytes();
+  static RctKey addKeysAAbBcCVar(
+    RctKey a,
+    List<EDPoint> A,
+    RctKey b,
+    List<EDPoint> B,
+    RctKey c,
+    List<EDPoint> C,
+  ) {
+    return CryptoOps.geTripleScalarMultPrecompPointVar(
+      a,
+      A,
+      b,
+      B,
+      c,
+      C,
+    ).toBytes();
   }
 
   static List<int> hashToScalarBytes(List<int> data) {
@@ -395,8 +435,10 @@ class RCT {
     }
   }
 
-  static EcdhTuple ecdhDecode(
-      {required EcdhInfo ecdh, required List<int> sharedSec}) {
+  static EcdhTuple ecdhDecode({
+    required EcdhInfo ecdh,
+    required List<int> sharedSec,
+  }) {
     //decode
     if (ecdh.version == EcdhInfoVersion.v2) {
       final mask = genCommitmentMask(sharedSec);
@@ -416,8 +458,10 @@ class RCT {
     }
   }
 
-  static EcdhTuple ecdhDecodeVar(
-      {required EcdhInfo ecdh, required List<int> sharedSec}) {
+  static EcdhTuple ecdhDecodeVar({
+    required EcdhInfo ecdh,
+    required List<int> sharedSec,
+  }) {
     //decode
     if (ecdh.version == EcdhInfoVersion.v2) {
       final mask = genCommitmentMaskVar(sharedSec);

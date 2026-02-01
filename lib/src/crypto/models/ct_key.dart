@@ -9,8 +9,16 @@ class CtKey extends MoneroSerialization {
   /// The mask key,
   final List<int> mask;
   CtKey({required List<int> dest, required List<int> mask})
-      : dest = dest.asImmutableBytes.exc(32),
-        mask = mask.asImmutableBytes.exc(32);
+    : dest = dest.asImmutableBytes.exc(
+        length: 32,
+        operation: "CtKey",
+        reason: "Invalid dest bytes length.",
+      ),
+      mask = mask.asImmutableBytes.exc(
+        length: 32,
+        operation: "CtKey",
+        reason: "Invalid mask bytes length.",
+      );
   CtKey copyWith({List<int>? dest, List<int>? mask}) {
     return CtKey(dest: dest ?? this.dest, mask: mask ?? this.mask);
   }
@@ -22,7 +30,7 @@ class CtKey extends MoneroSerialization {
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       LayoutConst.fixedBlob32(property: "dest"),
-      LayoutConst.fixedBlob32(property: "mask")
+      LayoutConst.fixedBlob32(property: "mask"),
     ], property: property);
   }
 
@@ -34,7 +42,7 @@ class CtKey extends MoneroSerialization {
   Map<String, dynamic> toJson() {
     return {
       "mask": BytesUtils.toHexString(mask),
-      "dest": BytesUtils.toHexString(dest)
+      "dest": BytesUtils.toHexString(dest),
     };
   }
 

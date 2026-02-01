@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Provide the necessary data to create a custom block template. They are used by p2pool.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_miner_data
-class DaemonRequestGetMinerData extends MoneroDaemonRequestParam<
-    DaemonGetMinerDataResponse, Map<String, dynamic>> {
+class DaemonRequestGetMinerData
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetMinerDataResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestGetMinerData();
 
   @override

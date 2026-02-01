@@ -8,48 +8,56 @@ class MoneroIntegratedAddress extends MoneroAddress {
     required super.address,
     required super.network,
     required List<int> paymentId,
-  })  : paymentId = paymentId.asImmutableBytes,
-        super._(type: XmrAddressType.integrated);
+  }) : paymentId = paymentId.asImmutableBytes,
+       super._(type: XmrAddressType.integrated);
 
   factory MoneroIntegratedAddress(String address, {MoneroNetwork? network}) {
     final decode = XmrAddrDecoder().decode(address);
     if (decode.type != XmrAddressType.integrated) {
       throw const DartMoneroPluginException(
-          "Use `MoneroAccountAddress` for creating a MoneroAccount address.");
+        "Use `MoneroAccountAddress` for creating a MoneroAccount address.",
+      );
     }
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
-      throw DartMoneroPluginException("Invalid address network.", details: {
-        "expected": network.toString(),
-        "type": addrNetwork.toString()
-      });
+      throw DartMoneroPluginException(
+        "Invalid address network.",
+        details: {
+          "expected": network.toString(),
+          "type": addrNetwork.toString(),
+        },
+      );
     }
     return MoneroIntegratedAddress._(
-        pubSpendKey: decode.publicSpendKey,
-        pubViewKey: decode.publicViewKey,
-        address: address,
-        network: addrNetwork,
-        paymentId: decode.paymentId!);
+      pubSpendKey: decode.publicSpendKey,
+      pubViewKey: decode.publicViewKey,
+      address: address,
+      network: addrNetwork,
+      paymentId: decode.paymentId!,
+    );
   }
 
-  factory MoneroIntegratedAddress.fromPubKeys(
-      {required List<int> pubSpendKey,
-      required List<int> pubViewKey,
-      required List<int> paymentId,
-      MoneroNetwork network = MoneroNetwork.mainnet}) {
+  factory MoneroIntegratedAddress.fromPubKeys({
+    required List<int> pubSpendKey,
+    required List<int> pubViewKey,
+    required List<int> paymentId,
+    MoneroNetwork network = MoneroNetwork.mainnet,
+  }) {
     paymentId = paymentId.asImmutableBytes;
     final psKey = pubSpendKey;
     final pvKey = pubViewKey;
     final encode = XmrAddrEncoder().encode(
-        pubSpendKey: psKey,
-        pubViewKey: pvKey,
-        paymentId: paymentId,
-        netVarBytes: network.findPrefix(XmrAddressType.integrated));
+      pubSpendKey: psKey,
+      pubViewKey: pvKey,
+      paymentId: paymentId,
+      netVarBytes: network.findPrefix(XmrAddressType.integrated),
+    );
     return MoneroIntegratedAddress._(
-        pubSpendKey: psKey,
-        pubViewKey: pvKey,
-        address: encode,
-        network: network,
-        paymentId: paymentId);
+      pubSpendKey: psKey,
+      pubViewKey: pvKey,
+      address: encode,
+      network: network,
+      paymentId: paymentId,
+    );
   }
 }

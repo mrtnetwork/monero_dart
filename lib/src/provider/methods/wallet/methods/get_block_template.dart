@@ -34,17 +34,17 @@ class DaemonOnGetBlockTemplateResponse extends DaemonBaseResponse {
   });
 
   DaemonOnGetBlockTemplateResponse.fromJson(super.json)
-      : blockhashingBlob = json["blockhashing_blob"],
-        blocktemplateBlob = json["blocktemplate_blob"],
-        difficulty = BigintUtils.parse(json["difficulty"]),
-        difficultyTop64 = json["difficulty_top64"],
-        expectedReward = BigintUtils.parse(json["expected_reward"]),
-        height = BigintUtils.parse(json["height"]),
-        nextSeedHash = json["next_seed_hash"],
-        prevHash = json["prev_hash"],
-        rewardOffset = json["reserved_offset"],
-        seedHash = json["seed_hash"],
-        wideDifficulty = json["wide_difficulty"],
-        seedHeight = BigintUtils.parse(json["seed_height"]),
-        super.fromJson();
+    : blockhashingBlob = json["blockhashing_blob"],
+      blocktemplateBlob = json["blocktemplate_blob"],
+      difficulty = BigintUtils.parse(json["difficulty"]),
+      difficultyTop64 = json["difficulty_top64"],
+      expectedReward = BigintUtils.parse(json["expected_reward"]),
+      height = BigintUtils.parse(json["height"]),
+      nextSeedHash = json["next_seed_hash"],
+      prevHash = json["prev_hash"],
+      rewardOffset = json["reserved_offset"],
+      seedHash = json["seed_hash"],
+      wideDifficulty = json["wide_difficulty"],
+      seedHeight = BigintUtils.parse(json["seed_height"]),
+      super.fromJson();
 }

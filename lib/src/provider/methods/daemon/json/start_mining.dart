@@ -5,11 +5,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#start_mining
 class DaemonRequestStartMining
     extends MoneroDaemonRequestParam<DaemonBaseResponse, Map<String, dynamic>> {
-  const DaemonRequestStartMining(
-      {required this.doBackgroundMining,
-      required this.ignoreBattery,
-      required this.minerAddress,
-      required this.threadsCount});
+  const DaemonRequestStartMining({
+    required this.doBackgroundMining,
+    required this.ignoreBattery,
+    required this.minerAddress,
+    required this.threadsCount,
+  });
 
   /// Account address to mine to.
   final String minerAddress;
@@ -26,11 +27,11 @@ class DaemonRequestStartMining
   String get method => "start_mining";
   @override
   Map<String, dynamic> get params => {
-        "threads_count": threadsCount.toString(),
-        "miner_address": minerAddress,
-        "do_background_mining": doBackgroundMining,
-        "ignore_battery": ignoreBattery
-      };
+    "threads_count": threadsCount.toString(),
+    "miner_address": minerAddress,
+    "do_background_mining": doBackgroundMining,
+    "ignore_battery": ignoreBattery,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.json;
 

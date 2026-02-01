@@ -44,17 +44,15 @@ void _test() {
     "d4d71b8fe9e27ed5e5733377ed6008321db709afeb4c055d69429395fbfb4a0b",
     "886facf167ee374cfd1e3a8e116e84bb314d5dc1a53625c8602a4188a5183108",
     "8868bc0ef3a40779bd560b9a3a1c390cf03531c0c058636af45b3a4329b0a102",
-    "8c7b4d51a1f26f86fff2462508ba448a7450a196aba0fa1dbf9e2314173fa00f"
+    "8c7b4d51a1f26f86fff2462508ba448a7450a196aba0fa1dbf9e2314173fa00f",
   ];
   int index = 0;
-  QuickCrypto.setupRandom(
-    (length) {
-      if (index >= rands.length) {
-        index = 0;
-      }
-      return BytesUtils.fromHexString(rands[index++]);
-    },
-  );
+  QuickCrypto.setupRandom((length) {
+    if (index >= rands.length) {
+      index = 0;
+    }
+    return BytesUtils.fromHexString(rands[index++]);
+  });
   const int N = 11;
   const int idx = 5;
   final CtKeyV pubs = [];
@@ -94,35 +92,63 @@ void _test() {
 
   test("correct sig", () {
     expect(vr, true);
-    expect(BytesUtils.toHexString(prove.i!),
-        "f6dc8eb3c14c3a9572fe4ddbc1b8e6174e25d94339422357aed7046077337f46");
-    expect(BytesUtils.toHexString(prove.c1),
-        "82df47e67caf1722c929adcd5260cd797195c706a1bf6bcc27a1d3ae33e78a00");
-    expect(BytesUtils.toHexString(prove.d),
-        "2a17bc6bcc71a65ad70d7ff18d787067f5eedf0fea947c1905dd69c9940be10d");
+    expect(
+      BytesUtils.toHexString(prove.i!),
+      "f6dc8eb3c14c3a9572fe4ddbc1b8e6174e25d94339422357aed7046077337f46",
+    );
+    expect(
+      BytesUtils.toHexString(prove.c1),
+      "82df47e67caf1722c929adcd5260cd797195c706a1bf6bcc27a1d3ae33e78a00",
+    );
+    expect(
+      BytesUtils.toHexString(prove.d),
+      "2a17bc6bcc71a65ad70d7ff18d787067f5eedf0fea947c1905dd69c9940be10d",
+    );
     expect(prove.s.length, 11);
-    expect(BytesUtils.toHexString(prove.s[0]),
-        "c73e80b0d40024bb8eedfaac1a7d34c88421550c67c08de2971861dcfc8a930f");
-    expect(BytesUtils.toHexString(prove.s[1]),
-        "d4d71b8fe9e27ed5e5733377ed6008321db709afeb4c055d69429395fbfb4a0b");
-    expect(BytesUtils.toHexString(prove.s[2]),
-        "886facf167ee374cfd1e3a8e116e84bb314d5dc1a53625c8602a4188a5183108");
-    expect(BytesUtils.toHexString(prove.s[3]),
-        "8868bc0ef3a40779bd560b9a3a1c390cf03531c0c058636af45b3a4329b0a102");
-    expect(BytesUtils.toHexString(prove.s[4]),
-        "8c7b4d51a1f26f86fff2462508ba448a7450a196aba0fa1dbf9e2314173fa00f");
-    expect(BytesUtils.toHexString(prove.s[5]),
-        "10cfe97da5f1970414938e659e92eaf2c07ab33da00866a61899a8cf0fd3c404");
-    expect(BytesUtils.toHexString(prove.s[6]),
-        "d22839047bb7187920a0ad1c001e2d5cc38240af9acd4fa87034445aa24f0e08");
-    expect(BytesUtils.toHexString(prove.s[7]),
-        "3e0954c0c268a06365a6802a746fa8b950a8529faea0cae4fc610253f816be07");
-    expect(BytesUtils.toHexString(prove.s[8]),
-        "ded6bec2dbaf1add0d62365363ad084f160fada886b47d125a8125e4dcce0700");
-    expect(BytesUtils.toHexString(prove.s[9]),
-        "d05d52c9a252ec175983728931e5c479f7e2bc9abcb0b6e278005e0a83361e0e");
-    expect(BytesUtils.toHexString(prove.s[10]),
-        "1b0106fe6493b6b84a6f86f3d0c379aebf3f9f8c1713bd74e22f83443bcb8500");
+    expect(
+      BytesUtils.toHexString(prove.s[0]),
+      "c73e80b0d40024bb8eedfaac1a7d34c88421550c67c08de2971861dcfc8a930f",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[1]),
+      "d4d71b8fe9e27ed5e5733377ed6008321db709afeb4c055d69429395fbfb4a0b",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[2]),
+      "886facf167ee374cfd1e3a8e116e84bb314d5dc1a53625c8602a4188a5183108",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[3]),
+      "8868bc0ef3a40779bd560b9a3a1c390cf03531c0c058636af45b3a4329b0a102",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[4]),
+      "8c7b4d51a1f26f86fff2462508ba448a7450a196aba0fa1dbf9e2314173fa00f",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[5]),
+      "10cfe97da5f1970414938e659e92eaf2c07ab33da00866a61899a8cf0fd3c404",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[6]),
+      "d22839047bb7187920a0ad1c001e2d5cc38240af9acd4fa87034445aa24f0e08",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[7]),
+      "3e0954c0c268a06365a6802a746fa8b950a8529faea0cae4fc610253f816be07",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[8]),
+      "ded6bec2dbaf1add0d62365363ad084f160fada886b47d125a8125e4dcce0700",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[9]),
+      "d05d52c9a252ec175983728931e5c479f7e2bc9abcb0b6e278005e0a83361e0e",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s[10]),
+      "1b0106fe6493b6b84a6f86f3d0c379aebf3f9f8c1713bd74e22f83443bcb8500",
+    );
   });
 
   test("bad message", () {
@@ -132,17 +158,31 @@ void _test() {
   });
 
   test("bad index", () {
-    final prove =
-        CLSAGUtils.prove(message, pubs, insk, t2, cout, (idx + 1) % N);
+    final prove = CLSAGUtils.prove(
+      message,
+      pubs,
+      insk,
+      t2,
+      cout,
+      (idx + 1) % N,
+    );
     final vr = CLSAGUtils.verify(message, prove, pubs, cout);
     expect(vr, false);
   });
 
   test("bad C", () {
-    pubs[idx] =
-        CtKey(dest: RCT.scalarmultBase(RCT.skGen_()), mask: pubs[idx].mask);
-    final prove =
-        CLSAGUtils.prove(message, pubs, insk, t2, cout, (idx + 1) % N);
+    pubs[idx] = CtKey(
+      dest: RCT.scalarmultBase(RCT.skGen_()),
+      mask: pubs[idx].mask,
+    );
+    final prove = CLSAGUtils.prove(
+      message,
+      pubs,
+      insk,
+      t2,
+      cout,
+      (idx + 1) % N,
+    );
     final vr = CLSAGUtils.verify(message, prove, pubs, cout);
     expect(vr, false);
   });

@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Get the node's current height.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_height
-class DaemonRequestGetHeight extends MoneroDaemonRequestParam<
-    DaemonGetBlockHeightResponse, Map<String, dynamic>> {
+class DaemonRequestGetHeight
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetBlockHeightResponse,
+          Map<String, dynamic>
+        > {
   const DaemonRequestGetHeight();
 
   @override

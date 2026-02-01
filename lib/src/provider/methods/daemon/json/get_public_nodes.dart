@@ -3,10 +3,17 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Get public peer information.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_public_nodes
-class DaemonRequestGetPublicNodes extends MoneroDaemonRequestParam<
-    DaemonGetPublicNodeResponse, Map<String, dynamic>> {
-  const DaemonRequestGetPublicNodes(
-      {this.gray = false, this.white = true, this.includeBlocked = false});
+class DaemonRequestGetPublicNodes
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetPublicNodeResponse,
+          Map<String, dynamic>
+        > {
+  const DaemonRequestGetPublicNodes({
+    this.gray = false,
+    this.white = true,
+    this.includeBlocked = false,
+  });
 
   /// Include gray peers.
   final bool gray;
@@ -19,8 +26,11 @@ class DaemonRequestGetPublicNodes extends MoneroDaemonRequestParam<
   @override
   String get method => "get_public_nodes";
   @override
-  Map<String, dynamic> get params =>
-      {"gray": gray, "white": white, "include_blocked": includeBlocked};
+  Map<String, dynamic> get params => {
+    "gray": gray,
+    "white": white,
+    "include_blocked": includeBlocked,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.json;
 

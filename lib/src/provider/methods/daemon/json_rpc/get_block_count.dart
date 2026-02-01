@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Look up how many blocks are in the longest chain known to the node.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_block_count
-class DaemonRequestGetBlockCount extends MoneroDaemonRequestParam<
-    DaemonGetBlockCountResponse, Map<String, dynamic>> {
+class DaemonRequestGetBlockCount
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetBlockCountResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestGetBlockCount();
 
   @override

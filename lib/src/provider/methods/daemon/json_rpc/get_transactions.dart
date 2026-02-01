@@ -6,9 +6,12 @@ import 'package:monero_dart/src/provider/models/daemon/tx_response.dart';
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_transactions
 class DaemonRequestGetTransactions
     extends MoneroDaemonRequestParam<List<TxResponse>, Map<String, dynamic>> {
-  DaemonRequestGetTransactions(List<String> txHashes,
-      {this.decodeAsJson, this.prune, this.split})
-      : txHashes = txHashes.immutable;
+  DaemonRequestGetTransactions(
+    List<String> txHashes, {
+    this.decodeAsJson,
+    this.prune,
+    this.split,
+  }) : txHashes = txHashes.immutable;
 
   /// List of transaction hashes to look up.
   final List<String> txHashes;
@@ -25,11 +28,11 @@ class DaemonRequestGetTransactions
   String get method => "get_transactions";
   @override
   Map<String, dynamic> get params => {
-        "txs_hashes": txHashes,
-        "decode_as_json": decodeAsJson,
-        "prune": prune,
-        "split": split
-      };
+    "txs_hashes": txHashes,
+    "decode_as_json": decodeAsJson,
+    "prune": prune,
+    "split": split,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.json;
 

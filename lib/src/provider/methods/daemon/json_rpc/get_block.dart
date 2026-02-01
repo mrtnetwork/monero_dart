@@ -5,14 +5,17 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 /// like with the above block header calls. For full block information,
 /// both lookups use the same method, but with different input parameters.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_block
-class DaemonRequestGetBlock extends MoneroDaemonRequestParam<
-    DaemonGetBlockResponse, Map<String, dynamic>> {
+class DaemonRequestGetBlock
+    extends
+        MoneroDaemonRequestParam<DaemonGetBlockResponse, Map<String, dynamic>> {
   const DaemonRequestGetBlock({
     this.height,
     this.hash,
     this.fillPowHash = false,
-  }) : assert(height != null || hash != null,
-            "Pick height or hash to retrive block informations.");
+  }) : assert(
+         height != null || hash != null,
+         "Pick height or hash to retrive block informations.",
+       );
 
   /// The block's height.
   final BigInt? height;
@@ -24,10 +27,10 @@ class DaemonRequestGetBlock extends MoneroDaemonRequestParam<
   String get method => "get_block";
   @override
   Map<String, dynamic> get params => {
-        if (height != null) "height": height.toString(),
-        if (hash != null) "hash": hash,
-        "fill_pow_hash": fillPowHash
-      };
+    if (height != null) "height": height.toString(),
+    if (hash != null) "hash": hash,
+    "fill_pow_hash": fillPowHash,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.jsonRPC;
 

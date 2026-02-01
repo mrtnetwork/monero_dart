@@ -15,17 +15,29 @@ class MoneroOutputType {
   final int value;
   final String name;
   const MoneroOutputType._({required this.value, required this.name});
-  static const MoneroOutputType locked =
-      MoneroOutputType._(value: 0, name: "locked");
-  static const MoneroOutputType unlocked =
-      MoneroOutputType._(value: 1, name: "unlocked");
-  static const MoneroOutputType unlockedMultisig =
-      MoneroOutputType._(value: 2, name: "unlockedMultisig");
+  static const MoneroOutputType locked = MoneroOutputType._(
+    value: 0,
+    name: "locked",
+  );
+  static const MoneroOutputType unlocked = MoneroOutputType._(
+    value: 1,
+    name: "unlocked",
+  );
+  static const MoneroOutputType unlockedMultisig = MoneroOutputType._(
+    value: 2,
+    name: "unlockedMultisig",
+  );
   static const List<MoneroOutputType> values = [locked, unlocked];
   static MoneroOutputType fromName(String? name) {
-    return values.firstWhere((e) => e.name == name,
-        orElse: () => throw DartMoneroPluginException("Invalid output type.",
-            details: {"type": name}));
+    return values.firstWhere(
+      (e) => e.name == name,
+      orElse:
+          () =>
+              throw DartMoneroPluginException(
+                "Invalid output type.",
+                details: {"type": name},
+              ),
+    );
   }
 
   @override
@@ -38,21 +50,33 @@ class MoneroPaymentType {
   final int value;
   final String name;
   const MoneroPaymentType._({required this.value, required this.name});
-  static const MoneroPaymentType locked =
-      MoneroPaymentType._(value: 0, name: "locked");
-  static const MoneroPaymentType unlocked =
-      MoneroPaymentType._(value: 1, name: "unlocked");
-  static const MoneroPaymentType unlockedMultisig =
-      MoneroPaymentType._(value: 2, name: "unlockedMultisig");
+  static const MoneroPaymentType locked = MoneroPaymentType._(
+    value: 0,
+    name: "locked",
+  );
+  static const MoneroPaymentType unlocked = MoneroPaymentType._(
+    value: 1,
+    name: "unlocked",
+  );
+  static const MoneroPaymentType unlockedMultisig = MoneroPaymentType._(
+    value: 2,
+    name: "unlockedMultisig",
+  );
   static const List<MoneroPaymentType> values = [
     locked,
     unlocked,
-    unlockedMultisig
+    unlockedMultisig,
   ];
   static MoneroPaymentType fromName(String? name) {
-    return values.firstWhere((e) => e.name == name,
-        orElse: () => throw DartMoneroPluginException("Invalid payment type.",
-            details: {"type": name}));
+    return values.firstWhere(
+      (e) => e.name == name,
+      orElse:
+          () =>
+              throw DartMoneroPluginException(
+                "Invalid payment type.",
+                details: {"type": name},
+              ),
+    );
   }
 
   @override
@@ -70,24 +94,38 @@ abstract class MoneroOutput extends MoneroVariantSerialization {
   final List<int> outputPublicKey;
   final BigInt unlockTime;
   final int realIndex;
-  MoneroOutput(
-      {required BigInt amount,
-      required this.accountIndex,
-      required this.type,
-      required RctKey mask,
-      required RctKey derivation,
-      required List<int> outputPublicKey,
-      required BigInt unlockTime,
-      required int realIndex})
-      : amount = amount.asUint64,
-        mask = mask.asImmutableBytes.exc(32),
-        derivation = derivation.asImmutableBytes.exc(32),
-        unlockTime = unlockTime.asUint64,
-        realIndex = realIndex.asUint32,
-        outputPublicKey = outputPublicKey.exc(32);
+  MoneroOutput({
+    required BigInt amount,
+    required this.accountIndex,
+    required this.type,
+    required RctKey mask,
+    required RctKey derivation,
+    required List<int> outputPublicKey,
+    required BigInt unlockTime,
+    required int realIndex,
+  }) : amount = amount.asU64,
+       mask = mask.asImmutableBytes.exc(
+         length: 32,
+         operation: "MoneroOutput",
+         reason: "Invalid mask bytes length.",
+       ),
+       derivation = derivation.asImmutableBytes.exc(
+         length: 32,
+         operation: "MoneroOutput",
+         reason: "Invalid derivation bytes length.",
+       ),
+       unlockTime = unlockTime.asU64,
+       realIndex = realIndex.asU32,
+       outputPublicKey = outputPublicKey.exc(
+         length: 32,
+         operation: "MoneroOutput",
+         reason: "Invalid outputPublicKey bytes length.",
+       );
   factory MoneroOutput.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroVariantSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroOutput.fromStruct(decode);
   }
 
@@ -140,14 +178,16 @@ abstract class MoneroOutput extends MoneroVariantSerialization {
       "accountIndex": accountIndex.toJson(),
       "outputPublicKey": BytesUtils.toHexString(outputPublicKey),
       "unlockTime": unlockTime,
-      "realIndex": realIndex
+      "realIndex": realIndex,
     };
   }
 
   T cast<T extends MoneroOutput>() {
     if (this is! T) {
-      throw DartMoneroPluginException("Monero output casting failed.",
-          details: {"expected": "$T", "type": type.name});
+      throw DartMoneroPluginException(
+        "Monero output casting failed.",
+        details: {"expected": "$T", "type": type.name},
+      );
     }
     return this as T;
   }
@@ -159,29 +199,32 @@ abstract class MoneroOutput extends MoneroVariantSerialization {
 }
 
 class MoneroLockedOutput extends MoneroOutput {
-  MoneroLockedOutput(
-      {required super.amount,
-      required super.mask,
-      required super.derivation,
-      required super.outputPublicKey,
-      required super.accountIndex,
-      required super.unlockTime,
-      required super.realIndex})
-      : super(type: MoneroOutputType.locked);
+  MoneroLockedOutput({
+    required super.amount,
+    required super.mask,
+    required super.derivation,
+    required super.outputPublicKey,
+    required super.accountIndex,
+    required super.unlockTime,
+    required super.realIndex,
+  }) : super(type: MoneroOutputType.locked);
   factory MoneroLockedOutput.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroLockedOutput.fromStruct(decode);
   }
   factory MoneroLockedOutput.fromStruct(Map<String, dynamic> json) {
     return MoneroLockedOutput(
-        amount: json.as("amount"),
-        accountIndex: MoneroAccountIndex.fromStruct(json.asMap("accountIndex")),
-        mask: json.asBytes("mask"),
-        derivation: json.asBytes("derivation"),
-        outputPublicKey: json.asBytes("outputPublicKey"),
-        unlockTime: json.as("unlockTime"),
-        realIndex: json.as("realIndex"));
+      amount: json.as("amount"),
+      accountIndex: MoneroAccountIndex.fromStruct(json.asMap("accountIndex")),
+      mask: json.asBytes("mask"),
+      derivation: json.asBytes("derivation"),
+      outputPublicKey: json.asBytes("outputPublicKey"),
+      unlockTime: json.as("unlockTime"),
+      realIndex: json.as("realIndex"),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -205,7 +248,7 @@ class MoneroLockedOutput extends MoneroOutput {
       "derivation": derivation,
       "outputPublicKey": outputPublicKey,
       "unlockTime": unlockTime,
-      "realIndex": realIndex
+      "realIndex": realIndex,
     };
   }
 
@@ -234,45 +277,60 @@ class MoneroUnlockedOutput extends MoneroOutput {
     required super.unlockTime,
     required super.realIndex,
     MoneroOutputType type = MoneroOutputType.unlocked,
-  })  : ephemeralPublicKey = ephemeralPublicKey.asImmutableBytes.exc(32),
-        ephemeralSecretKey = ephemeralSecretKey.asImmutableBytes.exc(32),
-        keyImage = keyImage.asImmutableBytes.exc(32),
-        super(type: MoneroOutputType.unlocked);
-  factory MoneroUnlockedOutput(
-      {required BigInt amount,
-      required RctKey derivation,
-      required RctKey ephemeralSecretKey,
-      required RctKey ephemeralPublicKey,
-      required RctKey keyImage,
-      required RctKey mask,
-      required RctKey outputPublicKey,
-      required MoneroAccountIndex accountIndex,
-      required BigInt unlockTime,
-      required int realIndex}) {
+  }) : ephemeralPublicKey = ephemeralPublicKey.asImmutableBytes.exc(
+         length: 32,
+         operation: "MoneroUnlockedOutput",
+         reason: "Invalid ephemeralPublicKey bytes length.",
+       ),
+       ephemeralSecretKey = ephemeralSecretKey.asImmutableBytes.exc(
+         length: 32,
+         operation: "MoneroUnlockedOutput",
+         reason: "Invalid ephemeralSecretKey bytes length.",
+       ),
+       keyImage = keyImage.asImmutableBytes.exc(
+         length: 32,
+         operation: "MoneroUnlockedOutput",
+         reason: "Invalid keyImage bytes length.",
+       ),
+       super(type: MoneroOutputType.unlocked);
+  factory MoneroUnlockedOutput({
+    required BigInt amount,
+    required RctKey derivation,
+    required RctKey ephemeralSecretKey,
+    required RctKey ephemeralPublicKey,
+    required RctKey keyImage,
+    required RctKey mask,
+    required RctKey outputPublicKey,
+    required MoneroAccountIndex accountIndex,
+    required BigInt unlockTime,
+    required int realIndex,
+  }) {
     return MoneroUnlockedOutput._(
-        amount: amount,
-        derivation: derivation,
-        ephemeralSecretKey: ephemeralSecretKey,
-        ephemeralPublicKey: ephemeralPublicKey,
-        keyImage: keyImage,
-        mask: mask,
-        outputPublicKey: outputPublicKey,
-        accountIndex: accountIndex,
-        unlockTime: unlockTime,
-        realIndex: realIndex);
+      amount: amount,
+      derivation: derivation,
+      ephemeralSecretKey: ephemeralSecretKey,
+      ephemeralPublicKey: ephemeralPublicKey,
+      keyImage: keyImage,
+      mask: mask,
+      outputPublicKey: outputPublicKey,
+      accountIndex: accountIndex,
+      unlockTime: unlockTime,
+      realIndex: realIndex,
+    );
   }
   factory MoneroUnlockedOutput.fromStruct(Map<String, dynamic> json) {
     return MoneroUnlockedOutput(
-        amount: json.as("amount"),
-        accountIndex: MoneroAccountIndex.fromStruct(json.asMap("accountIndex")),
-        derivation: json.asBytes("derivation"),
-        mask: json.asBytes("mask"),
-        ephemeralPublicKey: json.asBytes("ephemeralPublicKey"),
-        ephemeralSecretKey: json.asBytes("ephemeralSecretKey"),
-        keyImage: json.asBytes("keyImage"),
-        outputPublicKey: json.asBytes("outputPublicKey"),
-        unlockTime: json.as("unlockTime"),
-        realIndex: json.as("realIndex"));
+      amount: json.as("amount"),
+      accountIndex: MoneroAccountIndex.fromStruct(json.asMap("accountIndex")),
+      derivation: json.asBytes("derivation"),
+      mask: json.asBytes("mask"),
+      ephemeralPublicKey: json.asBytes("ephemeralPublicKey"),
+      ephemeralSecretKey: json.asBytes("ephemeralSecretKey"),
+      keyImage: json.asBytes("keyImage"),
+      outputPublicKey: json.asBytes("outputPublicKey"),
+      unlockTime: json.as("unlockTime"),
+      realIndex: json.as("realIndex"),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -302,7 +360,7 @@ class MoneroUnlockedOutput extends MoneroOutput {
       "accountIndex": accountIndex.toLayoutStruct(),
       "outputPublicKey": outputPublicKey,
       "unlockTime": unlockTime,
-      "realIndex": realIndex
+      "realIndex": realIndex,
     };
   }
 
@@ -313,7 +371,7 @@ class MoneroUnlockedOutput extends MoneroOutput {
       "ephemeralSecretKey": BytesUtils.toHexString(ephemeralSecretKey),
       "ephemeralPublicKey": BytesUtils.toHexString(ephemeralPublicKey),
       "keyImage": BytesUtils.toHexString(keyImage),
-      "realIndex": realIndex
+      "realIndex": realIndex,
     };
   }
 
@@ -325,33 +383,38 @@ class MoneroUnlockedOutput extends MoneroOutput {
 
 class MoneroUnlockedMultisigOutput extends MoneroUnlockedOutput {
   final RctKey multisigKeyImage;
-  MoneroUnlockedMultisigOutput(
-      {required super.amount,
-      required super.derivation,
-      required super.ephemeralSecretKey,
-      required super.ephemeralPublicKey,
-      required RctKey multisigKeyImage,
-      required super.keyImage,
-      required super.mask,
-      required super.outputPublicKey,
-      required super.accountIndex,
-      required super.unlockTime,
-      required super.realIndex})
-      : multisigKeyImage = multisigKeyImage.asImmutableBytes.exc(32),
-        super._(type: MoneroOutputType.unlockedMultisig);
+  MoneroUnlockedMultisigOutput({
+    required super.amount,
+    required super.derivation,
+    required super.ephemeralSecretKey,
+    required super.ephemeralPublicKey,
+    required RctKey multisigKeyImage,
+    required super.keyImage,
+    required super.mask,
+    required super.outputPublicKey,
+    required super.accountIndex,
+    required super.unlockTime,
+    required super.realIndex,
+  }) : multisigKeyImage = multisigKeyImage.asImmutableBytes.exc(
+         length: 32,
+         operation: "MoneroUnlockedMultisigOutput",
+         reason: "Invalid multisigKeyImage bytes length.",
+       ),
+       super._(type: MoneroOutputType.unlockedMultisig);
   factory MoneroUnlockedMultisigOutput.fromStruct(Map<String, dynamic> json) {
     return MoneroUnlockedMultisigOutput(
-        amount: json.as("amount"),
-        accountIndex: MoneroAccountIndex.fromStruct(json.asMap("accountIndex")),
-        derivation: json.asBytes("derivation"),
-        mask: json.asBytes("mask"),
-        ephemeralPublicKey: json.asBytes("ephemeralPublicKey"),
-        ephemeralSecretKey: json.asBytes("ephemeralSecretKey"),
-        keyImage: json.asBytes("keyImage"),
-        unlockTime: json.as("unlockTime"),
-        outputPublicKey: json.asBytes("outputPublicKey"),
-        multisigKeyImage: json.asBytes("multisigKeyImage"),
-        realIndex: json.as("realIndex"));
+      amount: json.as("amount"),
+      accountIndex: MoneroAccountIndex.fromStruct(json.asMap("accountIndex")),
+      derivation: json.asBytes("derivation"),
+      mask: json.asBytes("mask"),
+      ephemeralPublicKey: json.asBytes("ephemeralPublicKey"),
+      ephemeralSecretKey: json.asBytes("ephemeralSecretKey"),
+      keyImage: json.asBytes("keyImage"),
+      unlockTime: json.as("unlockTime"),
+      outputPublicKey: json.asBytes("outputPublicKey"),
+      multisigKeyImage: json.asBytes("multisigKeyImage"),
+      realIndex: json.as("realIndex"),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -383,7 +446,7 @@ class MoneroUnlockedMultisigOutput extends MoneroUnlockedOutput {
       "outputPublicKey": outputPublicKey,
       "multisigKeyImage": multisigKeyImage,
       "unlockTime": unlockTime,
-      "realIndex": realIndex
+      "realIndex": realIndex,
     };
   }
 
@@ -408,7 +471,7 @@ abstract class MoneroPayment<T extends MoneroOutput>
       "txPubkey": txPubkey,
       "paymentId": BytesUtils.tryToHexString(paymentId),
       "encryptedPaymentid": BytesUtils.tryToHexString(encryptedPaymentid),
-      "globalIndex": globalIndex.toString()
+      "globalIndex": globalIndex.toString(),
     };
   }
 
@@ -419,12 +482,19 @@ abstract class MoneroPayment<T extends MoneroOutput>
     required RctKey? paymentId,
     required RctKey? encryptedPaymentid,
     required this.globalIndex,
-  })  : paymentId = paymentId?.asImmutableBytes,
-        encryptedPaymentid = encryptedPaymentid?.asImmutableBytes,
-        txPubkey = txPubkey.exc(32, name: "public key.");
+  }) : paymentId = paymentId?.asImmutableBytes,
+       encryptedPaymentid = encryptedPaymentid?.asImmutableBytes,
+       txPubkey = txPubkey.exc(
+         length: 32,
+         operation: "MoneroPayment",
+         reason: "Invalid txPubkey bytes length.",
+         name: "txPubkey",
+       );
   factory MoneroPayment.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroVariantSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroPayment.fromStruct(decode);
   }
 
@@ -446,8 +516,10 @@ abstract class MoneroPayment<T extends MoneroOutput>
         throw UnimplementedError("Invalid monero payment type.");
     }
     if (payment is! MoneroPayment<T>) {
-      throw DartMoneroPluginException("Monero payment casting failed.",
-          details: {"expected": "$T", "type": type.name});
+      throw DartMoneroPluginException(
+        "Monero payment casting failed.",
+        details: {"expected": "$T", "type": type.name},
+      );
     }
     return payment;
   }
@@ -481,8 +553,10 @@ abstract class MoneroPayment<T extends MoneroOutput>
 
   E cast<E extends MoneroPayment>() {
     if (this is! E) {
-      throw DartMoneroPluginException("Payment casting failed.",
-          details: {"expected": "$E", "type": type.name});
+      throw DartMoneroPluginException(
+        "Payment casting failed.",
+        details: {"expected": "$E", "type": type.name},
+      );
     }
     return this as E;
   }
@@ -504,24 +578,29 @@ class MoneroLockedPayment extends MoneroPayment<MoneroLockedOutput> {
 
   factory MoneroLockedPayment.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroLockedPayment.fromStruct(decode);
   }
   factory MoneroLockedPayment.fromStruct(Map<String, dynamic> json) {
     return MoneroLockedPayment(
-        output: MoneroLockedOutput.fromStruct(json.asMap("output")),
-        txPubkey: json.asBytes("txPubkey"),
-        encryptedPaymentid: json.asBytes("encryptedPaymentid"),
-        paymentId: json.asBytes("paymentId"),
-        globalIndex: json.as("globalIndex"));
+      output: MoneroLockedOutput.fromStruct(json.asMap("output")),
+      txPubkey: json.asBytes("txPubkey"),
+      encryptedPaymentid: json.asBytes("encryptedPaymentid"),
+      paymentId: json.asBytes("paymentId"),
+      globalIndex: json.as("globalIndex"),
+    );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       MoneroLockedOutput.layout(property: "output"),
       LayoutConst.fixedBlob32(property: "txPubkey"),
       LayoutConst.optional(LayoutConst.fixedBlobN(8), property: "paymentId"),
-      LayoutConst.optional(LayoutConst.fixedBlobN(8),
-          property: "encryptedPaymentid"),
+      LayoutConst.optional(
+        LayoutConst.fixedBlobN(8),
+        property: "encryptedPaymentid",
+      ),
       MoneroLayoutConst.varintBigInt(property: "globalIndex"),
     ], property: property);
   }
@@ -538,7 +617,7 @@ class MoneroLockedPayment extends MoneroPayment<MoneroLockedOutput> {
       "txPubkey": txPubkey,
       "paymentId": paymentId,
       "encryptedPaymentid": encryptedPaymentid,
-      "globalIndex": globalIndex
+      "globalIndex": globalIndex,
     };
   }
 }
@@ -547,20 +626,21 @@ class MoneroUnLockedPayment<T extends MoneroUnlockedOutput>
     extends MoneroPayment<T> {
   RctKey get keyImage => output.keyImage;
   String get keyImageAsHex => BytesUtils.toHexString(keyImage);
-  MoneroUnLockedPayment._(
-      {required super.output,
-      required super.txPubkey,
-      super.paymentId,
-      super.encryptedPaymentid,
-      required super.type,
-      required super.globalIndex});
-  MoneroUnLockedPayment(
-      {required super.output,
-      required super.txPubkey,
-      super.paymentId,
-      super.encryptedPaymentid,
-      required super.globalIndex})
-      : super(type: MoneroPaymentType.unlocked);
+  MoneroUnLockedPayment._({
+    required super.output,
+    required super.txPubkey,
+    super.paymentId,
+    super.encryptedPaymentid,
+    required super.type,
+    required super.globalIndex,
+  });
+  MoneroUnLockedPayment({
+    required super.output,
+    required super.txPubkey,
+    super.paymentId,
+    super.encryptedPaymentid,
+    required super.globalIndex,
+  }) : super(type: MoneroPaymentType.unlocked);
   factory MoneroUnLockedPayment.fromStruct(Map<String, dynamic> json) {
     return MoneroUnLockedPayment(
       output: MoneroUnlockedOutput.fromStruct(json.asMap("output")).cast<T>(),
@@ -570,10 +650,14 @@ class MoneroUnLockedPayment<T extends MoneroUnlockedOutput>
       globalIndex: json.as("globalIndex"),
     );
   }
-  factory MoneroUnLockedPayment.deserialize(List<int> bytes,
-      {String? property}) {
+  factory MoneroUnLockedPayment.deserialize(
+    List<int> bytes, {
+    String? property,
+  }) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroUnLockedPayment.fromStruct(decode);
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -581,8 +665,10 @@ class MoneroUnLockedPayment<T extends MoneroUnlockedOutput>
       MoneroUnlockedOutput.layout(property: "output"),
       LayoutConst.fixedBlob32(property: "txPubkey"),
       LayoutConst.optional(LayoutConst.fixedBlobN(8), property: "paymentId"),
-      LayoutConst.optional(LayoutConst.fixedBlobN(8),
-          property: "encryptedPaymentid"),
+      LayoutConst.optional(
+        LayoutConst.fixedBlobN(8),
+        property: "encryptedPaymentid",
+      ),
       MoneroLayoutConst.varintBigInt(property: "globalIndex"),
     ], property: property);
   }
@@ -626,24 +712,30 @@ class MoneroUnlockedMultisigPayment
     required super.encryptedPaymentid,
     required super.globalIndex,
     required List<MoneroMultisigOutputInfo> multisigInfos,
-  })  : multisigInfos = multisigInfos.immutable,
-        super._(type: MoneroPaymentType.unlockedMultisig);
+  }) : multisigInfos = multisigInfos.immutable,
+       super._(type: MoneroPaymentType.unlockedMultisig);
   factory MoneroUnlockedMultisigPayment.fromStruct(Map<String, dynamic> json) {
     return MoneroUnlockedMultisigPayment(
-        output: MoneroUnlockedMultisigOutput.fromStruct(json.asMap("output")),
-        txPubkey: json.asBytes("txPubkey"),
-        encryptedPaymentid: json.asBytes("encryptedPaymentid"),
-        paymentId: json.asBytes("paymentId"),
-        multisigInfos: json
-            .asListOfMap("multisigInfos")!
-            .map((e) => MoneroMultisigOutputInfo.fromStruct(e))
-            .toList(),
-        globalIndex: json.as("globalIndex"));
+      output: MoneroUnlockedMultisigOutput.fromStruct(json.asMap("output")),
+      txPubkey: json.asBytes("txPubkey"),
+      encryptedPaymentid: json.asBytes("encryptedPaymentid"),
+      paymentId: json.asBytes("paymentId"),
+      multisigInfos:
+          json
+              .asListOfMap("multisigInfos")!
+              .map((e) => MoneroMultisigOutputInfo.fromStruct(e))
+              .toList(),
+      globalIndex: json.as("globalIndex"),
+    );
   }
-  factory MoneroUnlockedMultisigPayment.deserialize(List<int> bytes,
-      {String? property}) {
+  factory MoneroUnlockedMultisigPayment.deserialize(
+    List<int> bytes, {
+    String? property,
+  }) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroUnlockedMultisigPayment.fromStruct(decode);
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -651,11 +743,15 @@ class MoneroUnlockedMultisigPayment
       MoneroUnlockedMultisigOutput.layout(property: "output"),
       LayoutConst.fixedBlob32(property: "txPubkey"),
       LayoutConst.optional(LayoutConst.fixedBlobN(8), property: "paymentId"),
-      LayoutConst.optional(LayoutConst.fixedBlobN(8),
-          property: "encryptedPaymentid"),
+      LayoutConst.optional(
+        LayoutConst.fixedBlobN(8),
+        property: "encryptedPaymentid",
+      ),
       MoneroLayoutConst.varintBigInt(property: "globalIndex"),
-      MoneroLayoutConst.variantVec(MoneroMultisigOutputInfo.layout(),
-          property: "multisigInfos"),
+      MoneroLayoutConst.variantVec(
+        MoneroMultisigOutputInfo.layout(),
+        property: "multisigInfos",
+      ),
     ], property: property);
   }
 
@@ -672,7 +768,7 @@ class MoneroUnlockedMultisigPayment
       "paymentId": paymentId,
       "encryptedPaymentid": encryptedPaymentid,
       "multisigInfos": multisigInfos.map((e) => e.toLayoutStruct()).toList(),
-      "globalIndex": globalIndex
+      "globalIndex": globalIndex,
     };
   }
 
@@ -694,35 +790,42 @@ class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
 
   SpendablePayment<E> updatePayment<E extends MoneroPayment>(E updatePayment) {
     return SpendablePayment<E>(
-        payment: updatePayment, outs: outs, realOutIndex: realOutIndex);
+      payment: updatePayment,
+      outs: outs,
+      realOutIndex: realOutIndex,
+    );
   }
 
-  SpendablePayment(
-      {required this.payment,
-      required List<OutsEntery> outs,
-      required int realOutIndex})
-      : outs = outs.immutable,
-        realOutIndex = realOutIndex.asUint32;
+  SpendablePayment({
+    required this.payment,
+    required List<OutsEntery> outs,
+    required int realOutIndex,
+  }) : outs = outs.immutable,
+       realOutIndex = realOutIndex.asU32;
   factory SpendablePayment.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return SpendablePayment.fromStruct(decode);
   }
   factory SpendablePayment.fromStruct(Map<String, dynamic> json) {
     return SpendablePayment(
-        payment: MoneroPayment.fromStruct(json.asMap("payment")).cast<T>(),
-        outs: json
-            .asListOfMap("outs")!
-            .map((e) => OutsEntery.fromStruct(e))
-            .toList(),
-        realOutIndex: json.as("realOutIndex"));
+      payment: MoneroPayment.fromStruct(json.asMap("payment")).cast<T>(),
+      outs:
+          json
+              .asListOfMap("outs")!
+              .map((e) => OutsEntery.fromStruct(e))
+              .toList(),
+      realOutIndex: json.as("realOutIndex"),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       MoneroPayment.layout(property: "payment"),
       MoneroLayoutConst.variantVec(OutsEntery.layout(), property: "outs"),
-      MoneroLayoutConst.varintInt(property: "realOutIndex")
+      MoneroLayoutConst.varintInt(property: "realOutIndex"),
     ], property: property);
   }
 
@@ -731,7 +834,7 @@ class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
     return {
       "payment": payment.toVariantLayoutStruct(),
       "outs": outs.map((e) => e.toLayoutStruct()).toList(),
-      "realOutIndex": realOutIndex
+      "realOutIndex": realOutIndex,
     };
   }
 
@@ -744,7 +847,7 @@ class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
     return {
       "outs": outs.map((e) => e.toJson()).toList(),
       "realOutIndex": realOutIndex,
-      "payment": payment.toJson()
+      "payment": payment.toJson(),
     };
   }
 }
@@ -752,18 +855,19 @@ class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
 class UnlockMultisigOutputRequest {
   final List<MoneroMultisigOutputInfo> multisigInfos;
   final MoneroUnLockedPayment payment;
-  UnlockMultisigOutputRequest(
-      {required this.payment,
-      required List<MoneroMultisigOutputInfo> multisigInfos})
-      : multisigInfos = multisigInfos.immutable;
+  UnlockMultisigOutputRequest({
+    required this.payment,
+    required List<MoneroMultisigOutputInfo> multisigInfos,
+  }) : multisigInfos = multisigInfos.immutable;
 }
 
 class MoneroTransactionWithOutputIndeces {
   final MoneroTransaction transaction;
   final List<BigInt> outputIndices;
-  MoneroTransactionWithOutputIndeces._(
-      {required this.transaction, required List<BigInt> outputIndices})
-      : outputIndices = outputIndices.immutable;
+  MoneroTransactionWithOutputIndeces._({
+    required this.transaction,
+    required List<BigInt> outputIndices,
+  }) : outputIndices = outputIndices.immutable;
   factory MoneroTransactionWithOutputIndeces.unSafe({
     required MoneroTransaction transaction,
     required List<BigInt> outputIndices,
@@ -771,14 +875,17 @@ class MoneroTransactionWithOutputIndeces {
     if (outputIndices.isNotEmpty &&
         transaction.vout.length != outputIndices.length) {
       throw DartMoneroPluginException(
-          "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
-          details: {
-            "out_indices": outputIndices,
-            "output": transaction.vout.length
-          });
+        "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
+        details: {
+          "out_indices": outputIndices,
+          "output": transaction.vout.length,
+        },
+      );
     }
     return MoneroTransactionWithOutputIndeces._(
-        transaction: transaction, outputIndices: outputIndices);
+      transaction: transaction,
+      outputIndices: outputIndices,
+    );
   }
   factory MoneroTransactionWithOutputIndeces({
     required MoneroTransaction transaction,
@@ -786,14 +893,17 @@ class MoneroTransactionWithOutputIndeces {
   }) {
     if (transaction.vout.length != outputIndices.length) {
       throw DartMoneroPluginException(
-          "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
-          details: {
-            "out_indices": outputIndices,
-            "output": transaction.vout.length
-          });
+        "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
+        details: {
+          "out_indices": outputIndices,
+          "output": transaction.vout.length,
+        },
+      );
     }
     return MoneroTransactionWithOutputIndeces._(
-        transaction: transaction, outputIndices: outputIndices);
+      transaction: transaction,
+      outputIndices: outputIndices,
+    );
   }
 
   bool get hasIndices => outputIndices.isNotEmpty;
@@ -804,21 +914,26 @@ class MoneroTxDestination extends MoneroSerialization {
   final MoneroAddress address;
   String get amountAsXMR => MoneroTransactionHelper.toXMR(amount);
   MoneroTxDestination({required BigInt amount, required this.address})
-      : amount = amount.asUint64;
-  factory MoneroTxDestination.fromXMR(
-      {required MoneroAddress address, required String amount}) {
+    : amount = amount.asU64;
+  factory MoneroTxDestination.fromXMR({
+    required MoneroAddress address,
+    required String amount,
+  }) {
     final piconero = MoneroTransactionHelper.toPiconero(amount);
     return MoneroTxDestination(amount: piconero, address: address);
   }
   factory MoneroTxDestination.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroTxDestination.fromStruct(decode);
   }
   factory MoneroTxDestination.fromStruct(Map<String, dynamic> json) {
     return MoneroTxDestination(
-        amount: json.as("amount"),
-        address: MoneroAddress.fromStruct(json.asMap("address")));
+      amount: json.as("amount"),
+      address: MoneroAddress.fromStruct(json.asMap("address")),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -842,7 +957,7 @@ class MoneroTxDestination extends MoneroSerialization {
   String toString() {
     return {
       "amount": MoneroTransactionHelper.toXMR(amount),
-      "address": address.toString()
+      "address": address.toString(),
     }.toString();
   }
 }
@@ -853,7 +968,9 @@ class MoneroAccountIndex extends MoneroSerialization {
   const MoneroAccountIndex({this.major = 0, this.minor = 0});
   factory MoneroAccountIndex.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroAccountIndex.fromStruct(decode);
   }
   static const MoneroAccountIndex primary = MoneroAccountIndex();
@@ -869,7 +986,7 @@ class MoneroAccountIndex extends MoneroSerialization {
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       LayoutConst.u32(property: "major"),
-      LayoutConst.u32(property: "minor")
+      LayoutConst.u32(property: "minor"),
     ], property: property);
   }
 
@@ -909,13 +1026,15 @@ class OutsEntery extends MoneroSerialization {
   const OutsEntery({required this.index, required this.key});
   factory OutsEntery.fromStruct(Map<String, dynamic> json) {
     return OutsEntery(
-        index: json.as("index"), key: CtKey.fromStruct(json.asMap("key")));
+      index: json.as("index"),
+      key: CtKey.fromStruct(json.asMap("key")),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       MoneroLayoutConst.varintBigInt(property: "index"),
-      CtKey.layout(property: "key")
+      CtKey.layout(property: "key"),
     ], property: property);
   }
 
@@ -949,45 +1068,55 @@ class TxEpemeralKeyResult {
   final TxoutTarget txOut;
   final List<int> amountKey;
   final MoneroPublicKey? additionalTxPubKey;
-  TxEpemeralKeyResult(
-      {required this.txOut,
-      required List<int> amountKey,
-      this.additionalTxPubKey})
-      : amountKey = amountKey.immutable;
+  TxEpemeralKeyResult({
+    required this.txOut,
+    required List<int> amountKey,
+    this.additionalTxPubKey,
+  }) : amountKey = amountKey.immutable;
 }
 
 class MoneroFeePrority {
   final String name;
   final int index;
   const MoneroFeePrority._({required this.name, required this.index});
-  static const MoneroFeePrority defaultPriority =
-      MoneroFeePrority._(name: "default", index: 0);
+  static const MoneroFeePrority defaultPriority = MoneroFeePrority._(
+    name: "default",
+    index: 0,
+  );
   static const MoneroFeePrority low = MoneroFeePrority._(name: "Low", index: 1);
-  static const MoneroFeePrority medium =
-      MoneroFeePrority._(name: "Medium", index: 2);
-  static const MoneroFeePrority high =
-      MoneroFeePrority._(name: "High", index: 3);
+  static const MoneroFeePrority medium = MoneroFeePrority._(
+    name: "Medium",
+    index: 2,
+  );
+  static const MoneroFeePrority high = MoneroFeePrority._(
+    name: "High",
+    index: 3,
+  );
 
   static const List<MoneroFeePrority> values = [
     defaultPriority,
     low,
     medium,
-    high
+    high,
   ];
   BigInt getBaseFee(DaemonGetEstimateFeeResponse baseFee) {
     if (index == 0) return baseFee.fee;
     if (index >= baseFee.fees.length) {
       throw const DartMoneroPluginException(
-          "Failed to determine base fee based on your priority.");
+        "Failed to determine base fee based on your priority.",
+      );
     }
     return baseFee.fees[index];
   }
 
-  BigInt calcuateFee(
-      {required BigInt weight, required DaemonGetEstimateFeeResponse baseFee}) {
+  BigInt calcuateFee({
+    required BigInt weight,
+    required DaemonGetEstimateFeeResponse baseFee,
+  }) {
     BigInt fee = getBaseFee(baseFee);
     fee = weight * fee;
-    fee = (fee + baseFee.quantizationMask - BigInt.one) ~/
+    fee =
+        (fee + baseFee.quantizationMask - BigInt.one) ~/
         baseFee.quantizationMask *
         baseFee.quantizationMask;
     return fee;

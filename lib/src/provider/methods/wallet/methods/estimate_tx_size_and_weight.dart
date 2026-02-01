@@ -2,13 +2,18 @@ import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#estimate_tx_size_and_weight
-class WalletRequestEstimateTxSizeAndWeight extends MoneroWalletRequestParam<
-    WalletRPCEstimateTxSizeAndWeightResponse, Map<String, dynamic>> {
-  WalletRequestEstimateTxSizeAndWeight(
-      {required this.nInputs,
-      required this.nOutputs,
-      required this.rignSize,
-      required this.rct});
+class WalletRequestEstimateTxSizeAndWeight
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCEstimateTxSizeAndWeightResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestEstimateTxSizeAndWeight({
+    required this.nInputs,
+    required this.nOutputs,
+    required this.rignSize,
+    required this.rct,
+  });
 
   final int nInputs;
   final int nOutputs;
@@ -23,15 +28,16 @@ class WalletRequestEstimateTxSizeAndWeight extends MoneroWalletRequestParam<
   String get method => "estimate_tx_size_and_weight";
   @override
   Map<String, dynamic> get params => {
-        "n_inputs": nInputs,
-        "n_outputs": nOutputs,
-        "ring_size": rignSize,
-        "rct": rct
-      };
+    "n_inputs": nInputs,
+    "n_outputs": nOutputs,
+    "ring_size": rignSize,
+    "rct": rct,
+  };
 
   @override
   WalletRPCEstimateTxSizeAndWeightResponse onResonse(
-      Map<String, dynamic> result) {
+    Map<String, dynamic> result,
+  ) {
     return WalletRPCEstimateTxSizeAndWeightResponse.fromJson(result);
   }
 }

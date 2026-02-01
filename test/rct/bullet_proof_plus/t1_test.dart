@@ -33,48 +33,78 @@ void _test() {
 
   test("bullet proofs plus", () {
     int index = 0;
-    QuickCrypto.setupRandom(
-      (length) {
-        if (index >= debugRandomKeys.length) {
-          index = 0;
-        }
-        return BytesUtils.fromHexString(debugRandomKeys[index++]);
-      },
-    );
+    QuickCrypto.setupRandom((length) {
+      if (index >= debugRandomKeys.length) {
+        index = 0;
+      }
+      return BytesUtils.fromHexString(debugRandomKeys[index++]);
+    });
 
     final prove = BulletproofsPlusGenerator.bulletproofPlusPROVEAmouts(
-        [BigInt.zero], [RCT.skGen_()]);
+      [BigInt.zero],
+      [RCT.skGen_()],
+    );
 
-    expect(BytesUtils.toHexString(prove.d1),
-        "085b44e0ff52802f5a19c77a5c3fce4826f1d85915ad05d69a72f3fbc6d2440e");
-    expect(BytesUtils.toHexString(prove.a),
-        "d2a2b9a23a6b54965ca965beef61d049aa0ac27abb183cf0e1d01ae5398233c1");
-    expect(BytesUtils.toHexString(prove.a1),
-        "e7390b8a1836b70ef8d1890a9e05f528363f1f3575f830a4290c5f1299e9a7c2");
-    expect(BytesUtils.toHexString(prove.s1),
-        "930757aa2c6a2eab9c5ce23c9cea12b6c91c1eeef37a63cec479610f9d9af907");
-    expect(BytesUtils.toHexString(prove.l[0]),
-        "cacf90eeeb522efd7534cdf72091f8a0120e1346fb7201d869a369222a5e14b5");
-    expect(BytesUtils.toHexString(prove.l[1]),
-        "00721a8b466253cb43d11b20e2d39738eef69af0c76fc2d44e000e1bee11fbbc");
-    expect(BytesUtils.toHexString(prove.l[2]),
-        "95147ad9c4a4fdf7d0aca8f3cf42ed84521f683c57b5a7b8e03ed6df29f03732");
-    expect(BytesUtils.toHexString(prove.l[3]),
-        "5adb08e120cd4fc5c22d5e426b4c4a94cabe358a37010ef80c7b61e370623287");
-    expect(BytesUtils.toHexString(prove.l[4]),
-        "666161a55014a9c8f707f8f106ffa90bfcb85033d64108b90f8d226c7869f098");
-    expect(BytesUtils.toHexString(prove.r[0]),
-        "9a9323401b551f26e7ca6897606dd4219ccf11afeea95750ceed9380f64d2fa3");
-    expect(BytesUtils.toHexString(prove.r[1]),
-        "a5a39f615c0b1385f6483ecbaac10cc196f1964b226d47b389b69aeb66369668");
-    expect(BytesUtils.toHexString(prove.r[2]),
-        "c6da1fde62da34eeb7ab070066a5d5348fccb411b4acabe5db096657c1d73353");
-    expect(BytesUtils.toHexString(prove.r[3]),
-        "179020dc4fec3ce785325b2f108c10623effba92ebd321862c3f019206d934a9");
-    expect(BytesUtils.toHexString(prove.r[4]),
-        "82b2f35b3c98f54579dc5f2bf458e0c781777ad930c22e1fd85c30fc29e9b12d");
-    expect(BytesUtils.toHexString(prove.r[5]),
-        "8b7c3add6611de54ab006c6af98c0b0480e4a8fe3c73d6d9b1575d1e05d155fa");
+    expect(
+      BytesUtils.toHexString(prove.d1),
+      "085b44e0ff52802f5a19c77a5c3fce4826f1d85915ad05d69a72f3fbc6d2440e",
+    );
+    expect(
+      BytesUtils.toHexString(prove.a),
+      "d2a2b9a23a6b54965ca965beef61d049aa0ac27abb183cf0e1d01ae5398233c1",
+    );
+    expect(
+      BytesUtils.toHexString(prove.a1),
+      "e7390b8a1836b70ef8d1890a9e05f528363f1f3575f830a4290c5f1299e9a7c2",
+    );
+    expect(
+      BytesUtils.toHexString(prove.s1),
+      "930757aa2c6a2eab9c5ce23c9cea12b6c91c1eeef37a63cec479610f9d9af907",
+    );
+    expect(
+      BytesUtils.toHexString(prove.l[0]),
+      "cacf90eeeb522efd7534cdf72091f8a0120e1346fb7201d869a369222a5e14b5",
+    );
+    expect(
+      BytesUtils.toHexString(prove.l[1]),
+      "00721a8b466253cb43d11b20e2d39738eef69af0c76fc2d44e000e1bee11fbbc",
+    );
+    expect(
+      BytesUtils.toHexString(prove.l[2]),
+      "95147ad9c4a4fdf7d0aca8f3cf42ed84521f683c57b5a7b8e03ed6df29f03732",
+    );
+    expect(
+      BytesUtils.toHexString(prove.l[3]),
+      "5adb08e120cd4fc5c22d5e426b4c4a94cabe358a37010ef80c7b61e370623287",
+    );
+    expect(
+      BytesUtils.toHexString(prove.l[4]),
+      "666161a55014a9c8f707f8f106ffa90bfcb85033d64108b90f8d226c7869f098",
+    );
+    expect(
+      BytesUtils.toHexString(prove.r[0]),
+      "9a9323401b551f26e7ca6897606dd4219ccf11afeea95750ceed9380f64d2fa3",
+    );
+    expect(
+      BytesUtils.toHexString(prove.r[1]),
+      "a5a39f615c0b1385f6483ecbaac10cc196f1964b226d47b389b69aeb66369668",
+    );
+    expect(
+      BytesUtils.toHexString(prove.r[2]),
+      "c6da1fde62da34eeb7ab070066a5d5348fccb411b4acabe5db096657c1d73353",
+    );
+    expect(
+      BytesUtils.toHexString(prove.r[3]),
+      "179020dc4fec3ce785325b2f108c10623effba92ebd321862c3f019206d934a9",
+    );
+    expect(
+      BytesUtils.toHexString(prove.r[4]),
+      "82b2f35b3c98f54579dc5f2bf458e0c781777ad930c22e1fd85c30fc29e9b12d",
+    );
+    expect(
+      BytesUtils.toHexString(prove.r[5]),
+      "8b7c3add6611de54ab006c6af98c0b0480e4a8fe3c73d6d9b1575d1e05d155fa",
+    );
     // final verify = BulletproofsPlusGenerator.bulletproofPlusVerify([prove]);
     // expect(verify, true);
   });

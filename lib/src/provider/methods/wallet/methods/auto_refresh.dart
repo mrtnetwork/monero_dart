@@ -15,8 +15,10 @@ class WalletRequestAutoRefresh
   @override
   String get method => "auto_refresh";
   @override
-  Map<String, dynamic> get params =>
-      {"enable": enable ?? true, "period": period};
+  Map<String, dynamic> get params => {
+    "enable": enable ?? true,
+    "period": period,
+  };
 
   @override
   Null onResonse(Map<String, dynamic> result) {

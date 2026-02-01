@@ -4,8 +4,11 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#create_wallet
 class WalletRequestCreateWallet
     extends MoneroWalletRequestParam<Null, Map<String, dynamic>> {
-  WalletRequestCreateWallet(
-      {required this.fileName, this.password, required this.language});
+  WalletRequestCreateWallet({
+    required this.fileName,
+    this.password,
+    required this.language,
+  });
 
   /// Wallet file name.
   final String fileName;
@@ -19,8 +22,11 @@ class WalletRequestCreateWallet
   @override
   String get method => "create_wallet";
   @override
-  Map<String, dynamic> get params =>
-      {"filename": fileName, "password": password, "language": language};
+  Map<String, dynamic> get params => {
+    "filename": fileName,
+    "password": password,
+    "language": language,
+  };
 
   @override
   Null onResonse(Map<String, dynamic> result) {

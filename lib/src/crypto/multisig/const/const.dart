@@ -31,7 +31,7 @@ class MoneroMultisigConst {
     0x00,
     0x00,
     0x00,
-    0x00
+    0x00,
   ];
   static const String multisigKexMsgV2Magic1 = "MultisigxV2R1";
   static const String multisigKexMsgV2MagicN = "MultisigxV2Rn";
@@ -51,7 +51,7 @@ class MoneroMultisigConst {
     95,
     97,
     103,
-    103
+    103,
   ];
   static const int prefixLength = 13;
   static const int kAlphaComponents = 2;

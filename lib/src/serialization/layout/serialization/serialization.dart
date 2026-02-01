@@ -8,7 +8,7 @@ class MoneroVariantDecodeResult {
   String get variantName => result["key"];
   Map<String, dynamic> get value => result["value"];
   MoneroVariantDecodeResult(Map<String, dynamic> result)
-      : result = result.immutable;
+    : result = result.immutable;
 
   @override
   String toString() {
@@ -20,9 +20,10 @@ abstract class MoneroSerialization {
   const MoneroSerialization();
 
   /// quick method for deserialize layout.
-  static Map<String, dynamic> deserialize(
-      {required List<int> bytes,
-      required Layout<Map<String, dynamic>> layout}) {
+  static Map<String, dynamic> deserialize({
+    required List<int> bytes,
+    required Layout<Map<String, dynamic>> layout,
+  }) {
     final decode = layout.deserialize(bytes);
     return decode.value;
   }
@@ -49,22 +50,26 @@ abstract class MoneroSerialization {
 abstract class MoneroVariantSerialization extends MoneroSerialization {
   const MoneroVariantSerialization();
   static MoneroVariantDecodeResult toVariantDecodeResult(
-      Map<String, dynamic> json) {
+    Map<String, dynamic> json,
+  ) {
     if (json["key"] is! String || !json.containsKey("value")) {
       throw const MoneroSerializationException(
-          "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.");
+        "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.",
+      );
     }
     return MoneroVariantDecodeResult(json);
   }
 
   /// quick method to deserialize variant struct bytes.
-  static Map<String, dynamic> deserialize(
-      {required List<int> bytes,
-      required Layout<Map<String, dynamic>> layout}) {
+  static Map<String, dynamic> deserialize({
+    required List<int> bytes,
+    required Layout<Map<String, dynamic>> layout,
+  }) {
     final json = layout.deserialize(bytes).value;
     if (json["key"] is! String || !json.containsKey("value")) {
       throw const MoneroSerializationException(
-          "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.");
+        "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.",
+      );
     }
     return json;
   }

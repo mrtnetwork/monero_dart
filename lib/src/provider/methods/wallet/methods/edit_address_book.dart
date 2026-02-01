@@ -5,14 +5,15 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#edit_address_book
 class WalletRequestEditAddressBook
     extends MoneroWalletRequestParam<void, Map<String, dynamic>> {
-  WalletRequestEditAddressBook(
-      {required this.index,
-      required this.setAddress,
-      this.address,
-      required this.setDescription,
-      this.description,
-      this.setPaymentId,
-      this.paymentId});
+  WalletRequestEditAddressBook({
+    required this.index,
+    required this.setAddress,
+    this.address,
+    required this.setDescription,
+    this.description,
+    this.setPaymentId,
+    this.paymentId,
+  });
 
   /// Index of the address book entry to edit.
   final int index;
@@ -38,14 +39,14 @@ class WalletRequestEditAddressBook
   String get method => "edit_address_book";
   @override
   Map<String, dynamic> get params => {
-        "index": index,
-        "set_address": setAddress,
-        "address": address?.address,
-        "set_description": setDescription,
-        "description": description,
-        "set_payment_id": setPaymentId,
-        "payment_id": paymentId
-      };
+    "index": index,
+    "set_address": setAddress,
+    "address": address?.address,
+    "set_description": setDescription,
+    "description": description,
+    "set_payment_id": setPaymentId,
+    "payment_id": paymentId,
+  };
 
   @override
   void onResonse(Map<String, dynamic> result) {}

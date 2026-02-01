@@ -3,21 +3,26 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Send monero to a number of recipients.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#transfer
-class WalletRequestTransfer extends MoneroWalletRequestParam<
-    WalletRPCTransferMoneroResponse, Map<String, dynamic>> {
-  WalletRequestTransfer(
-      {required this.destinations,
-      required this.accountIndex,
-      this.subaddrIndices,
-      this.subtractFeeFromOutputs,
-      this.priority,
-      required this.mixin,
-      required this.ringSize,
-      required this.unlockTime,
-      this.getTxKeys,
-      this.doNotRelay,
-      this.getTxHex,
-      this.getTxMetadata});
+class WalletRequestTransfer
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCTransferMoneroResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestTransfer({
+    required this.destinations,
+    required this.accountIndex,
+    this.subaddrIndices,
+    this.subtractFeeFromOutputs,
+    this.priority,
+    required this.mixin,
+    required this.ringSize,
+    required this.unlockTime,
+    this.getTxKeys,
+    this.doNotRelay,
+    this.getTxHex,
+    this.getTxMetadata,
+  });
 
   /// Destination public address.
   final List<WalletRPCTransferDestinationParam> destinations;
@@ -61,19 +66,19 @@ class WalletRequestTransfer extends MoneroWalletRequestParam<
   String get method => "transfer";
   @override
   Map<String, dynamic> get params => {
-        "destinations": destinations.map((e) => e.toJson()).toList(),
-        "account_index": accountIndex,
-        "subaddr_indices": subaddrIndices,
-        "subtract_fee_from_outputs": subtractFeeFromOutputs,
-        "priority": priority,
-        "mixin": mixin,
-        "ring_size": ringSize,
-        "unlock_time": unlockTime,
-        "get_tx_keys": getTxKeys,
-        "do_not_relay": doNotRelay,
-        "get_tx_hex": getTxHex,
-        "get_tx_metadata": getTxMetadata,
-      };
+    "destinations": destinations.map((e) => e.toJson()).toList(),
+    "account_index": accountIndex,
+    "subaddr_indices": subaddrIndices,
+    "subtract_fee_from_outputs": subtractFeeFromOutputs,
+    "priority": priority,
+    "mixin": mixin,
+    "ring_size": ringSize,
+    "unlock_time": unlockTime,
+    "get_tx_keys": getTxKeys,
+    "do_not_relay": doNotRelay,
+    "get_tx_hex": getTxHex,
+    "get_tx_metadata": getTxMetadata,
+  };
 
   @override
   WalletRPCTransferMoneroResponse onResonse(Map<String, dynamic> result) {

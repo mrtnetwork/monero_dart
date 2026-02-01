@@ -6,10 +6,16 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 /// because it has the same functionality but is more extendable.
 /// Either is fine for looking up transactions by a single payment ID.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_bulk_payments
-class WalletRequestGetBulkPayments extends MoneroWalletRequestParam<
-    List<WalletRPCPaymentResponse>, Map<String, dynamic>> {
-  WalletRequestGetBulkPayments(
-      {required this.paymentIds, required this.minBlockHeight});
+class WalletRequestGetBulkPayments
+    extends
+        MoneroWalletRequestParam<
+          List<WalletRPCPaymentResponse>,
+          Map<String, dynamic>
+        > {
+  WalletRequestGetBulkPayments({
+    required this.paymentIds,
+    required this.minBlockHeight,
+  });
 
   /// Payment IDs used to find the payments (16 characters hex)
   final List<String> paymentIds;
@@ -20,9 +26,9 @@ class WalletRequestGetBulkPayments extends MoneroWalletRequestParam<
   String get method => "get_bulk_payments";
   @override
   Map<String, dynamic> get params => {
-        "payment_ids": paymentIds,
-        "min_block_height": minBlockHeight.toString()
-      };
+    "payment_ids": paymentIds,
+    "min_block_height": minBlockHeight.toString(),
+  };
 
   @override
   List<WalletRPCPaymentResponse> onResonse(Map<String, dynamic> result) {

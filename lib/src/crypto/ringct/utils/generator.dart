@@ -41,7 +41,8 @@ class RCTGeneratorUtils {
     if (rv.signature.message == null ||
         (rv.signature.mixRing?.isEmpty ?? true)) {
       throw const MoneroCryptoException(
-          "message and mixRing required for generate mlsag hash.");
+        "message and mixRing required for generate mlsag hash.",
+      );
     }
     final message = rv.signature.message!;
     final mixRing = rv.signature.mixRing!;
@@ -50,8 +51,10 @@ class RCTGeneratorUtils {
         rv.signature.type.isSimple ? mixRing.length : mixRing[0].length;
     final int outputs = rv.signature.ecdhInfo.length;
     final ss = RCTSignature.layout(
-            inputLength: inputs, outputLength: outputs, forcePrunable: true)
-        .serialize(rv.toLayoutStruct());
+      inputLength: inputs,
+      outputLength: outputs,
+      forcePrunable: true,
+    ).serialize(rv.toLayoutStruct());
     final h = QuickCrypto.keccack256Hash(ss);
     hashes.add(h);
     final KeyV kv = [];
@@ -122,12 +125,18 @@ class RCTGeneratorUtils {
   }
 
   static BulletproofPlus _proveRangeBulletproofPlus(
-      KeyV C, KeyV masks, List<BigInt> amounts, List<RctKey> sk) {
+    KeyV C,
+    KeyV masks,
+    List<BigInt> amounts,
+    List<RctKey> sk,
+  ) {
     if (amounts.length != sk.length) {
       throw const MoneroCryptoException("Invalid amounts/sk sizes");
     }
-    final proof =
-        BulletproofsPlusGenerator.bulletproofPlusPROVEAmouts(amounts, masks);
+    final proof = BulletproofsPlusGenerator.bulletproofPlusPROVEAmouts(
+      amounts,
+      masks,
+    );
     if (proof.v.length != amounts.length) {
       throw const MoneroCryptoException("V does not have the expected size");
     }
@@ -144,31 +153,33 @@ class RCTGeneratorUtils {
     }
     lR += 6;
     return BulletproofPlus(
-        a: RCT.identity(clone: false),
-        a1: RCT.identity(clone: false),
-        b: RCT.identity(clone: false),
-        r1: RCT.identity(clone: false),
-        s1: RCT.identity(clone: false),
-        d1: RCT.identity(clone: false),
-        l: List.filled(lR, RCT.identity(clone: false)),
-        r: List.filled(lR, RCT.identity(clone: false)),
-        v: List.filled(amounts.length, RCT.identity(clone: false)));
+      a: RCT.identity(clone: false),
+      a1: RCT.identity(clone: false),
+      b: RCT.identity(clone: false),
+      r1: RCT.identity(clone: false),
+      s1: RCT.identity(clone: false),
+      d1: RCT.identity(clone: false),
+      l: List.filled(lR, RCT.identity(clone: false)),
+      r: List.filled(lR, RCT.identity(clone: false)),
+      v: List.filled(amounts.length, RCT.identity(clone: false)),
+    );
   }
 
   static RCTSignature<S, P>
-      genRctSimple<S extends RCTSignatureBase, P extends RctSigPrunable>(
-          {required RctKey message,
-          required CtKeyV inSk,
-          required KeyV destinations,
-          required List<BigInt> inamounts,
-          required List<BigInt> outamounts,
-          required BigInt txnFee,
-          required CtKeyM mixRing,
-          required KeyV amountKeys,
-          required List<int> index,
-          required CtKeyV outSk,
-          KeyV? aResult,
-          bool createLinkable = true}) {
+  genRctSimple<S extends RCTSignatureBase, P extends RctSigPrunable>({
+    required RctKey message,
+    required CtKeyV inSk,
+    required KeyV destinations,
+    required List<BigInt> inamounts,
+    required List<BigInt> outamounts,
+    required BigInt txnFee,
+    required CtKeyM mixRing,
+    required KeyV amountKeys,
+    required List<int> index,
+    required CtKeyV outSk,
+    KeyV? aResult,
+    bool createLinkable = true,
+  }) {
     if (inamounts.isEmpty) {
       throw const MoneroCryptoException("Empty inamounts");
     }
@@ -179,12 +190,14 @@ class RCTGeneratorUtils {
 
     if (outamounts.length != destinations.length) {
       throw const MoneroCryptoException(
-          "Different number of amounts/destinations");
+        "Different number of amounts/destinations",
+      );
     }
 
     if (amountKeys.length != destinations.length) {
       throw const MoneroCryptoException(
-          "Different number of amountKeys/destinations");
+        "Different number of amountKeys/destinations",
+      );
     }
 
     if (index.length != inSk.length) {
@@ -213,7 +226,9 @@ class RCTGeneratorUtils {
     }
     final keys = amountKeys.map((e) => e.clone()).toList();
     final KeyV masks = List.generate(
-        outamounts.length, (i) => RCT.genCommitmentMaskVar(keys[i]));
+      outamounts.length,
+      (i) => RCT.genCommitmentMaskVar(keys[i]),
+    );
     final KeyV C = List.generate(outamounts.length, (_) => RCT.zero());
     final prove = _proveRangeBulletproofPlus(C, masks, outamounts, keys);
     bulletProofPlus.add(prove);
@@ -226,9 +241,10 @@ class RCTGeneratorUtils {
     for (i = 0; i < outSk.length; ++i) {
       sumout = Ed25519Utils.scAddVar(outSk[i].mask, sumout);
       final ecdhT = EcdhTuple(
-          mask: outSk[i].mask,
-          amount: RCT.d2h(outamounts[i]),
-          version: EcdhInfoVersion.v2);
+        mask: outSk[i].mask,
+        amount: RCT.d2h(outamounts[i]),
+        version: EcdhInfoVersion.v2,
+      );
       final EcdhInfo info = RCT.ecdhEncodeVar(ecdhT, amountKeys[i]);
       ecdh.add(info);
     }
@@ -248,59 +264,63 @@ class RCTGeneratorUtils {
     a[i] = Ed25519Utils.scSubVar(sumout, sumpouts);
     pseudoOuts[i] = RCT.genCVar(a[i], inamounts[i]);
     final RCTSignature<S, P> signature = buildSignature(
-        type: RCTType.rctTypeBulletproofPlus,
-        ecdh: ecdh,
-        txnFee: txnFee,
-        outPk: outPk,
-        message: message,
-        mixRing: mixRing,
-        rangeSig: [],
-        mgs: [],
-        bulletProofPlus: bulletProofPlus,
-        bulletProof: [],
-        clsag: clsag,
-        pseudoOuts: pseudoOuts);
+      type: RCTType.rctTypeBulletproofPlus,
+      ecdh: ecdh,
+      txnFee: txnFee,
+      outPk: outPk,
+      message: message,
+      mixRing: mixRing,
+      rangeSig: [],
+      mgs: [],
+      bulletProofPlus: bulletProofPlus,
+      bulletProof: [],
+      clsag: clsag,
+      pseudoOuts: pseudoOuts,
+    );
     if (!createLinkable) return signature;
     final RctKey fullMessage = getPreMlsagHash(signature);
     for (i = 0; i < inamounts.length; i++) {
       final prove = CLSAGUtils.prove(
-          fullMessage,
-          signature.signature.mixRing![i],
-          inSk[i],
-          a[i],
-          pseudoOuts[i],
-          index[i]);
+        fullMessage,
+        signature.signature.mixRing![i],
+        inSk[i],
+        a[i],
+        pseudoOuts[i],
+        index[i],
+      );
       clsag.add(prove);
     }
     return buildSignature<S, P>(
-        type: RCTType.rctTypeBulletproofPlus,
-        ecdh: ecdh,
-        txnFee: txnFee,
-        outPk: outPk,
-        message: message,
-        mixRing: mixRing,
-        rangeSig: [],
-        mgs: [],
-        bulletProofPlus: bulletProofPlus,
-        bulletProof: [],
-        clsag: clsag,
-        pseudoOuts: pseudoOuts);
+      type: RCTType.rctTypeBulletproofPlus,
+      ecdh: ecdh,
+      txnFee: txnFee,
+      outPk: outPk,
+      message: message,
+      mixRing: mixRing,
+      rangeSig: [],
+      mgs: [],
+      bulletProofPlus: bulletProofPlus,
+      bulletProof: [],
+      clsag: clsag,
+      pseudoOuts: pseudoOuts,
+    );
   }
 
   static RCTSignature<S, P>
-      genFakeRctSimple<S extends RCTSignatureBase, P extends RctSigPrunable>(
-          {required RctKey message,
-          required CtKeyV inSk,
-          required KeyV destinations,
-          required List<BigInt> inamounts,
-          required List<BigInt> outamounts,
-          required BigInt txnFee,
-          required CtKeyM mixRing,
-          required KeyV amountKeys,
-          required List<int> index,
-          required CtKeyV outSk,
-          KeyV? aResult,
-          bool createLinkable = true}) {
+  genFakeRctSimple<S extends RCTSignatureBase, P extends RctSigPrunable>({
+    required RctKey message,
+    required CtKeyV inSk,
+    required KeyV destinations,
+    required List<BigInt> inamounts,
+    required List<BigInt> outamounts,
+    required BigInt txnFee,
+    required CtKeyM mixRing,
+    required KeyV amountKeys,
+    required List<int> index,
+    required CtKeyV outSk,
+    KeyV? aResult,
+    bool createLinkable = true,
+  }) {
     if (inamounts.isEmpty) {
       throw const MoneroCryptoException("Empty inamounts");
     }
@@ -311,12 +331,14 @@ class RCTGeneratorUtils {
 
     if (outamounts.length != destinations.length) {
       throw const MoneroCryptoException(
-          "Different number of amounts/destinations");
+        "Different number of amounts/destinations",
+      );
     }
 
     if (amountKeys.length != destinations.length) {
       throw const MoneroCryptoException(
-          "Different number of amountKeys/destinations");
+        "Different number of amountKeys/destinations",
+      );
     }
 
     if (index.length != inSk.length) {
@@ -348,41 +370,46 @@ class RCTGeneratorUtils {
     // final KeyV C = List.generate(outamounts.length, (_) => RCT.identity());
     final prove = _fakeProveRangeBulletproofPlus(outamounts);
     bulletProofPlus.add(prove);
-    final List<EcdhInfo> ecdh =
-        List.filled(outSk.length, EcdhInfoV2(RCT.identity().sublist(0, 8)));
+    final List<EcdhInfo> ecdh = List.filled(
+      outSk.length,
+      EcdhInfoV2(RCT.identity().sublist(0, 8)),
+    );
     final KeyV pseudoOuts = List.generate(inamounts.length, (_) => RCT.zero());
     final List<Clsag> clsag = [];
     final RCTSignature<S, P> signature = buildSignature(
-        type: RCTType.rctTypeBulletproofPlus,
-        ecdh: ecdh,
-        txnFee: txnFee,
-        outPk: outPk,
-        message: message,
-        mixRing: mixRing,
-        rangeSig: [],
-        mgs: [],
-        bulletProofPlus: bulletProofPlus,
-        bulletProof: [],
-        clsag: clsag,
-        pseudoOuts: pseudoOuts);
+      type: RCTType.rctTypeBulletproofPlus,
+      ecdh: ecdh,
+      txnFee: txnFee,
+      outPk: outPk,
+      message: message,
+      mixRing: mixRing,
+      rangeSig: [],
+      mgs: [],
+      bulletProofPlus: bulletProofPlus,
+      bulletProof: [],
+      clsag: clsag,
+      pseudoOuts: pseudoOuts,
+    );
     for (i = 0; i < inamounts.length; i++) {
-      final prove =
-          CLSAGUtils.fakeProve(signature.signature.mixRing![i].length);
+      final prove = CLSAGUtils.fakeProve(
+        signature.signature.mixRing![i].length,
+      );
       clsag.add(prove);
     }
     return buildSignature<S, P>(
-        type: RCTType.rctTypeBulletproofPlus,
-        ecdh: ecdh,
-        txnFee: txnFee,
-        outPk: outPk,
-        message: message,
-        mixRing: mixRing,
-        rangeSig: [],
-        mgs: [],
-        bulletProofPlus: bulletProofPlus,
-        bulletProof: [],
-        clsag: clsag,
-        pseudoOuts: pseudoOuts);
+      type: RCTType.rctTypeBulletproofPlus,
+      ecdh: ecdh,
+      txnFee: txnFee,
+      outPk: outPk,
+      message: message,
+      mixRing: mixRing,
+      rangeSig: [],
+      mgs: [],
+      bulletProofPlus: bulletProofPlus,
+      bulletProof: [],
+      clsag: clsag,
+      pseudoOuts: pseudoOuts,
+    );
   }
 
   static bool verRctSemanticsSimple(List<RCTSignature> rvv) {
@@ -396,18 +423,23 @@ class RCTGeneratorUtils {
       if (bulletproof || bulletproofPlus) {
         if (bulletproofPlus) {
           if (rv.signature.outPk.length !=
-              nBulletproofPlusAmounts(rv.rctSigPrunable!
-                  .cast<RctSigPrunableBulletproofPlus>()
-                  .bulletproofPlus)) {
+              nBulletproofPlusAmounts(
+                rv.rctSigPrunable!
+                    .cast<RctSigPrunableBulletproofPlus>()
+                    .bulletproofPlus,
+              )) {
             throw const MoneroCryptoException(
-                "Mismatched sizes of outPk and bulletproofs_plus");
+              "Mismatched sizes of outPk and bulletproofs_plus",
+            );
           }
         } else {
           if (rv.signature.outPk.length !=
               nBulletproofAmounts(
-                  rv.rctSigPrunable!.cast<BulletproofPrunable>().bulletproof)) {
+                rv.rctSigPrunable!.cast<BulletproofPrunable>().bulletproof,
+              )) {
             throw const MoneroCryptoException(
-                "Mismatched sizes of outPk and bulletproofs");
+              "Mismatched sizes of outPk and bulletproofs",
+            );
           }
         }
 
@@ -415,7 +447,8 @@ class RCTGeneratorUtils {
           final clsag = rv.rctSigPrunable!.cast<ClsagPrunable>();
           if (clsag.pseudoOuts.length != clsag.clsag.length) {
             throw const MoneroCryptoException(
-                "Mismatched sizes of pseudoOuts and CLSAGs");
+              "Mismatched sizes of pseudoOuts and CLSAGs",
+            );
           }
         }
 
@@ -426,7 +459,8 @@ class RCTGeneratorUtils {
 
       if (rv.signature.outPk.length != rv.signature.ecdhInfo.length) {
         throw const MoneroCryptoException(
-            "Mismatched sizes of outPk and rv.ecdhInfo");
+          "Mismatched sizes of outPk and rv.ecdhInfo",
+        );
       }
     }
 
@@ -438,8 +472,10 @@ class RCTGeneratorUtils {
         pseudoOuts =
             rv.rctSigPrunable!.pseudoOuts.map((e) => e.clone()).toList();
       }
-      final KeyV masks =
-          List.generate(rv.signature.outPk.length, (_) => RCT.zero());
+      final KeyV masks = List.generate(
+        rv.signature.outPk.length,
+        (_) => RCT.zero(),
+      );
       for (int i = 0; i < rv.signature.outPk.length; i++) {
         masks[i] = rv.signature.outPk[i].mask.clone();
       }
@@ -464,11 +500,13 @@ class RCTGeneratorUtils {
     }
     if (rv.signature.mixRing == null || rv.signature.message == null) {
       throw const MoneroCryptoException(
-          "mixRing and message required for verification.");
+        "mixRing and message required for verification.",
+      );
     }
     if (rv.rctSigPrunable == null) {
       throw const MoneroCryptoException(
-          "Prunable signature is required for verification.");
+        "Prunable signature is required for verification.",
+      );
     }
     final bool bulletproof = rv.signature.type.isBulletproof;
     final bool bulletproofPlus = rv.signature.type.isBulletproofPlus;
@@ -476,26 +514,34 @@ class RCTGeneratorUtils {
       if (rv.signature.mixRing!.length !=
           rv.rctSigPrunable!.pseudoOuts.length) {
         throw const MoneroCryptoException(
-            "Mismatched sizes of pseudoOuts and mixRing");
+          "Mismatched sizes of pseudoOuts and mixRing",
+        );
       }
     } else {
       if (rv.signature.pseudoOuts == null) {
         throw const MoneroCryptoException(
-            "Signature pseudoOuts is required for verification.");
+          "Signature pseudoOuts is required for verification.",
+        );
       }
       if (rv.signature.mixRing!.length != rv.signature.pseudoOuts?.length) {
         throw const MoneroCryptoException(
-            "Mismatched sizes of pseudoOuts and mixRing");
+          "Mismatched sizes of pseudoOuts and mixRing",
+        );
       }
     }
-    final KeyV pseudoOuts = bulletproof || bulletproofPlus
-        ? rv.rctSigPrunable!.pseudoOuts
-        : rv.signature.pseudoOuts!;
+    final KeyV pseudoOuts =
+        bulletproof || bulletproofPlus
+            ? rv.rctSigPrunable!.pseudoOuts
+            : rv.signature.pseudoOuts!;
     final message = getPreMlsagHash(rv);
     for (int i = 0; i < rv.signature.mixRing!.length; i++) {
       final cslag = rv.rctSigPrunable!.cast<ClsagPrunable>();
       final verify = CLSAGUtils.verify(
-          message, cslag.clsag[i], rv.signature.mixRing![i], pseudoOuts[i]);
+        message,
+        cslag.clsag[i],
+        rv.signature.mixRing![i],
+        pseudoOuts[i],
+      );
       if (!verify) return false;
     }
     return true;
@@ -511,7 +557,11 @@ class RCTGeneratorUtils {
   }
 
   static int nBulletproofAmountsBase(
-      int lSize, int rSize, int vSize, int maxOutputs) {
+    int lSize,
+    int rSize,
+    int vSize,
+    int maxOutputs,
+  ) {
     if (lSize < 6) {
       throw const MoneroCryptoException("Invalid bulletproof L size");
     }
@@ -541,12 +591,20 @@ class RCTGeneratorUtils {
 
   static int nBulletproofAmount(Bulletproof proof) {
     return nBulletproofAmountsBase(
-        proof.l.length, proof.r.length, proof.v.length, maxOuts);
+      proof.l.length,
+      proof.r.length,
+      proof.v.length,
+      maxOuts,
+    );
   }
 
   static int nBulletproofPlusAmount(BulletproofPlus proof) {
     return nBulletproofAmountsBase(
-        proof.l.length, proof.r.length, proof.v.length, maxOuts);
+      proof.l.length,
+      proof.r.length,
+      proof.v.length,
+      maxOuts,
+    );
   }
 
   static int nBulletproofAmounts(List<Bulletproof> proofs) {
@@ -554,7 +612,7 @@ class RCTGeneratorUtils {
 
     for (final Bulletproof proof in proofs) {
       final int n2 = nBulletproofAmount(proof);
-      if (n2 >= mask32 - n) {
+      if (n2 >= BinaryOps.mask32 - n) {
         throw const MoneroCryptoException("Invalid number of bulletproofs");
       }
 
@@ -568,50 +626,60 @@ class RCTGeneratorUtils {
     return n;
   }
 
-  static int nBulletproofMaxAmountBase(
-      {required int lSize, required int rSize, required int maxOuts}) {
+  static int nBulletproofMaxAmountBase({
+    required int lSize,
+    required int rSize,
+    required int maxOuts,
+  }) {
     const int extraBits = 4;
 
     if (lSize < 6) {
       throw const MoneroCryptoException(
-          "Invalid bulletproof L size: L size must be at least 6.");
+        "Invalid bulletproof L size: L size must be at least 6.",
+      );
     }
     if (lSize != rSize) {
       throw const MoneroCryptoException(
-          "Mismatched bulletproof L/R size: L size and R_size must be equal.");
+        "Mismatched bulletproof L/R size: L size and R_size must be equal.",
+      );
     }
     if ((1 << extraBits) != maxOuts) {
       throw const MoneroCryptoException(
-          "log2(max_outputs) is out of date: max_outputs must be 2^extraBits.");
+        "log2(max_outputs) is out of date: max_outputs must be 2^extraBits.",
+      );
     }
     if (lSize > 6 + extraBits) {
       throw const MoneroCryptoException(
-          "Invalid bulletproof L size: L_size must not exceed 6 + extraBits.");
+        "Invalid bulletproof L size: L_size must not exceed 6 + extraBits.",
+      );
     }
     return 1 << (lSize - 6);
   }
 
   static int _nBulletproofMaxAmounts(Bulletproof proof) {
     return nBulletproofMaxAmountBase(
-        lSize: proof.l.length,
-        rSize: proof.r.length,
-        maxOuts: MoneroNetworkConst.bulletproofMaxOutputs);
+      lSize: proof.l.length,
+      rSize: proof.r.length,
+      maxOuts: MoneroNetworkConst.bulletproofMaxOutputs,
+    );
   }
 
   static int _nBulletproofPlusMaxAmounts(BulletproofPlus proof) {
     return nBulletproofMaxAmountBase(
-        lSize: proof.l.length,
-        rSize: proof.r.length,
-        maxOuts: MoneroNetworkConst.bulletproofPlussMaxOutputs);
+      lSize: proof.l.length,
+      rSize: proof.r.length,
+      maxOuts: MoneroNetworkConst.bulletproofPlussMaxOutputs,
+    );
   }
 
   static int nBulletproofMaxAmounts(List<Bulletproof> proofs) {
     int n = 0;
     for (final proof in proofs) {
       final int n2 = _nBulletproofMaxAmounts(proof);
-      if (n2 >= maxUint32 - n) {
+      if (n2 >= BinaryOps.maxUint32 - n) {
         throw const MoneroCryptoException(
-            "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.");
+          "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.",
+        );
       }
       if (n2 == 0) {
         return 0;
@@ -625,9 +693,10 @@ class RCTGeneratorUtils {
     int n = 0;
     for (final proof in proofs) {
       final int n2 = _nBulletproofPlusMaxAmounts(proof);
-      if (n2 >= maxUint32 - n) {
+      if (n2 >= BinaryOps.maxUint32 - n) {
         throw const MoneroCryptoException(
-            "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.");
+          "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.",
+        );
       }
       if (n2 == 0) {
         return 0;
@@ -638,7 +707,7 @@ class RCTGeneratorUtils {
   }
 
   static RCTSignature<S, P>
-      buildSignature<S extends RCTSignatureBase, P extends RctSigPrunable>({
+  buildSignature<S extends RCTSignatureBase, P extends RctSigPrunable>({
     required RCTType type,
     required List<EcdhInfo> ecdh,
     required BigInt txnFee,
@@ -657,63 +726,79 @@ class RCTGeneratorUtils {
     switch (type) {
       case RCTType.rctTypeFull:
         base = RCTFull(
-            ecdhInfo: ecdh.cast<EcdhInfoV1>(),
-            txnFee: txnFee,
-            outPk: outPk,
-            message: message,
-            mixRing: mixRing);
+          ecdhInfo: ecdh.cast<EcdhInfoV1>(),
+          txnFee: txnFee,
+          outPk: outPk,
+          message: message,
+          mixRing: mixRing,
+        );
         prunable = RctSigPrunableRangeSigs(rangeSig: rangeSig, mgs: mgs);
         break;
       case RCTType.rctTypeBulletproofPlus:
         base = RCTBulletproofPlus(
-            ecdhInfo: ecdh.cast<EcdhInfoV2>(),
-            txnFee: txnFee,
-            outPk: outPk,
-            message: message,
-            mixRing: mixRing);
+          ecdhInfo: ecdh.cast<EcdhInfoV2>(),
+          txnFee: txnFee,
+          outPk: outPk,
+          message: message,
+          mixRing: mixRing,
+        );
         prunable = RctSigPrunableBulletproofPlus(
-            bulletproofPlus: bulletProofPlus,
-            clsag: clsag,
-            pseudoOuts: pseudoOuts);
+          bulletproofPlus: bulletProofPlus,
+          clsag: clsag,
+          pseudoOuts: pseudoOuts,
+        );
         break;
       case RCTType.rctTypeBulletproof2:
         base = RCTBulletproof2(
-            ecdhInfo: ecdh.cast<EcdhInfoV2>(),
-            txnFee: txnFee,
-            outPk: outPk,
-            message: message,
-            mixRing: mixRing);
+          ecdhInfo: ecdh.cast<EcdhInfoV2>(),
+          txnFee: txnFee,
+          outPk: outPk,
+          message: message,
+          mixRing: mixRing,
+        );
         prunable = RctSigPrunableBulletproof2(
-            bulletproof: bulletProof, mgs: mgs, pseudoOuts: pseudoOuts);
+          bulletproof: bulletProof,
+          mgs: mgs,
+          pseudoOuts: pseudoOuts,
+        );
         break;
       case RCTType.rctTypeBulletproof:
         base = RCTBulletproof(
-            ecdhInfo: ecdh.cast<EcdhInfoV1>(),
-            txnFee: txnFee,
-            outPk: outPk,
-            message: message,
-            mixRing: mixRing);
+          ecdhInfo: ecdh.cast<EcdhInfoV1>(),
+          txnFee: txnFee,
+          outPk: outPk,
+          message: message,
+          mixRing: mixRing,
+        );
         prunable = RctSigPrunableBulletproof(
-            bulletproof: bulletProof, mgs: mgs, pseudoOuts: pseudoOuts);
+          bulletproof: bulletProof,
+          mgs: mgs,
+          pseudoOuts: pseudoOuts,
+        );
         break;
       case RCTType.rctTypeCLSAG:
         base = RCTCLSAG(
-            ecdhInfo: ecdh.cast<EcdhInfoV2>(),
-            txnFee: txnFee,
-            outPk: outPk,
-            message: message,
-            mixRing: mixRing);
+          ecdhInfo: ecdh.cast<EcdhInfoV2>(),
+          txnFee: txnFee,
+          outPk: outPk,
+          message: message,
+          mixRing: mixRing,
+        );
         prunable = RctSigPrunableCLSAG(
-            bulletproof: bulletProof, clsag: clsag, pseudoOuts: pseudoOuts);
+          bulletproof: bulletProof,
+          clsag: clsag,
+          pseudoOuts: pseudoOuts,
+        );
         break;
       case RCTType.rctTypeSimple:
         base = RCTSimple(
-            ecdhInfo: ecdh.cast<EcdhInfoV1>(),
-            pseudoOuts: pseudoOuts,
-            txnFee: txnFee,
-            outPk: outPk,
-            message: message,
-            mixRing: mixRing);
+          ecdhInfo: ecdh.cast<EcdhInfoV1>(),
+          pseudoOuts: pseudoOuts,
+          txnFee: txnFee,
+          outPk: outPk,
+          message: message,
+          mixRing: mixRing,
+        );
         prunable = RctSigPrunableRangeSigs(mgs: mgs, rangeSig: rangeSig);
         break;
       default:
@@ -731,7 +816,7 @@ class RCTGeneratorUtils {
     for (final BulletproofPlus proof in proofs) {
       final int n2 = nBulletproofPlusAmount(proof);
 
-      if (n2 >= mask32 - n) {
+      if (n2 >= BinaryOps.mask32 - n) {
         throw const MoneroCryptoException("Invalid number of bulletproofs");
       }
 
@@ -746,39 +831,46 @@ class RCTGeneratorUtils {
   }
 
   static RCTSignature<S, P>
-      genRctSimple_<S extends RCTSignatureBase, P extends RctSigPrunable>(
-          {required RctKey message,
-          required CtKeyV inSk,
-          required CtKeyV inPk,
-          required KeyV destinations,
-          required List<BigInt> inamounts,
-          required List<BigInt> outamounts,
-          required KeyV amountKeys,
-          required BigInt txnFee,
-          required int mixin,
-          bool createLinkable = true}) {
+  genRctSimple_<S extends RCTSignatureBase, P extends RctSigPrunable>({
+    required RctKey message,
+    required CtKeyV inSk,
+    required CtKeyV inPk,
+    required KeyV destinations,
+    required List<BigInt> inamounts,
+    required List<BigInt> outamounts,
+    required KeyV amountKeys,
+    required BigInt txnFee,
+    required int mixin,
+    bool createLinkable = true,
+  }) {
     final List<int> index = List.filled(inPk.length, 0);
     final CtKeyM mixRing = List.generate(
-        inPk.length,
-        (_) => List.generate(
-            mixin + 1, (_) => CtKey(dest: RCT.zero(), mask: RCT.zero())));
+      inPk.length,
+      (_) => List.generate(
+        mixin + 1,
+        (_) => CtKey(dest: RCT.zero(), mask: RCT.zero()),
+      ),
+    );
     final CtKeyV outSk = List.generate(
-        destinations.length, (_) => CtKey(dest: RCT.zero(), mask: RCT.zero()));
+      destinations.length,
+      (_) => CtKey(dest: RCT.zero(), mask: RCT.zero()),
+    );
     for (int i = 0; i < inPk.length; ++i) {
       index[i] = _generateKeySimple(mixRing[i], inPk[i], mixin);
     }
     return genRctSimple(
-        message: message,
-        inSk: inSk,
-        destinations: destinations,
-        inamounts: inamounts,
-        outamounts: outamounts,
-        txnFee: txnFee,
-        mixRing: mixRing,
-        amountKeys: amountKeys,
-        index: index,
-        outSk: outSk,
-        createLinkable: createLinkable);
+      message: message,
+      inSk: inSk,
+      destinations: destinations,
+      inamounts: inamounts,
+      outamounts: outamounts,
+      txnFee: txnFee,
+      mixRing: mixRing,
+      amountKeys: amountKeys,
+      index: index,
+      outSk: outSk,
+      createLinkable: createLinkable,
+    );
   }
 
   static int _generateKeySimple(CtKeyV mixRing, CtKey inPk, int mixin) {
@@ -798,19 +890,23 @@ class RCTGeneratorUtils {
     final type = signature.signature.type;
     if (signature.rctSigPrunable == null) {
       throw const MoneroCryptoException(
-          "signature prunable required for calculate claw back.");
+        "signature prunable required for calculate claw back.",
+      );
     }
     if (!type.isBulletproof && !type.isBulletproofPlus) {
       return 0;
     }
     int paddedOutputs = 0;
     if (type.isBulletproofPlus) {
-      paddedOutputs = nBulletproofPlusMaxAmounts(signature.rctSigPrunable!
-          .cast<RctSigPrunableBulletproofPlus>()
-          .bulletproofPlus);
+      paddedOutputs = nBulletproofPlusMaxAmounts(
+        signature.rctSigPrunable!
+            .cast<RctSigPrunableBulletproofPlus>()
+            .bulletproofPlus,
+      );
     } else {
       paddedOutputs = nBulletproofMaxAmounts(
-          signature.rctSigPrunable!.cast<BulletproofPrunable>().bulletproof);
+        signature.rctSigPrunable!.cast<BulletproofPrunable>().bulletproof,
+      );
     }
     if (paddedOutputs <= 2) return 0;
     final isBpp = type.isBulletproofPlus;
@@ -826,16 +922,18 @@ class RCTGeneratorUtils {
     return bpClawback;
   }
 
-  static (BigInt, RctKey) _decodeRctVar(
-      {required RCTSignature sig,
-      required RctKey secretKey,
-      required int outputIndex}) {
+  static (BigInt, RctKey) _decodeRctVar({
+    required RCTSignature sig,
+    required RctKey secretKey,
+    required int outputIndex,
+  }) {
     if (outputIndex >= sig.signature.ecdhInfo.length) {
       throw const MoneroCryptoException("Bad index");
     }
     if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
       throw const MoneroCryptoException(
-          "Mismatched sizes of publickey and ECDH");
+        "Mismatched sizes of publickey and ECDH",
+      );
     }
     final ecdh = sig.signature.ecdhInfo[outputIndex];
     final result = RCT.ecdhDecodeVar(ecdh: ecdh, sharedSec: secretKey);
@@ -854,34 +952,41 @@ class RCTGeneratorUtils {
     final t = RCT.addKeys2Var(mask, amount, RCTConst.h);
     if (!BytesUtils.bytesEqual(c, t)) {
       throw const MoneroCryptoException(
-          "amount decoded incorrectly, will be unable to spend");
+        "amount decoded incorrectly, will be unable to spend",
+      );
     }
     final bAmount = RCT.h2d(amount);
     return (bAmount, mask);
   }
 
-  static (BigInt, RctKey)? decodeRctVar(
-      {required RCTSignature sig,
-      required RctKey secretKey,
-      required int outputIndex}) {
+  static (BigInt, RctKey)? decodeRctVar({
+    required RCTSignature sig,
+    required RctKey secretKey,
+    required int outputIndex,
+  }) {
     try {
       return _decodeRctVar(
-          sig: sig, secretKey: secretKey, outputIndex: outputIndex);
+        sig: sig,
+        secretKey: secretKey,
+        outputIndex: outputIndex,
+      );
     } on MoneroCryptoException {
       return null;
     }
   }
 
-  static (BigInt, RctKey) _decodeRct(
-      {required RCTSignature sig,
-      required RctKey secretKey,
-      required int outputIndex}) {
+  static (BigInt, RctKey) _decodeRct({
+    required RCTSignature sig,
+    required RctKey secretKey,
+    required int outputIndex,
+  }) {
     if (outputIndex >= sig.signature.ecdhInfo.length) {
       throw const MoneroCryptoException("Bad index");
     }
     if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
       throw const MoneroCryptoException(
-          "Mismatched sizes of publickey and ECDH");
+        "Mismatched sizes of publickey and ECDH",
+      );
     }
     final ecdh = sig.signature.ecdhInfo[outputIndex];
     final result = RCT.ecdhDecode(ecdh: ecdh, sharedSec: secretKey);
@@ -900,19 +1005,24 @@ class RCTGeneratorUtils {
     final t = RCT.addKeys2_(mask, amount, RCTConst.h);
     if (!BytesUtils.bytesEqual(c, t)) {
       throw const MoneroCryptoException(
-          "amount decoded incorrectly, will be unable to spend");
+        "amount decoded incorrectly, will be unable to spend",
+      );
     }
     final bAmount = RCT.h2d(amount);
     return (bAmount, mask);
   }
 
-  static (BigInt, RctKey)? decodeRct(
-      {required RCTSignature sig,
-      required RctKey secretKey,
-      required int outputIndex}) {
+  static (BigInt, RctKey)? decodeRct({
+    required RCTSignature sig,
+    required RctKey secretKey,
+    required int outputIndex,
+  }) {
     try {
       return _decodeRct(
-          sig: sig, secretKey: secretKey, outputIndex: outputIndex);
+        sig: sig,
+        secretKey: secretKey,
+        outputIndex: outputIndex,
+      );
     } on MoneroCryptoException {
       return null;
     }

@@ -3,8 +3,9 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Look up information regarding hard fork voting and readiness.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#hard_fork_info
-class DaemonRequestHardForkInfo extends MoneroDaemonRequestParam<
-    DaemonHardForkResponse, Map<String, dynamic>> {
+class DaemonRequestHardForkInfo
+    extends
+        MoneroDaemonRequestParam<DaemonHardForkResponse, Map<String, dynamic>> {
   const DaemonRequestHardForkInfo();
 
   @override

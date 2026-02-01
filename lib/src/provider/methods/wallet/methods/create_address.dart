@@ -3,10 +3,17 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Create a new address for an account. Optionally, label the new address.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#create_address
-class WalletRequestCreateAddress extends MoneroWalletRequestParam<
-    WalletRPCCreateAddressResponse, Map<String, dynamic>> {
-  WalletRequestCreateAddress(
-      {required this.accountIndex, this.label, this.count});
+class WalletRequestCreateAddress
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCCreateAddressResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestCreateAddress({
+    required this.accountIndex,
+    this.label,
+    this.count,
+  });
 
   /// Label for the new address.
   final String? label;
@@ -20,8 +27,11 @@ class WalletRequestCreateAddress extends MoneroWalletRequestParam<
   @override
   String get method => "create_address";
   @override
-  Map<String, dynamic> get params =>
-      {"label": label, "account_index": accountIndex, "count": count};
+  Map<String, dynamic> get params => {
+    "label": label,
+    "account_index": accountIndex,
+    "count": count,
+  };
 
   @override
   WalletRPCCreateAddressResponse onResonse(Map<String, dynamic> result) {

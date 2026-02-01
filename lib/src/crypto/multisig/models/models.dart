@@ -8,8 +8,8 @@ class MultisigLR extends MoneroSerialization {
   final RctKey l;
   final RctKey r;
   MultisigLR({required RctKey l, required RctKey r})
-      : l = l.asImmutableBytes,
-        r = r.asImmutableBytes;
+    : l = l.asImmutableBytes,
+      r = r.asImmutableBytes;
 
   factory MultisigLR.fromStruct(Map<String, dynamic> json) {
     return MultisigLR(l: json.asBytes("l"), r: json.asBytes("r"));
@@ -40,10 +40,11 @@ class MultisigKLRKI extends MoneroSerialization {
   final RctKey ki;
   factory MultisigKLRKI.fromStruct(Map<String, dynamic> json) {
     return MultisigKLRKI(
-        k: json.asBytes("k"),
-        L: json.asBytes("L"),
-        R: json.asBytes("R"),
-        ki: json.asBytes("ki"));
+      k: json.asBytes("k"),
+      L: json.asBytes("L"),
+      R: json.asBytes("R"),
+      ki: json.asBytes("ki"),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -70,10 +71,10 @@ class MultisigKLRKI extends MoneroSerialization {
     required RctKey L,
     required RctKey R,
     required RctKey ki,
-  })  : k = k.asImmutableBytes,
-        L = L.asImmutableBytes,
-        R = R.asImmutableBytes,
-        ki = ki.asImmutableBytes;
+  }) : k = k.asImmutableBytes,
+       L = L.asImmutableBytes,
+       R = R.asImmutableBytes,
+       ki = ki.asImmutableBytes;
 }
 
 class MoneroMultisigOutputInfo extends MoneroSerialization {
@@ -85,26 +86,33 @@ class MoneroMultisigOutputInfo extends MoneroSerialization {
     required this.signer,
     required List<MultisigLR> lr,
     required List<RctKey> partialKeyImages,
-  })  : lr = lr.immutable,
-        partialKeyImages = partialKeyImages
-            .map((e) => e.asImmutableBytes.exc(32))
-            .toImutableList;
+  }) : lr = lr.immutable,
+       partialKeyImages =
+           partialKeyImages
+               .map(
+                 (e) => e.asImmutableBytes.exc(
+                   length: 32,
+                   operation: "MoneroMultisigOutputInfo",
+                   reason: "Invalid key image bytes length.",
+                 ),
+               )
+               .toImutableList;
   factory MoneroMultisigOutputInfo.fromStruct(Map<String, dynamic> json) {
     return MoneroMultisigOutputInfo(
-        signer: MoneroPublicKey.fromBytes(json.asBytes("signer")),
-        lr: json
-            .asListOfMap("lr")!
-            .map((e) => MultisigLR.fromStruct(e))
-            .toList(),
-        partialKeyImages: json.asListBytes("partialKeyImages")!);
+      signer: MoneroPublicKey.fromBytes(json.asBytes("signer")),
+      lr: json.asListOfMap("lr")!.map((e) => MultisigLR.fromStruct(e)).toList(),
+      partialKeyImages: json.asListBytes("partialKeyImages")!,
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       LayoutConst.fixedBlob32(property: "signer"),
       MoneroLayoutConst.variantVec(MultisigLR.layout(), property: "lr"),
-      MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
-          property: "partialKeyImages"),
+      MoneroLayoutConst.variantVec(
+        LayoutConst.fixedBlob32(),
+        property: "partialKeyImages",
+      ),
     ], property: property);
   }
 
@@ -113,7 +121,7 @@ class MoneroMultisigOutputInfo extends MoneroSerialization {
     return {
       "signer": signer.key,
       "lr": lr.map((e) => e.toLayoutStruct()).toList(),
-      "partialKeyImages": partialKeyImages
+      "partialKeyImages": partialKeyImages,
     };
   }
 
@@ -126,29 +134,36 @@ class MoneroMultisigOutputInfo extends MoneroSerialization {
 class MoneroMultisigInfo extends MoneroSerialization {
   final MoneroMultisigOutputInfo info;
   final List<MoneroPrivateKey> nonces;
-  MoneroMultisigInfo(
-      {required this.info, required List<MoneroPrivateKey> nonces})
-      : nonces = nonces.immutable;
+  MoneroMultisigInfo({
+    required this.info,
+    required List<MoneroPrivateKey> nonces,
+  }) : nonces = nonces.immutable;
   factory MoneroMultisigInfo.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
-        bytes: bytes, layout: layout(property: property));
+      bytes: bytes,
+      layout: layout(property: property),
+    );
     return MoneroMultisigInfo.fromStruct(decode);
   }
 
   factory MoneroMultisigInfo.fromStruct(Map<String, dynamic> json) {
     return MoneroMultisigInfo(
-        info: MoneroMultisigOutputInfo.fromStruct(json.asMap("info")),
-        nonces: json
-            .asListBytes("nonces")!
-            .map((e) => MoneroPrivateKey.fromBytes(e))
-            .toList());
+      info: MoneroMultisigOutputInfo.fromStruct(json.asMap("info")),
+      nonces:
+          json
+              .asListBytes("nonces")!
+              .map((e) => MoneroPrivateKey.fromBytes(e))
+              .toList(),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       MoneroMultisigOutputInfo.layout(property: "info"),
-      MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
-          property: "nonces")
+      MoneroLayoutConst.variantVec(
+        LayoutConst.fixedBlob32(),
+        property: "nonces",
+      ),
     ], property: property);
   }
 
@@ -161,7 +176,7 @@ class MoneroMultisigInfo extends MoneroSerialization {
   Map<String, dynamic> toLayoutStruct() {
     return {
       "info": info.toLayoutStruct(),
-      "nonces": nonces.map((e) => e.key).toList()
+      "nonces": nonces.map((e) => e.key).toList(),
     };
   }
 }

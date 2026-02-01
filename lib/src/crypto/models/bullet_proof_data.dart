@@ -8,16 +8,16 @@ class BpPlusProofData {
   final List<RctKey> challenges;
   final int logM;
   final int invOffset;
-  BpPlusProofData(
-      {required RctKey y,
-      required RctKey z,
-      required RctKey e,
-      required List<RctKey> challenges,
-      required this.logM,
-      required this.invOffset})
-      : y = y.asImmutableBytes,
-        z = z.asImmutableBytes,
-        e = e.asImmutableBytes,
-        challenges =
-            challenges.map((e) => e.asImmutableBytes).toList().immutable;
+  BpPlusProofData({
+    required RctKey y,
+    required RctKey z,
+    required RctKey e,
+    required List<RctKey> challenges,
+    required this.logM,
+    required this.invOffset,
+  }) : y = y.asImmutableBytes,
+       z = z.asImmutableBytes,
+       e = e.asImmutableBytes,
+       challenges =
+           challenges.map((e) => e.asImmutableBytes).toList().immutable;
 }

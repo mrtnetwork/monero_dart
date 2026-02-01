@@ -36,19 +36,21 @@ class TxResponse {
       asJson = StringUtils.tryToJson<Map<String, dynamic>>(json["as_json"]);
     }
     return TxResponse(
-        height: IntUtils.tryParse(json["block_height"]),
-        timestamp: IntUtils.tryParse(json["block_timestamp"]),
-        confirmations: IntUtils.tryParse(json["confirmations"]),
-        doubleSpend: json["double_spend_seen"],
-        inPool: json["in_pool"],
-        outoutIndices: (json["output_indices"] as List?)
-                ?.map((e) => BigintUtils.parse(e))
-                .toList() ??
-            [],
-        txHash: json["tx_hash"],
-        txHex: txHex.trim(),
-        prunableHash: json["prunable_hash"],
-        txJson: asJson);
+      height: IntUtils.tryParse(json["block_height"]),
+      timestamp: IntUtils.tryParse(json["block_timestamp"]),
+      confirmations: IntUtils.tryParse(json["confirmations"]),
+      doubleSpend: json["double_spend_seen"],
+      inPool: json["in_pool"],
+      outoutIndices:
+          (json["output_indices"] as List?)
+              ?.map((e) => BigintUtils.parse(e))
+              .toList() ??
+          [],
+      txHash: json["tx_hash"],
+      txHex: txHex.trim(),
+      prunableHash: json["prunable_hash"],
+      txJson: asJson,
+    );
   }
 
   MoneroTransaction toTx() {

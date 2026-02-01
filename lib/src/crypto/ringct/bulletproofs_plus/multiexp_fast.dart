@@ -22,11 +22,15 @@ class _StrausData {
       throw const MoneroCryptoException("Bad cache base data.");
     }
     final _StrausData cache = _StrausData(
-        size: n,
-        multiples: List.generate(
-            n,
-            (_) => List.generate((1 << Multiexp.strausC) - 1,
-                (_) => EDPoint.infinity(curve: Curves.curveEd25519))));
+      size: n,
+      multiples: List.generate(
+        n,
+        (_) => List.generate(
+          (1 << Multiexp.strausC) - 1,
+          (_) => EDPoint.infinity(curve: Curves.curveEd25519),
+        ),
+      ),
+    );
     for (int j = 0; j < n; ++j) {
       cache.multiples[j][0] = data[j].point;
       for (int i = 2; i < (1 << Multiexp.strausC); ++i) {
@@ -35,8 +39,9 @@ class _StrausData {
       }
     }
     return _StrausData(
-        multiples: cache.multiples.map((e) => e.immutable).toImutableList,
-        size: n);
+      multiples: cache.multiples.map((e) => e.immutable).toImutableList,
+      size: n,
+    );
   }
 }
 
@@ -63,8 +68,11 @@ class Multiexp {
     return res;
   }
 
-  static List<EDPoint> _getPippenger(
-      {required List<MultiexpData> data, int startOffset = 0, int? N}) {
+  static List<EDPoint> _getPippenger({
+    required List<MultiexpData> data,
+    int startOffset = 0,
+    int? N,
+  }) {
     if (startOffset > data.length) {
       throw const MoneroCryptoException("Bad cache base data");
     }
@@ -130,7 +138,7 @@ class Multiexp {
         EDPoint p1 = bandP3!;
 
         for (int j = 0; j < strausC; ++j) {
-          p1 = p1.doublePoint();
+          p1 = p1.double();
           if (j == strausC - 1) {
             bandP3 = p1;
           }
@@ -176,27 +184,36 @@ class Multiexp {
     return k[n >> 3] & (1 << (n & 7));
   }
 
-  static EDPoint pippenger(
-      {required List<MultiexpData> data, int? cacheSize, int? c}) {
+  static EDPoint pippenger({
+    required List<MultiexpData> data,
+    int? cacheSize,
+    int? c,
+  }) {
     return _pippengerP3(data: data, cacheSize: cacheSize, c: c);
   }
 
-  static EDPoint _pippengerP3(
-      {required List<MultiexpData> data, int? cacheSize, int? c}) {
+  static EDPoint _pippengerP3({
+    required List<MultiexpData> data,
+    int? cacheSize,
+    int? c,
+  }) {
     cacheSize ??= 0;
     if (c == null || c == 0) {
       c = getPippengerC(data.length);
     }
-    EDPoint result =
-        EDPoint.fromBytes(curve: Curves.curveEd25519, data: RCT.identity());
+    EDPoint result = EDPoint.fromBytes(
+      curve: Curves.curveEd25519,
+      data: RCT.identity(),
+    );
     bool resultInit = false;
     final List<EDPoint?> buckets = List.filled(1 << c, null);
     final List<bool> bucketsInit = List.filled(1 << 9, false);
     final localCache = _getPippenger(data: data);
 
-    final localCache2 = data.length > cacheSize
-        ? _getPippenger(data: data, startOffset: cacheSize)
-        : null;
+    final localCache2 =
+        data.length > cacheSize
+            ? _getPippenger(data: data, startOffset: cacheSize)
+            : null;
     List<int> maxScalar = RCT.zero();
     for (int i = 0; i < data.length; i++) {
       if (_isLowerThan(maxScalar, data[i].scalar)) {
@@ -212,7 +229,7 @@ class Multiexp {
       if (resultInit) {
         EDPoint p2 = result;
         for (int i = 0; i < c; ++i) {
-          final EDPoint p1 = p2.doublePoint();
+          final EDPoint p1 = p2.double();
           if (i == c - 1) {
             result = p1;
           } else {
@@ -242,8 +259,10 @@ class Multiexp {
           if (i < cacheSize) {
             buckets[bucket] = _addPoint(buckets[bucket]!, localCache[i]);
           } else {
-            buckets[bucket] =
-                _addPoint(buckets[bucket]!, localCache2![i - cacheSize]);
+            buckets[bucket] = _addPoint(
+              buckets[bucket]!,
+              localCache2![i - cacheSize],
+            );
           }
         } else {
           buckets[bucket] = data[i].point;

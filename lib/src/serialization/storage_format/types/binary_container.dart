@@ -13,14 +13,15 @@ abstract class MoneroStorageContainer {
 class MoneroStorageBinary extends MoneroStorageContainer {
   final List<int> data;
   MoneroStorageBinary._(List<int> data)
-      : data = data.asImmutableBytes,
-        super(MoneroStorageTypes.string);
+    : data = data.asImmutableBytes,
+      super(MoneroStorageTypes.string);
   factory MoneroStorageBinary.fromBytes(List<int> data) {
     return MoneroStorageBinary._(data);
   }
   factory MoneroStorageBinary.fromListOfHex(List<String> hex) {
     return MoneroStorageBinary._(
-        hex.map((e) => BytesUtils.fromHexString(e)).expand((e) => e).toList());
+      hex.map((e) => BytesUtils.fromHexString(e)).expand((e) => e).toList(),
+    );
   }
 
   @override

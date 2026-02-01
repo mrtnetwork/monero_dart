@@ -7,16 +7,17 @@ class DaemonBaseResponse {
   final String status;
   final String? topHash;
   final bool? untrusted;
-  const DaemonBaseResponse(
-      {required this.credits,
-      required this.status,
-      required this.topHash,
-      required this.untrusted});
+  const DaemonBaseResponse({
+    required this.credits,
+    required this.status,
+    required this.topHash,
+    required this.untrusted,
+  });
   DaemonBaseResponse.fromJson(Map<String, dynamic> json)
-      : credits = BigintUtils.tryParse(json["credits"]),
-        status = json["status"],
-        topHash = json["top_hash"],
-        untrusted = json["untrusted"];
+    : credits = BigintUtils.tryParse(json["credits"]),
+      status = json["status"],
+      topHash = json["top_hash"],
+      untrusted = json["untrusted"];
 
   bool get isOk => status == "OK";
 }
@@ -30,9 +31,9 @@ class DaemonBannedResponse extends DaemonBaseResponse {
   final bool banned;
   final int seconds;
   DaemonBannedResponse.fromJson(super.json)
-      : banned = json["banned"],
-        seconds = json["seconds"] ?? 0,
-        super.fromJson();
+    : banned = json["banned"],
+      seconds = json["seconds"] ?? 0,
+      super.fromJson();
 }
 
 class DaemonChainInfo {
@@ -47,14 +48,14 @@ class DaemonChainInfo {
 
   // fromJson constructor
   DaemonChainInfo.fromJson(Map<String, dynamic> json)
-      : blockHash = json['block_hash'],
-        height = BigintUtils.parse(json['height']),
-        length = BigintUtils.parse(json['length']),
-        difficulty = BigintUtils.parse(json['difficulty']),
-        wideDifficulty = json['wide_difficulty'],
-        difficultyTop64 = BigintUtils.parse(json['difficulty_top64']),
-        blockHashes = List<String>.from(json['block_hashes']),
-        mainChainParentBlock = json['main_chain_parent_block'];
+    : blockHash = json['block_hash'],
+      height = BigintUtils.parse(json['height']),
+      length = BigintUtils.parse(json['length']),
+      difficulty = BigintUtils.parse(json['difficulty']),
+      wideDifficulty = json['wide_difficulty'],
+      difficultyTop64 = BigintUtils.parse(json['difficulty_top64']),
+      blockHashes = List<String>.from(json['block_hashes']),
+      mainChainParentBlock = json['main_chain_parent_block'];
 }
 
 class DaemonGetAlternateChainsResponse extends DaemonBaseResponse {
@@ -62,19 +63,20 @@ class DaemonGetAlternateChainsResponse extends DaemonBaseResponse {
   final List<DaemonChainInfo> chains;
 
   DaemonGetAlternateChainsResponse.fromJson(super.json)
-      : chains = (json["chains"] as List?)
-                ?.map((e) => DaemonChainInfo.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : chains =
+          (json["chains"] as List?)
+              ?.map((e) => DaemonChainInfo.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonSyncInfoResponse extends DaemonBaseResponse {
   final DaemonConnectionInfoResponse info;
 
   DaemonSyncInfoResponse.fromJson(super.json)
-      : info = DaemonConnectionInfoResponse.fromJson(json["info"]),
-        super.fromJson();
+    : info = DaemonConnectionInfoResponse.fromJson(json["info"]),
+      super.fromJson();
 }
 
 class DaemonCoinbaseTxSumResponse extends DaemonBaseResponse {
@@ -87,13 +89,13 @@ class DaemonCoinbaseTxSumResponse extends DaemonBaseResponse {
 
   // fromJson constructor
   DaemonCoinbaseTxSumResponse.fromJson(super.json)
-      : emissionAmount = BigintUtils.parse(json['emission_amount']),
-        wideEmissionAmount = json['wide_emission_amount'],
-        emissionAmountTop64 = BigintUtils.parse(json['emission_amount_top64']),
-        feeAmount = BigintUtils.parse(json['fee_amount']),
-        wideFeeAmount = json['wide_fee_amount'],
-        feeAmountTop64 = BigintUtils.parse(json['fee_amount_top64']),
-        super.fromJson();
+    : emissionAmount = BigintUtils.parse(json['emission_amount']),
+      wideEmissionAmount = json['wide_emission_amount'],
+      emissionAmountTop64 = BigintUtils.parse(json['emission_amount_top64']),
+      feeAmount = BigintUtils.parse(json['fee_amount']),
+      wideFeeAmount = json['wide_fee_amount'],
+      feeAmountTop64 = BigintUtils.parse(json['fee_amount_top64']),
+      super.fromJson();
 }
 
 class DaemonGetBlockCountResponse extends DaemonBaseResponse {
@@ -101,26 +103,26 @@ class DaemonGetBlockCountResponse extends DaemonBaseResponse {
   final int count;
 
   DaemonGetBlockCountResponse.fromJson(super.json)
-      : count = IntUtils.parse(json["count"]),
-        super.fromJson();
+    : count = IntUtils.parse(json["count"]),
+      super.fromJson();
 }
 
 class DaemonGenerateBlockResponse extends DaemonBaseResponse {
   /// unsigned int; Number of blocks in longest chain seen by the node.
   final List<String> blocks;
   final BigInt height;
-  DaemonGenerateBlockResponse(
-      {required List<String> blocks,
-      required this.height,
-      required super.credits,
-      required super.status,
-      required super.topHash,
-      required bool super.untrusted})
-      : blocks = blocks.immutable;
+  DaemonGenerateBlockResponse({
+    required List<String> blocks,
+    required this.height,
+    required super.credits,
+    required super.status,
+    required super.topHash,
+    required bool super.untrusted,
+  }) : blocks = blocks.immutable;
   DaemonGenerateBlockResponse.fromJson(super.json)
-      : blocks = (json["count"] as List).cast<String>().immutable,
-        height = BigintUtils.parse(json["height"]),
-        super.fromJson();
+    : blocks = (json["count"] as List).cast<String>().immutable,
+      height = BigintUtils.parse(json["height"]),
+      super.fromJson();
 }
 
 class DaemonTxBacklogEntry {
@@ -129,19 +131,20 @@ class DaemonTxBacklogEntry {
   final BigInt fee;
 
   DaemonTxBacklogEntry.fromJson(Map<String, dynamic> json)
-      : id = json['id'],
-        weight = BigintUtils.parse(json['weight']),
-        fee = BigintUtils.parse(json['fee']);
+    : id = json['id'],
+      weight = BigintUtils.parse(json['weight']),
+      fee = BigintUtils.parse(json['fee']);
 }
 
 class DaemonGetTxPoolBackLogResponse extends DaemonBaseResponse {
   final List<DaemonTxBacklogEntry> backlog;
 
   DaemonGetTxPoolBackLogResponse.fromJson(super.json)
-      : backlog = (json["backlog"] as List)
-            .map((e) => DaemonTxBacklogEntry.fromJson(e))
-            .toImutableList,
-        super.fromJson();
+    : backlog =
+          (json["backlog"] as List)
+              .map((e) => DaemonTxBacklogEntry.fromJson(e))
+              .toImutableList,
+      super.fromJson();
 }
 
 class DaemonGetMinerDataResponse extends DaemonBaseResponse {
@@ -155,29 +158,31 @@ class DaemonGetMinerDataResponse extends DaemonBaseResponse {
   final List<DaemonTxBacklogEntry> txBacklog;
   // fromJson constructor
   DaemonGetMinerDataResponse.fromJson(super.json)
-      : majorVersion = json['major_version'],
-        height = BigintUtils.parse(json['height']),
-        prevId = json['prev_id'],
-        seedHash = json['seed_hash'],
-        difficulty = json['difficulty'],
-        medianWeight = BigintUtils.parse(json['median_weight']),
-        alreadyGeneratedCoins =
-            BigRational.parseDecimal(json['already_generated_coins'].toString())
-                .toBigInt(),
-        txBacklog = (json["tx_backlog"] as List?)
-                ?.map((e) => DaemonTxBacklogEntry.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : majorVersion = json['major_version'],
+      height = BigintUtils.parse(json['height']),
+      prevId = json['prev_id'],
+      seedHash = json['seed_hash'],
+      difficulty = json['difficulty'],
+      medianWeight = BigintUtils.parse(json['median_weight']),
+      alreadyGeneratedCoins =
+          BigRational.parseDecimal(
+            json['already_generated_coins'].toString(),
+          ).toBigInt(),
+      txBacklog =
+          (json["tx_backlog"] as List?)
+              ?.map((e) => DaemonTxBacklogEntry.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonPruneBlockchainResponse extends DaemonBaseResponse {
   final bool pruned;
   final BigInt pruningSeed;
   DaemonPruneBlockchainResponse.fromJson(super.json)
-      : pruned = json['pruned'],
-        pruningSeed = BigintUtils.parse(json['pruning_seed']),
-        super.fromJson();
+    : pruned = json['pruned'],
+      pruningSeed = BigintUtils.parse(json['pruning_seed']),
+      super.fromJson();
 }
 
 class DaemonAddAuxPowResponse extends DaemonBaseResponse {
@@ -187,36 +192,39 @@ class DaemonAddAuxPowResponse extends DaemonBaseResponse {
   final BigInt merkleTreeDepth;
   final List<DaemonAuxPowParams> auxPow;
   DaemonAddAuxPowResponse.fromJson(super.json)
-      : blocktemplateBlob = json['blocktemplate_blob'],
-        blockhashingBlob = json["blockhashing_blob"],
-        merkleRoot = json["merkle_root"],
-        merkleTreeDepth = BigintUtils.parse(json['merkle_tree_depth']),
-        auxPow = (json["aux_pow"] as List?)
-                ?.map((e) => DaemonAuxPowParams.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : blocktemplateBlob = json['blocktemplate_blob'],
+      blockhashingBlob = json["blockhashing_blob"],
+      merkleRoot = json["merkle_root"],
+      merkleTreeDepth = BigintUtils.parse(json['merkle_tree_depth']),
+      auxPow =
+          (json["aux_pow"] as List?)
+              ?.map((e) => DaemonAuxPowParams.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonGetHashesBinResponse extends DaemonBaseResponse {
   final BigInt startHeight;
   final BigInt currentHeight;
   final List<String> mBlockIds;
-  const DaemonGetHashesBinResponse(
-      {required super.credits,
-      required super.status,
-      required super.topHash,
-      required super.untrusted,
-      required this.startHeight,
-      required this.currentHeight,
-      required this.mBlockIds});
+  const DaemonGetHashesBinResponse({
+    required super.credits,
+    required super.status,
+    required super.topHash,
+    required super.untrusted,
+    required this.startHeight,
+    required this.currentHeight,
+    required this.mBlockIds,
+  });
 
   DaemonGetHashesBinResponse.fromBinaryResponse(super.json)
-      : mBlockIds =
-            ProviderUtils.parseBlockBinaryResponse(json["m_block_ids"] ?? []),
-        currentHeight = BigintUtils.parse(json["current_height"]),
-        startHeight = BigintUtils.parse(json["start_height"]),
-        super.fromJson();
+    : mBlockIds = ProviderUtils.parseBlockBinaryResponse(
+        json["m_block_ids"] ?? [],
+      ),
+      currentHeight = BigintUtils.parse(json["current_height"]),
+      startHeight = BigintUtils.parse(json["start_height"]),
+      super.fromJson();
 }
 
 class DaemonPublicNodeResponse {
@@ -226,10 +234,10 @@ class DaemonPublicNodeResponse {
   final int rpcCreditsPerHash;
 
   DaemonPublicNodeResponse.fromJson(Map<String, dynamic> json)
-      : host = json["host"],
-        lastSeen = BigintUtils.parse(json["last_seen"]),
-        port = json["rpc_port"],
-        rpcCreditsPerHash = json["rpc_credits_per_hash"];
+    : host = json["host"],
+      lastSeen = BigintUtils.parse(json["last_seen"]),
+      port = json["rpc_port"],
+      rpcCreditsPerHash = json["rpc_credits_per_hash"];
 }
 
 class DaemonGetPublicNodeResponse extends DaemonBaseResponse {
@@ -237,31 +245,33 @@ class DaemonGetPublicNodeResponse extends DaemonBaseResponse {
   final List<DaemonPublicNodeResponse> gray;
 
   DaemonGetPublicNodeResponse.fromJson(super.json)
-      : white = (json["white"] as List?)
-                ?.map((e) => DaemonPublicNodeResponse.fromJson(e))
-                .toImutableList ??
-            [],
-        gray = (json["gray"] as List?)
-                ?.map((e) => DaemonPublicNodeResponse.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : white =
+          (json["white"] as List?)
+              ?.map((e) => DaemonPublicNodeResponse.fromJson(e))
+              .toImutableList ??
+          [],
+      gray =
+          (json["gray"] as List?)
+              ?.map((e) => DaemonPublicNodeResponse.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonGetTransactionPoolHashesResponse extends DaemonBaseResponse {
   final List<String> txHashes;
 
   DaemonGetTransactionPoolHashesResponse.fromJson(super.json)
-      : txHashes = (json["tx_hashes"] as List).cast(),
-        super.fromJson();
+    : txHashes = (json["tx_hashes"] as List).cast(),
+      super.fromJson();
 }
 
 class DaemonPopBlocksResponse extends DaemonBaseResponse {
   final BigInt height;
 
   DaemonPopBlocksResponse.fromJson(super.json)
-      : height = BigintUtils.parse(json["height"]),
-        super.fromJson();
+    : height = BigintUtils.parse(json["height"]),
+      super.fromJson();
 }
 
 class DaemonUpdateResponse extends DaemonBaseResponse {
@@ -273,13 +283,13 @@ class DaemonUpdateResponse extends DaemonBaseResponse {
   final String path;
 
   DaemonUpdateResponse.fromJson(super.json)
-      : update = json["update"],
-        version = json["version"],
-        userUri = json["user_uri"],
-        autoUri = json["auto_uri"],
-        path = json["path"],
-        hash = json["hash"],
-        super.fromJson();
+    : update = json["update"],
+      version = json["version"],
+      userUri = json["user_uri"],
+      autoUri = json["auto_uri"],
+      path = json["path"],
+      hash = json["hash"],
+      super.fromJson();
 }
 
 class DaemonGetNetStatsResponse extends DaemonBaseResponse {
@@ -290,28 +300,28 @@ class DaemonGetNetStatsResponse extends DaemonBaseResponse {
   final BigInt totalBytesOut;
 
   DaemonGetNetStatsResponse.fromJson(super.json)
-      : startTime = BigintUtils.parse(json["start_time"]),
-        totalPacketsIn = BigintUtils.parse(json["total_packets_in"]),
-        totalBytesIn = BigintUtils.parse(json["total_bytes_in"]),
-        totalPacketsOut = BigintUtils.parse(json["total_packets_out"]),
-        totalBytesOut = BigintUtils.parse(json["total_bytes_out"]),
-        super.fromJson();
+    : startTime = BigintUtils.parse(json["start_time"]),
+      totalPacketsIn = BigintUtils.parse(json["total_packets_in"]),
+      totalBytesIn = BigintUtils.parse(json["total_bytes_in"]),
+      totalPacketsOut = BigintUtils.parse(json["total_packets_out"]),
+      totalBytesOut = BigintUtils.parse(json["total_bytes_out"]),
+      super.fromJson();
 }
 
 class DaemonInPeersResponse extends DaemonBaseResponse {
   final int inPeers;
 
   DaemonInPeersResponse.fromJson(super.json)
-      : inPeers = json["in_peers"],
-        super.fromJson();
+    : inPeers = json["in_peers"],
+      super.fromJson();
 }
 
 class DaemonOutPeersResponse extends DaemonBaseResponse {
   final int outPeers;
 
   DaemonOutPeersResponse.fromJson(super.json)
-      : outPeers = json["out_peers"],
-        super.fromJson();
+    : outPeers = json["out_peers"],
+      super.fromJson();
 }
 
 class DaemonLimitResponse extends DaemonBaseResponse {
@@ -319,9 +329,9 @@ class DaemonLimitResponse extends DaemonBaseResponse {
   final BigInt limitUp;
 
   DaemonLimitResponse.fromJson(super.json)
-      : limitDown = BigintUtils.parse(json["limit_down"]),
-        limitUp = BigintUtils.parse(json["limit_up"]),
-        super.fromJson();
+    : limitDown = BigintUtils.parse(json["limit_down"]),
+      limitUp = BigintUtils.parse(json["limit_up"]),
+      super.fromJson();
 }
 
 class DaemonTxPoolHistoResponse {
@@ -329,8 +339,8 @@ class DaemonTxPoolHistoResponse {
   final BigInt bytes;
 
   DaemonTxPoolHistoResponse.fromJson(Map<String, dynamic> json)
-      : txs = json["txs"],
-        bytes = BigintUtils.parse(json["bytes"]);
+    : txs = json["txs"],
+      bytes = BigintUtils.parse(json["bytes"]);
 }
 
 class DaemonTxPoolStatsResponse {
@@ -349,38 +359,39 @@ class DaemonTxPoolStatsResponse {
   final int numDoubleSpends;
 
   DaemonTxPoolStatsResponse.fromJson(Map<String, dynamic> json)
-      : bytesTotal = BigintUtils.parse(json["bytes_total"]),
-        bytesMin = json["bytes_min"],
-        bytesMax = json["bytes_max"],
-        bytesMed = json["bytes_med"],
-        txsTotal = json["txs_total"],
-        numFailing = json["num_failing"],
-        num10m = json["num_10m"],
-        numNotRelayed = json["num_not_relayed"],
-        numDoubleSpends = json["num_double_spends"],
-        feeTotal = BigintUtils.parse(json["fee_total"]),
-        oldest = BigintUtils.parse(json["oldest"]),
-        histo_98pc = BigintUtils.parse(json["histo_98pc"]),
-        histo = (json["histo"] as List?)
-                ?.map((e) => DaemonTxPoolHistoResponse.fromJson(e))
-                .toImutableList ??
-            [];
+    : bytesTotal = BigintUtils.parse(json["bytes_total"]),
+      bytesMin = json["bytes_min"],
+      bytesMax = json["bytes_max"],
+      bytesMed = json["bytes_med"],
+      txsTotal = json["txs_total"],
+      numFailing = json["num_failing"],
+      num10m = json["num_10m"],
+      numNotRelayed = json["num_not_relayed"],
+      numDoubleSpends = json["num_double_spends"],
+      feeTotal = BigintUtils.parse(json["fee_total"]),
+      oldest = BigintUtils.parse(json["oldest"]),
+      histo_98pc = BigintUtils.parse(json["histo_98pc"]),
+      histo =
+          (json["histo"] as List?)
+              ?.map((e) => DaemonTxPoolHistoResponse.fromJson(e))
+              .toImutableList ??
+          [];
 }
 
 class DaemonGetTransactionPoolStatsResponse extends DaemonBaseResponse {
   final DaemonTxPoolStatsResponse poolStats;
 
   DaemonGetTransactionPoolStatsResponse.fromJson(super.json)
-      : poolStats = DaemonTxPoolStatsResponse.fromJson(json["pool_stats"]),
-        super.fromJson();
+    : poolStats = DaemonTxPoolStatsResponse.fromJson(json["pool_stats"]),
+      super.fromJson();
 }
 
 class DaemonSetLogCategoriesResponse extends DaemonBaseResponse {
   final String categories;
 
   DaemonSetLogCategoriesResponse.fromJson(super.json)
-      : categories = json["categories"],
-        super.fromJson();
+    : categories = json["categories"],
+      super.fromJson();
 }
 
 class DaemonPeerResponse {
@@ -394,29 +405,31 @@ class DaemonPeerResponse {
   final BigInt lastSeen;
 
   DaemonPeerResponse.fromJson(Map<String, dynamic> json)
-      : id = BigintUtils.parse(json["id"]),
-        host = json["host"],
-        ip = json["ip"],
-        port = json["port"],
-        rpcPort = json["rpc_port"],
-        rpcCreditsPerHash = json["rpc_credits_per_hash"],
-        pruningSeed = json["pruning_seed"],
-        lastSeen = BigintUtils.parse(json["last_seen"]);
+    : id = BigintUtils.parse(json["id"]),
+      host = json["host"],
+      ip = json["ip"],
+      port = json["port"],
+      rpcPort = json["rpc_port"],
+      rpcCreditsPerHash = json["rpc_credits_per_hash"],
+      pruningSeed = json["pruning_seed"],
+      lastSeen = BigintUtils.parse(json["last_seen"]);
 }
 
 class DaemonGetPeerListResponse extends DaemonBaseResponse {
   final List<DaemonPeerResponse> whiteList;
   final List<DaemonPeerResponse> grayList;
   DaemonGetPeerListResponse.fromJson(super.json)
-      : whiteList = (json["white_list"] as List?)
-                ?.map((e) => DaemonPeerResponse.fromJson(e))
-                .toImutableList ??
-            [],
-        grayList = (json["gray_list"] as List?)
-                ?.map((e) => DaemonPeerResponse.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : whiteList =
+          (json["white_list"] as List?)
+              ?.map((e) => DaemonPeerResponse.fromJson(e))
+              .toImutableList ??
+          [],
+      grayList =
+          (json["gray_list"] as List?)
+              ?.map((e) => DaemonPeerResponse.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonMininStatusResponse extends DaemonBaseResponse {
@@ -437,22 +450,22 @@ class DaemonMininStatusResponse extends DaemonBaseResponse {
   final BigInt difficultyTop64;
 
   DaemonMininStatusResponse.fromJson(super.json)
-      : active = json['active'],
-        speed = BigintUtils.parse(json['speed']),
-        threadsCount = json['threads_count'],
-        address = json['address'],
-        powAlgorithm = json['pow_algorithm'],
-        isBackgroundMiningEnabled = json['is_background_mining_enabled'],
-        bgIdleThreshold = json['bg_idle_threshold'],
-        bgMinIdleSeconds = json['bg_min_idle_seconds'],
-        bgIgnoreBattery = json['bg_ignore_battery'],
-        bgTarget = json['bg_target'],
-        blockTarget = json['block_target'],
-        blockReward = BigintUtils.parse(json['block_reward']),
-        difficulty = BigintUtils.parse(json['difficulty']),
-        wideDifficulty = json['wide_difficulty'],
-        difficultyTop64 = BigintUtils.parse(json['difficulty_top64']),
-        super.fromJson();
+    : active = json['active'],
+      speed = BigintUtils.parse(json['speed']),
+      threadsCount = json['threads_count'],
+      address = json['address'],
+      powAlgorithm = json['pow_algorithm'],
+      isBackgroundMiningEnabled = json['is_background_mining_enabled'],
+      bgIdleThreshold = json['bg_idle_threshold'],
+      bgMinIdleSeconds = json['bg_min_idle_seconds'],
+      bgIgnoreBattery = json['bg_ignore_battery'],
+      bgTarget = json['bg_target'],
+      blockTarget = json['block_target'],
+      blockReward = BigintUtils.parse(json['block_reward']),
+      difficulty = BigintUtils.parse(json['difficulty']),
+      wideDifficulty = json['wide_difficulty'],
+      difficultyTop64 = BigintUtils.parse(json['difficulty_top64']),
+      super.fromJson();
 }
 
 enum DaemonKeyImageSpentStatus {
@@ -467,25 +480,24 @@ enum DaemonKeyImageSpentStatus {
 class DaemonIsKeyImageSpentResponse extends DaemonBaseResponse {
   final List<DaemonKeyImageSpentStatus> spentStatus;
   DaemonIsKeyImageSpentResponse(List<DaemonKeyImageSpentStatus> spentStatus)
-      : spentStatus = spentStatus.immutable,
-        super(
-            credits: BigInt.zero, status: 'OK', topHash: '', untrusted: false);
+    : spentStatus = spentStatus.immutable,
+      super(credits: BigInt.zero, status: 'OK', topHash: '', untrusted: false);
 
   DaemonIsKeyImageSpentResponse.fromJson(super.json)
-      : spentStatus = (json["spent_status"] as List)
-            .cast<int>()
-            .map((e) => DaemonKeyImageSpentStatus.values.elementAt(e))
-            .toImutableList,
-        super.fromJson();
+    : spentStatus =
+          (json["spent_status"] as List)
+              .cast<int>()
+              .map((e) => DaemonKeyImageSpentStatus.values.elementAt(e))
+              .toImutableList,
+      super.fromJson();
 }
 
 class DaemonGetAltBlockHashesResponse extends DaemonBaseResponse {
   final List<String> blksHashes;
 
   DaemonGetAltBlockHashesResponse.fromJson(super.json)
-      : blksHashes =
-            (json["blks_hashes"] as List).cast<String>().toImutableList,
-        super.fromJson();
+    : blksHashes = (json["blks_hashes"] as List).cast<String>().toImutableList,
+      super.fromJson();
 }
 
 class DaemonSendRawTxResponse extends DaemonBaseResponse {
@@ -505,20 +517,20 @@ class DaemonSendRawTxResponse extends DaemonBaseResponse {
   bool get isSuccess => status == "OK";
 
   DaemonSendRawTxResponse.fromJson(super.json)
-      : reason = json['reason'] ?? '',
-        notRelayed = json['not_relayed'] ?? false,
-        lowMixin = json['low_mixin'] ?? false,
-        doubleSpend = json['double_spend'] ?? false,
-        invalidInput = json['invalid_input'] ?? false,
-        invalidOutput = json['invalid_output'] ?? false,
-        tooBig = json['too_big'] ?? false,
-        overspend = json['overspend'] ?? false,
-        feeTooLow = json['fee_too_low'] ?? false,
-        tooFewOutputs = json['too_few_outputs'] ?? false,
-        sanityCheckFailed = json['sanity_check_failed'] ?? false,
-        txExtraTooBig = json['tx_extra_too_big'] ?? false,
-        nonzeroUnlockTime = json['nonzero_unlock_time'] ?? false,
-        super.fromJson();
+    : reason = json['reason'] ?? '',
+      notRelayed = json['not_relayed'] ?? false,
+      lowMixin = json['low_mixin'] ?? false,
+      doubleSpend = json['double_spend'] ?? false,
+      invalidInput = json['invalid_input'] ?? false,
+      invalidOutput = json['invalid_output'] ?? false,
+      tooBig = json['too_big'] ?? false,
+      overspend = json['overspend'] ?? false,
+      feeTooLow = json['fee_too_low'] ?? false,
+      tooFewOutputs = json['too_few_outputs'] ?? false,
+      sanityCheckFailed = json['sanity_check_failed'] ?? false,
+      txExtraTooBig = json['tx_extra_too_big'] ?? false,
+      nonzeroUnlockTime = json['nonzero_unlock_time'] ?? false,
+      super.fromJson();
 
   Map<String, dynamic> toJson() {
     return {
@@ -565,10 +577,11 @@ class DaemonGetTxGlobalOutputIndexesResponse extends DaemonBaseResponse {
   final List<BigInt> oIndexes;
 
   DaemonGetTxGlobalOutputIndexesResponse.fromJson(super.json)
-      : oIndexes = (json["o_indexes"] as List)
-            .map((e) => BigintUtils.parse(e))
-            .toImutableList,
-        super.fromJson();
+    : oIndexes =
+          (json["o_indexes"] as List)
+              .map((e) => BigintUtils.parse(e))
+              .toImutableList,
+      super.fromJson();
 }
 
 class DaemonBanParams extends DaemonBaseParams {
@@ -576,17 +589,19 @@ class DaemonBanParams extends DaemonBaseParams {
   final int ip;
   final bool ban;
   final int seconds;
-  const DaemonBanParams(
-      {required this.host,
-      required this.ip,
-      required this.ban,
-      required this.seconds});
+  const DaemonBanParams({
+    required this.host,
+    required this.ip,
+    required this.ban,
+    required this.seconds,
+  });
   factory DaemonBanParams.fromJson(Map<String, dynamic> json) {
     return DaemonBanParams(
-        host: json["host"],
-        ip: json["ip"],
-        ban: json["ban"] ?? true,
-        seconds: json["seconds"]);
+      host: json["host"],
+      ip: json["ip"],
+      ban: json["ban"] ?? true,
+      seconds: json["seconds"],
+    );
   }
   @override
   Map<String, dynamic> toJson() {
@@ -598,19 +613,20 @@ class DaemonGetBanResponse extends DaemonBaseResponse {
   final List<DaemonBanParams> bans;
 
   DaemonGetBanResponse.fromJson(super.json)
-      : bans = (json["bans"] as List?)
-                ?.map((e) => DaemonBanParams.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : bans =
+          (json["bans"] as List?)
+              ?.map((e) => DaemonBanParams.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonGetLastBlockHeaderResponse extends DaemonBaseResponse {
   final DaemonBlockHeaderResponse blockHeader;
 
   DaemonGetLastBlockHeaderResponse.fromJson(super.json)
-      : blockHeader = DaemonBlockHeaderResponse.fromJson(json["block_header"]),
-        super.fromJson();
+    : blockHeader = DaemonBlockHeaderResponse.fromJson(json["block_header"]),
+      super.fromJson();
 }
 
 class DaemonGetBlockResponse extends DaemonBaseResponse {
@@ -619,11 +635,11 @@ class DaemonGetBlockResponse extends DaemonBaseResponse {
   final String blob;
   final String json;
   DaemonGetBlockResponse.fromJson(super.json)
-      : blockHeader = DaemonBlockHeaderResponse.fromJson(json["block_header"]),
-        txHashes = (json["tx_hashes"] as List).cast<String>().toImutableList,
-        blob = json["blob"],
-        json = json["json"],
-        super.fromJson();
+    : blockHeader = DaemonBlockHeaderResponse.fromJson(json["block_header"]),
+      txHashes = (json["tx_hashes"] as List).cast<String>().toImutableList,
+      blob = json["blob"],
+      json = json["json"],
+      super.fromJson();
 }
 
 class DaemonBlockHeadersResponse extends DaemonBaseResponse {
@@ -631,24 +647,27 @@ class DaemonBlockHeadersResponse extends DaemonBaseResponse {
   final List<DaemonBlockHeaderResponse> blockHeaders;
 
   DaemonBlockHeadersResponse.fromJson(super.json)
-      : blockHeader = json["block_header"] == null
-            ? null
-            : DaemonBlockHeaderResponse.fromJson(json["block_header"]),
-        blockHeaders = (json["block_headers"] as List?)
-                ?.map((e) => DaemonBlockHeaderResponse.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : blockHeader =
+          json["block_header"] == null
+              ? null
+              : DaemonBlockHeaderResponse.fromJson(json["block_header"]),
+      blockHeaders =
+          (json["block_headers"] as List?)
+              ?.map((e) => DaemonBlockHeaderResponse.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonBlockHeadersByRangeResponse extends DaemonBaseResponse {
   final List<DaemonBlockHeaderResponse> headers;
 
   DaemonBlockHeadersByRangeResponse.fromJson(super.json)
-      : headers = (json["headers"] as List)
-            .map((e) => DaemonBlockHeaderResponse.fromJson(e))
-            .toImutableList,
-        super.fromJson();
+    : headers =
+          (json["headers"] as List)
+              .map((e) => DaemonBlockHeaderResponse.fromJson(e))
+              .toImutableList,
+      super.fromJson();
 }
 
 class DaemonBlockHeaderResponse {
@@ -677,30 +696,31 @@ class DaemonBlockHeaderResponse {
 
   // fromJson constructor
   DaemonBlockHeaderResponse.fromJson(Map<String, dynamic> json)
-      : majorVersion = json['major_version'],
-        minorVersion = json['minor_version'],
-        timestamp = BigintUtils.parse(json['timestamp']),
-        prevHash = json['prev_hash'],
-        nonce = json['nonce'],
-        orphanStatus = json['orphan_status'],
-        height = IntUtils.parse(json['height']),
-        depth = BigintUtils.parse(json['depth']),
-        hash = json['hash'],
-        difficulty = BigintUtils.parse(json['difficulty']),
-        wideDifficulty = json['wide_difficulty'],
-        difficultyTop64 = BigintUtils.parse(json['difficulty_top64']),
-        cumulativeDifficulty = BigintUtils.parse(json['cumulative_difficulty']),
-        wideCumulativeDifficulty = json['wide_cumulative_difficulty'],
-        cumulativeDifficultyTop64 =
-            BigintUtils.parse(json['cumulative_difficulty_top64']),
-        reward = BigintUtils.parse(json['reward']),
-        blockSize = IntUtils.tryParse(json['block_size']) ?? 0,
-        blockWeight = IntUtils.tryParse(json['block_weight']) ?? 0,
-        numTxes = BigintUtils.parse(json['num_txes']),
-        powHash = json['pow_hash'],
-        longTermWeight =
-            BigintUtils.tryParse(json['long_term_weight']) ?? BigInt.zero,
-        minerTxHash = json['miner_tx_hash'];
+    : majorVersion = json['major_version'],
+      minorVersion = json['minor_version'],
+      timestamp = BigintUtils.parse(json['timestamp']),
+      prevHash = json['prev_hash'],
+      nonce = json['nonce'],
+      orphanStatus = json['orphan_status'],
+      height = IntUtils.parse(json['height']),
+      depth = BigintUtils.parse(json['depth']),
+      hash = json['hash'],
+      difficulty = BigintUtils.parse(json['difficulty']),
+      wideDifficulty = json['wide_difficulty'],
+      difficultyTop64 = BigintUtils.parse(json['difficulty_top64']),
+      cumulativeDifficulty = BigintUtils.parse(json['cumulative_difficulty']),
+      wideCumulativeDifficulty = json['wide_cumulative_difficulty'],
+      cumulativeDifficultyTop64 = BigintUtils.parse(
+        json['cumulative_difficulty_top64'],
+      ),
+      reward = BigintUtils.parse(json['reward']),
+      blockSize = IntUtils.tryParse(json['block_size']) ?? 0,
+      blockWeight = IntUtils.tryParse(json['block_weight']) ?? 0,
+      numTxes = BigintUtils.parse(json['num_txes']),
+      powHash = json['pow_hash'],
+      longTermWeight =
+          BigintUtils.tryParse(json['long_term_weight']) ?? BigInt.zero,
+      minerTxHash = json['miner_tx_hash'];
 }
 
 class DaemonHFEnteryResponse {
@@ -709,8 +729,9 @@ class DaemonHFEnteryResponse {
   const DaemonHFEnteryResponse({required this.height, required this.hfVersion});
   factory DaemonHFEnteryResponse.fromJson(Map<String, dynamic> json) {
     return DaemonHFEnteryResponse(
-        height: BigintUtils.parse(json["height"]),
-        hfVersion: json["hf_version"]);
+      height: BigintUtils.parse(json["height"]),
+      hfVersion: json["hf_version"],
+    );
   }
 }
 
@@ -721,27 +742,28 @@ class DaemonGetVersionResponse extends DaemonBaseResponse {
   final BigInt targetHeight;
   final List<DaemonHFEnteryResponse> hardForks;
   DaemonGetVersionResponse.fromJson(super.json)
-      : version = json["version"],
-        release = json["release"],
-        currentHeight =
-            BigintUtils.tryParse(json["current_height"]) ?? BigInt.zero,
-        targetHeight =
-            BigintUtils.tryParse(json["target_height"]) ?? BigInt.zero,
-        hardForks = (json["hardForks"] as List?)
-                ?.map((e) => DaemonHFEnteryResponse.fromJson(e))
-                .toImutableList ??
-            [],
-        super.fromJson();
+    : version = json["version"],
+      release = json["release"],
+      currentHeight =
+          BigintUtils.tryParse(json["current_height"]) ?? BigInt.zero,
+      targetHeight = BigintUtils.tryParse(json["target_height"]) ?? BigInt.zero,
+      hardForks =
+          (json["hardForks"] as List?)
+              ?.map((e) => DaemonHFEnteryResponse.fromJson(e))
+              .toImutableList ??
+          [],
+      super.fromJson();
 }
 
 class DaemonGetOutputHistogramResponse extends DaemonBaseResponse {
   final List<DaemonHistogramResponse> histogram;
   DaemonGetOutputHistogramResponse.fromJson(super.json)
-      : histogram = (json["histogram"] as List?)
-                ?.map((e) => DaemonHistogramResponse.fromJson(e))
-                .toList() ??
-            [],
-        super.fromJson();
+    : histogram =
+          (json["histogram"] as List?)
+              ?.map((e) => DaemonHistogramResponse.fromJson(e))
+              .toList() ??
+          [],
+      super.fromJson();
 }
 
 class DaemonHistogramResponse {
@@ -749,11 +771,12 @@ class DaemonHistogramResponse {
   final BigInt recentInstances;
   final BigInt totalInstances;
   final BigInt unlockedInstances;
-  const DaemonHistogramResponse(
-      {required this.amount,
-      required this.recentInstances,
-      required this.totalInstances,
-      required this.unlockedInstances});
+  const DaemonHistogramResponse({
+    required this.amount,
+    required this.recentInstances,
+    required this.totalInstances,
+    required this.unlockedInstances,
+  });
   factory DaemonHistogramResponse.fromJson(Map<String, dynamic> json) {
     return DaemonHistogramResponse(
       amount: BigintUtils.parse(json["amount"]),
@@ -776,9 +799,9 @@ class DaemonGetBlockHeightResponse extends DaemonBaseResponse {
     required bool super.untrusted,
   });
   DaemonGetBlockHeightResponse.fromJson(super.json)
-      : hash = json["hash"],
-        height = IntUtils.parse(json["height"]),
-        super.fromJson();
+    : hash = json["hash"],
+      height = IntUtils.parse(json["height"]),
+      super.fromJson();
 }
 
 class DaemonHardForkResponse extends DaemonBaseResponse {
@@ -807,15 +830,15 @@ class DaemonHardForkResponse extends DaemonBaseResponse {
   });
 
   DaemonHardForkResponse.fromJson(super.json)
-      : earliestHeight = json['earliest_height'],
-        enabled = json['enabled'],
-        state = json['state'],
-        threshold = json['threshold'],
-        version = json['version'],
-        votes = json['votes'],
-        voting = json['voting'],
-        window = json['window'],
-        super.fromJson();
+    : earliestHeight = json['earliest_height'],
+      enabled = json['enabled'],
+      state = json['state'],
+      threshold = json['threshold'],
+      version = json['version'],
+      votes = json['votes'],
+      voting = json['voting'],
+      window = json['window'],
+      super.fromJson();
 }
 
 class DaemonAuxPowParams extends DaemonBaseParams {
@@ -836,10 +859,11 @@ class DaemonGetConnectionsResponse extends DaemonBaseResponse {
   final List<DaemonConnectionInfoResponse> connections;
 
   DaemonGetConnectionsResponse.fromJson(super.json)
-      : connections = (json["connections"] as List)
-            .map((e) => DaemonConnectionInfoResponse.fromJson(e))
-            .toImutableList,
-        super.fromJson();
+    : connections =
+          (json["connections"] as List)
+              .map((e) => DaemonConnectionInfoResponse.fromJson(e))
+              .toImutableList,
+      super.fromJson();
 }
 
 class DaemonConnectionInfoResponse {
@@ -885,32 +909,32 @@ class DaemonConnectionInfoResponse {
 
   // fromJson constructor
   DaemonConnectionInfoResponse.fromJson(Map<String, dynamic> json)
-      : incoming = json['incoming'],
-        localhost = json['localhost'],
-        localIp = json['local_ip'],
-        ssl = json['ssl'],
-        address = json['address'],
-        host = json['host'],
-        ip = json['ip'],
-        port = json['port'],
-        rpcPort = json['rpc_port'],
-        rpcCreditsPerHash = json['rpc_credits_per_hash'],
-        peerId = json['peer_id'],
-        recvCount = BigintUtils.parse(json['recv_count']),
-        recvIdleTime = BigintUtils.parse(json['recv_idle_time']),
-        sendCount = BigintUtils.parse(json['send_count']),
-        sendIdleTime = BigintUtils.parse(json['send_idle_time']),
-        state = json['state'],
-        liveTime = BigintUtils.parse(json['live_time']),
-        avgDownload = BigintUtils.parse(json['avg_download']),
-        currentDownload = BigintUtils.parse(json['current_download']),
-        avgUpload = BigintUtils.parse(json['avg_upload']),
-        currentUpload = BigintUtils.parse(json['current_upload']),
-        supportFlags = json['support_flags'],
-        connectionId = json['connection_id'],
-        height = BigintUtils.parse(json['height']),
-        pruningSeed = json['pruning_seed'],
-        addressType = json['address_type'];
+    : incoming = json['incoming'],
+      localhost = json['localhost'],
+      localIp = json['local_ip'],
+      ssl = json['ssl'],
+      address = json['address'],
+      host = json['host'],
+      ip = json['ip'],
+      port = json['port'],
+      rpcPort = json['rpc_port'],
+      rpcCreditsPerHash = json['rpc_credits_per_hash'],
+      peerId = json['peer_id'],
+      recvCount = BigintUtils.parse(json['recv_count']),
+      recvIdleTime = BigintUtils.parse(json['recv_idle_time']),
+      sendCount = BigintUtils.parse(json['send_count']),
+      sendIdleTime = BigintUtils.parse(json['send_idle_time']),
+      state = json['state'],
+      liveTime = BigintUtils.parse(json['live_time']),
+      avgDownload = BigintUtils.parse(json['avg_download']),
+      currentDownload = BigintUtils.parse(json['current_download']),
+      avgUpload = BigintUtils.parse(json['avg_upload']),
+      currentUpload = BigintUtils.parse(json['current_upload']),
+      supportFlags = json['support_flags'],
+      connectionId = json['connection_id'],
+      height = BigintUtils.parse(json['height']),
+      pruningSeed = json['pruning_seed'],
+      addressType = json['address_type'];
 }
 
 class DaemonGetEstimateFeeResponse extends DaemonBaseResponse {
@@ -918,21 +942,22 @@ class DaemonGetEstimateFeeResponse extends DaemonBaseResponse {
   final List<BigInt> fees;
   final BigInt quantizationMask;
   DaemonGetEstimateFeeResponse.fromJson(super.json)
-      : fee = BigintUtils.parse(json["fee"]),
-        fees = (json["fees"] as List)
-            .map((e) => BigintUtils.parse(e))
-            .toImutableList,
-        quantizationMask = BigintUtils.parse(json["quantization_mask"]),
-        super.fromJson();
-  DaemonGetEstimateFeeResponse(
-      {required this.fee,
-      required List<BigInt> fees,
-      required this.quantizationMask,
-      required super.credits,
-      required super.status,
-      required super.topHash,
-      required bool super.untrusted})
-      : fees = fees.immutable;
+    : fee = BigintUtils.parse(json["fee"]),
+      fees =
+          (json["fees"] as List)
+              .map((e) => BigintUtils.parse(e))
+              .toImutableList,
+      quantizationMask = BigintUtils.parse(json["quantization_mask"]),
+      super.fromJson();
+  DaemonGetEstimateFeeResponse({
+    required this.fee,
+    required List<BigInt> fees,
+    required this.quantizationMask,
+    required super.credits,
+    required super.status,
+    required super.topHash,
+    required bool super.untrusted,
+  }) : fees = fees.immutable;
 }
 
 class DaemonGetOutRequestParams {
@@ -941,8 +966,9 @@ class DaemonGetOutRequestParams {
   const DaemonGetOutRequestParams({required this.amount, required this.index});
   factory DaemonGetOutRequestParams.fromJson(Map<String, dynamic> json) {
     return DaemonGetOutRequestParams(
-        amount: BigintUtils.parse(json["amount"]),
-        index: BigintUtils.parse(json["index"]));
+      amount: BigintUtils.parse(json["amount"]),
+      index: BigintUtils.parse(json["index"]),
+    );
   }
   Map<String, dynamic> toJson() {
     return {"amount": amount.toString(), "index": index.toString()};

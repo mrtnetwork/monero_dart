@@ -5,8 +5,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 /// This method includes a starting block height and an ending block
 /// height as parameters to retrieve basic information about the range of blocks.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_block_headers_range
-class DaemonRequestGetBlockHeaderByRange extends MoneroDaemonRequestParam<
-    DaemonBlockHeadersByRangeResponse, Map<String, dynamic>> {
+class DaemonRequestGetBlockHeaderByRange
+    extends
+        MoneroDaemonRequestParam<
+          DaemonBlockHeadersByRangeResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestGetBlockHeaderByRange({
     required this.startHeight,
     required this.endHeight,
@@ -25,10 +29,10 @@ class DaemonRequestGetBlockHeaderByRange extends MoneroDaemonRequestParam<
   String get method => "get_block_headers_range";
   @override
   Map<String, dynamic> get params => {
-        "fill_pow_hash": fillPowHash,
-        "start_height": startHeight.toString(),
-        "end_height": endHeight.toString()
-      };
+    "fill_pow_hash": fillPowHash,
+    "start_height": startHeight.toString(),
+    "end_height": endHeight.toString(),
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override

@@ -4,10 +4,17 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Proves a wallet has a disposable reserve using a signature.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#check_reserve_proof
-class WalletRequestCheckReserveProof extends MoneroWalletRequestParam<
-    WalletRPCCheckReserveProofResponse, Map<String, dynamic>> {
-  WalletRequestCheckReserveProof(
-      {required this.address, this.message, required this.signature});
+class WalletRequestCheckReserveProof
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCCheckReserveProofResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestCheckReserveProof({
+    required this.address,
+    this.message,
+    required this.signature,
+  });
 
   /// Public address of the wallet.
   final MoneroAddress address;
@@ -22,8 +29,11 @@ class WalletRequestCheckReserveProof extends MoneroWalletRequestParam<
   @override
   String get method => "check_reserve_proof";
   @override
-  Map<String, dynamic> get params =>
-      {"address": address.address, "message": message, "signature": signature};
+  Map<String, dynamic> get params => {
+    "address": address.address,
+    "message": message,
+    "signature": signature,
+  };
 
   @override
   WalletRPCCheckReserveProofResponse onResonse(Map<String, dynamic> result) {

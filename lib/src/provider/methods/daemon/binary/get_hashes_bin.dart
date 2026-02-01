@@ -5,13 +5,17 @@ import 'package:monero_dart/src/serialization/storage_format/types/binary_contai
 
 /// Get hashes. Binary request.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_hashesbin
-class DaemonRequestGetHashesBin extends MoneroDaemonRequestParam<
-    DaemonGetHashesBinResponse, Map<String, dynamic>> {
-  DaemonRequestGetHashesBin(
-      {required List<String> blockIds,
-      required this.startHeight,
-      this.client = ''})
-      : blockIds = blockIds.immutable;
+class DaemonRequestGetHashesBin
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetHashesBinResponse,
+          Map<String, dynamic>
+        > {
+  DaemonRequestGetHashesBin({
+    required List<String> blockIds,
+    required this.startHeight,
+    this.client = '',
+  }) : blockIds = blockIds.immutable;
 
   /// first 10 blocks id goes sequential, next goes in pow(2,n) offset,
   /// like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block
@@ -22,10 +26,10 @@ class DaemonRequestGetHashesBin extends MoneroDaemonRequestParam<
   String get method => "get_hashes.bin";
   @override
   Map<String, dynamic> get params => {
-        "block_ids": MoneroStorageBinary.fromListOfHex(blockIds),
-        "client": client,
-        "start_height": startHeight,
-      };
+    "block_ids": MoneroStorageBinary.fromListOfHex(blockIds),
+    "client": client,
+    "start_height": startHeight,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.binary;
   @override

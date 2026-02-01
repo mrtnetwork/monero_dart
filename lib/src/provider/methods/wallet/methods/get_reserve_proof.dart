@@ -4,11 +4,12 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_reserve_proof
 class WalletRequestGetReserveProof
     extends MoneroWalletRequestParam<String, Map<String, dynamic>> {
-  WalletRequestGetReserveProof(
-      {required this.all,
-      required this.accountIndex,
-      required this.amount,
-      this.message});
+  WalletRequestGetReserveProof({
+    required this.all,
+    required this.accountIndex,
+    required this.amount,
+    this.message,
+  });
 
   /// Proves all wallet balance to be disposable.
   final bool all;
@@ -27,11 +28,11 @@ class WalletRequestGetReserveProof
   String get method => "get_reserve_proof";
   @override
   Map<String, dynamic> get params => {
-        "all": all,
-        "account_index": accountIndex,
-        "amount": amount.toString(),
-        "message": message
-      };
+    "all": all,
+    "account_index": accountIndex,
+    "amount": amount.toString(),
+    "message": message,
+  };
 
   @override
   String onResonse(Map<String, dynamic> result) {

@@ -3,13 +3,13 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Get all accounts for a wallet. Optionally filter accounts by tag.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_accounts
-class WalletRequestGetAccounts extends MoneroWalletRequestParam<
-    WalletRPCGetAccountsResponse, Map<String, dynamic>> {
-  WalletRequestGetAccounts({
-    this.tag,
-    this.regex,
-    this.strictBalances,
-  });
+class WalletRequestGetAccounts
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCGetAccountsResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestGetAccounts({this.tag, this.regex, this.strictBalances});
 
   /// Tag for filtering accounts.
   final String? tag;
@@ -25,8 +25,11 @@ class WalletRequestGetAccounts extends MoneroWalletRequestParam<
   @override
   String get method => "get_accounts";
   @override
-  Map<String, dynamic> get params =>
-      {"tag": tag, "regex": regex, "strict_balances": strictBalances};
+  Map<String, dynamic> get params => {
+    "tag": tag,
+    "regex": regex,
+    "strict_balances": strictBalances,
+  };
 
   @override
   WalletRPCGetAccountsResponse onResonse(Map<String, dynamic> result) {

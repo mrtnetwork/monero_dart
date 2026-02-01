@@ -4,8 +4,12 @@ import 'package:monero_dart/src/provider/models/daemon/distribution.dart';
 /// Get a histogram of output amounts. For all amounts (possibly filtered by parameters),
 /// gives the number of outputs on the chain for that amount. RingCT outputs counts as 0 amount.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_output_distribution
-class DaemonRequestGetOutputDistributionBin extends MoneroDaemonRequestParam<
-    OutputDistributionResponse, Map<String, dynamic>> {
+class DaemonRequestGetOutputDistributionBin
+    extends
+        MoneroDaemonRequestParam<
+          OutputDistributionResponse,
+          Map<String, dynamic>
+        > {
   const DaemonRequestGetOutputDistributionBin({
     required this.amounts,
     this.cumulative,
@@ -24,13 +28,13 @@ class DaemonRequestGetOutputDistributionBin extends MoneroDaemonRequestParam<
   String get method => "get_output_distribution.bin";
   @override
   Map<String, dynamic> get params => {
-        "amounts": amounts,
-        "cumulative": cumulative ?? false,
-        "from_height": fromHeight ?? 0,
-        "to_height": toHeight,
-        "binary": true,
-        "compress": compress,
-      };
+    "amounts": amounts,
+    "cumulative": cumulative ?? false,
+    "from_height": fromHeight ?? 0,
+    "to_height": toHeight,
+    "binary": true,
+    "compress": compress,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.binary;
   @override

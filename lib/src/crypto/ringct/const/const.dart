@@ -1,4 +1,4 @@
-import 'package:blockchain_utils/crypto/crypto/cdsa/crypto_ops/crypto_ops.dart';
+import 'package:blockchain_utils/crypto/crypto/ec/extended/crypto_ops/models/models.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 
 class RCTConst {
@@ -38,7 +38,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x00
+    0x00,
   ];
 
   static const List<int> i = [
@@ -73,7 +73,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x00
+    0x00,
   ];
   static const List<int> l = [
     0xed,
@@ -107,7 +107,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x10
+    0x10,
   ];
   static const List<int> g = [
     0x58,
@@ -141,7 +141,7 @@ class RCTConst {
     0x66,
     0x66,
     0x66,
-    0x66
+    0x66,
   ];
   static const List<int> eight = [
     0x08,
@@ -175,7 +175,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x00
+    0x00,
   ];
   static const List<int> invEight = [
     0x79,
@@ -209,10 +209,11 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x06
+    0x06,
   ];
   static BigInt invEightBig = BigInt.parse(
-      "2713877091499598330239944961141122840321418634767465352250731601857045344121");
+    "2713877091499598330239944961141122840321418634767465352250731601857045344121",
+  );
   static const List<int> h = [
     0x8b,
     0x65,
@@ -245,7 +246,7 @@ class RCTConst {
     0xd3,
     0x9c,
     0x1f,
-    0x94
+    0x94,
   ];
   static const GroupElementP3 identityP3 = GroupElementP3.uncheck(
     x: FieldElement.uncheck([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
@@ -254,43 +255,44 @@ class RCTConst {
     t: FieldElement.uncheck([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
   );
   static const GroupElementP3 geP3H = GroupElementP3.uncheck(
-      x: FieldElement.uncheck([
-        7329926,
-        -15101362,
-        31411471,
-        7614783,
-        27996851,
-        -3197071,
-        -11157635,
-        -6878293,
-        466949,
-        -7986503
-      ]),
-      y: FieldElement.uncheck([
-        5858699,
-        5096796,
-        21321203,
-        -7536921,
-        -5553480,
-        -11439507,
-        -5627669,
-        15045946,
-        19977121,
-        5275251
-      ]),
-      z: FieldElement.uncheck([1, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-      t: FieldElement.uncheck([
-        23443568,
-        -5110398,
-        -8776029,
-        -4345135,
-        6889568,
-        -14710814,
-        7474843,
-        3279062,
-        14550766,
-        -7453428
-      ]));
+    x: FieldElement.uncheck([
+      7329926,
+      -15101362,
+      31411471,
+      7614783,
+      27996851,
+      -3197071,
+      -11157635,
+      -6878293,
+      466949,
+      -7986503,
+    ]),
+    y: FieldElement.uncheck([
+      5858699,
+      5096796,
+      21321203,
+      -7536921,
+      -5553480,
+      -11439507,
+      -5627669,
+      15045946,
+      19977121,
+      5275251,
+    ]),
+    z: FieldElement.uncheck([1, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+    t: FieldElement.uncheck([
+      23443568,
+      -5110398,
+      -8776029,
+      -4345135,
+      6889568,
+      -14710814,
+      7474843,
+      3279062,
+      14550766,
+      -7453428,
+    ]),
+  );
 
   static const List<int> limit = [
     0xe3,
@@ -324,7 +326,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0xf0
+    0xf0,
   ];
   static const List<List<int>> h2 = [
     [
@@ -359,7 +361,7 @@ class RCTConst {
       211,
       156,
       31,
-      148
+      148,
     ],
     [
       143,
@@ -393,7 +395,7 @@ class RCTConst {
       81,
       94,
       135,
-      18
+      18,
     ],
     [
       18,
@@ -427,7 +429,7 @@ class RCTConst {
       126,
       156,
       199,
-      29
+      29,
     ],
     [
       120,
@@ -461,7 +463,7 @@ class RCTConst {
       242,
       20,
       199,
-      57
+      57,
     ],
     [
       119,
@@ -495,7 +497,7 @@ class RCTConst {
       119,
       206,
       61,
-      232
+      232,
     ],
     [
       115,
@@ -529,7 +531,7 @@ class RCTConst {
       24,
       42,
       138,
-      100
+      100,
     ],
     [
       141,
@@ -563,7 +565,7 @@ class RCTConst {
       99,
       168,
       212,
-      18
+      18,
     ],
     [
       9,
@@ -597,7 +599,7 @@ class RCTConst {
       23,
       126,
       244,
-      4
+      4,
     ],
     [
       208,
@@ -631,7 +633,7 @@ class RCTConst {
       71,
       169,
       201,
-      167
+      167,
     ],
     [
       85,
@@ -665,7 +667,7 @@ class RCTConst {
       158,
       225,
       131,
-      45
+      45,
     ],
     [
       231,
@@ -699,7 +701,7 @@ class RCTConst {
       25,
       88,
       195,
-      6
+      6,
     ],
     [
       249,
@@ -733,7 +735,7 @@ class RCTConst {
       138,
       204,
       141,
-      71
+      71,
     ],
     [
       31,
@@ -767,7 +769,7 @@ class RCTConst {
       57,
       239,
       58,
-      43
+      43,
     ],
     [
       62,
@@ -801,7 +803,7 @@ class RCTConst {
       137,
       151,
       239,
-      167
+      167,
     ],
     [
       178,
@@ -835,7 +837,7 @@ class RCTConst {
       126,
       168,
       72,
-      148
+      148,
     ],
     [
       86,
@@ -869,7 +871,7 @@ class RCTConst {
       80,
       254,
       63,
-      44
+      44,
     ],
     [
       29,
@@ -903,7 +905,7 @@ class RCTConst {
       87,
       202,
       170,
-      218
+      218,
     ],
     [
       208,
@@ -937,7 +939,7 @@ class RCTConst {
       225,
       13,
       118,
-      32
+      32,
     ],
     [
       246,
@@ -971,7 +973,7 @@ class RCTConst {
       93,
       235,
       80,
-      148
+      148,
     ],
     [
       40,
@@ -1005,7 +1007,7 @@ class RCTConst {
       50,
       39,
       225,
-      151
+      151,
     ],
     [
       135,
@@ -1039,7 +1041,7 @@ class RCTConst {
       113,
       5,
       92,
-      110
+      110,
     ],
     [
       92,
@@ -1073,7 +1075,7 @@ class RCTConst {
       33,
       96,
       12,
-      251
+      251,
     ],
     [
       230,
@@ -1107,7 +1109,7 @@ class RCTConst {
       50,
       97,
       43,
-      213
+      213,
     ],
     [
       54,
@@ -1141,7 +1143,7 @@ class RCTConst {
       187,
       190,
       2,
-      246
+      246,
     ],
     [
       52,
@@ -1175,7 +1177,7 @@ class RCTConst {
       22,
       227,
       30,
-      107
+      107,
     ],
     [
       142,
@@ -1209,7 +1211,7 @@ class RCTConst {
       8,
       148,
       103,
-      233
+      233,
     ],
     [
       48,
@@ -1243,7 +1245,7 @@ class RCTConst {
       169,
       255,
       8,
-      2
+      2,
     ],
     [
       245,
@@ -1277,7 +1279,7 @@ class RCTConst {
       33,
       95,
       0,
-      42
+      42,
     ],
     [
       55,
@@ -1311,7 +1313,7 @@ class RCTConst {
       110,
       217,
       71,
-      61
+      61,
     ],
     [
       159,
@@ -1345,7 +1347,7 @@ class RCTConst {
       177,
       146,
       248,
-      195
+      195,
     ],
     [
       94,
@@ -1379,7 +1381,7 @@ class RCTConst {
       11,
       230,
       32,
-      165
+      165,
     ],
     [
       134,
@@ -1413,7 +1415,7 @@ class RCTConst {
       102,
       106,
       69,
-      144
+      144,
     ],
     [
       179,
@@ -1447,7 +1449,7 @@ class RCTConst {
       117,
       88,
       203,
-      122
+      122,
     ],
     [
       129,
@@ -1481,7 +1483,7 @@ class RCTConst {
       220,
       198,
       209,
-      235
+      235,
     ],
     [
       16,
@@ -1515,7 +1517,7 @@ class RCTConst {
       109,
       0,
       129,
-      156
+      156,
     ],
     [
       90,
@@ -1549,7 +1551,7 @@ class RCTConst {
       136,
       123,
       45,
-      185
+      185,
     ],
     [
       51,
@@ -1583,7 +1585,7 @@ class RCTConst {
       5,
       90,
       41,
-      1
+      1,
     ],
     [
       207,
@@ -1617,7 +1619,7 @@ class RCTConst {
       110,
       159,
       149,
-      234
+      234,
     ],
     [
       213,
@@ -1651,7 +1653,7 @@ class RCTConst {
       108,
       188,
       158,
-      142
+      142,
     ],
     [
       85,
@@ -1685,7 +1687,7 @@ class RCTConst {
       253,
       233,
       62,
-      51
+      51,
     ],
     [
       213,
@@ -1719,7 +1721,7 @@ class RCTConst {
       203,
       64,
       93,
-      195
+      195,
     ],
     [
       7,
@@ -1753,7 +1755,7 @@ class RCTConst {
       173,
       38,
       22,
-      4
+      4,
     ],
     [
       233,
@@ -1787,7 +1789,7 @@ class RCTConst {
       216,
       113,
       70,
-      96
+      96,
     ],
     [
       123,
@@ -1821,7 +1823,7 @@ class RCTConst {
       66,
       38,
       165,
-      123
+      123,
     ],
     [
       236,
@@ -1855,7 +1857,7 @@ class RCTConst {
       193,
       156,
       170,
-      107
+      107,
     ],
     [
       1,
@@ -1889,7 +1891,7 @@ class RCTConst {
       231,
       252,
       51,
-      229
+      229,
     ],
     [
       0,
@@ -1923,7 +1925,7 @@ class RCTConst {
       115,
       91,
       175,
-      46
+      46,
     ],
     [
       70,
@@ -1957,7 +1959,7 @@ class RCTConst {
       209,
       48,
       131,
-      168
+      168,
     ],
     [
       238,
@@ -1991,7 +1993,7 @@ class RCTConst {
       228,
       254,
       58,
-      108
+      108,
     ],
     [
       168,
@@ -2025,7 +2027,7 @@ class RCTConst {
       181,
       116,
       78,
-      148
+      148,
     ],
     [
       147,
@@ -2059,7 +2061,7 @@ class RCTConst {
       78,
       9,
       221,
-      79
+      79,
     ],
     [
       22,
@@ -2093,7 +2095,7 @@ class RCTConst {
       142,
       40,
       191,
-      87
+      87,
     ],
     [
       15,
@@ -2127,7 +2129,7 @@ class RCTConst {
       26,
       40,
       167,
-      228
+      228,
     ],
     [
       215,
@@ -2161,7 +2163,7 @@ class RCTConst {
       8,
       10,
       32,
-      202
+      202,
     ],
     [
       69,
@@ -2195,7 +2197,7 @@ class RCTConst {
       253,
       112,
       12,
-      185
+      185,
     ],
     [
       178,
@@ -2229,7 +2231,7 @@ class RCTConst {
       113,
       119,
       240,
-      221
+      221,
     ],
     [
       126,
@@ -2263,7 +2265,7 @@ class RCTConst {
       54,
       108,
       223,
-      206
+      206,
     ],
     [
       91,
@@ -2297,7 +2299,7 @@ class RCTConst {
       211,
       8,
       123,
-      224
+      224,
     ],
     [
       116,
@@ -2331,7 +2333,7 @@ class RCTConst {
       128,
       29,
       67,
-      171
+      171,
     ],
     [
       203,
@@ -2365,7 +2367,7 @@ class RCTConst {
       136,
       219,
       25,
-      174
+      174,
     ],
     [
       96,
@@ -2399,7 +2401,7 @@ class RCTConst {
       107,
       140,
       252,
-      14
+      14,
     ],
     [
       229,
@@ -2433,7 +2435,7 @@ class RCTConst {
       3,
       152,
       49,
-      4
+      4,
     ],
     [
       5,
@@ -2467,7 +2469,7 @@ class RCTConst {
       65,
       146,
       49,
-      153
+      153,
     ],
     [
       248,
@@ -2501,8 +2503,8 @@ class RCTConst {
       3,
       41,
       184,
-      136
-    ]
+      136,
+    ],
   ];
   static const List<int> bulletproofHashKey = [
     98,
@@ -2515,7 +2517,7 @@ class RCTConst {
     114,
     111,
     111,
-    102
+    102,
   ];
   static const List<int> bulletproofPlusHashKey = [
     98,
@@ -2533,7 +2535,7 @@ class RCTConst {
     112,
     108,
     117,
-    115
+    115,
   ];
   static const String hashKeyTranscript = "bulletproof_plus_transcript";
   static const RctKey two = [
@@ -2568,7 +2570,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x00
+    0x00,
   ]; // 2
   static const RctKey minusOne = [
     0xec,
@@ -2602,7 +2604,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x10
+    0x10,
   ]; // -1
   static const RctKey minusInvEight = [
     0x74,
@@ -2636,7 +2638,7 @@ class RCTConst {
     0x00,
     0x00,
     0x00,
-    0x0a
+    0x0a,
   ]; // -(8**(-1))
 
   static const List<int> twoSixtyFourMinusOne = [
@@ -2671,7 +2673,7 @@ class RCTConst {
     0,
     0,
     0,
-    0
+    0,
   ];
   static const List<int> bulletproofPlusinitialTranscript = [
     74,
@@ -2705,7 +2707,7 @@ class RCTConst {
     68,
     90,
     34,
-    117
+    117,
   ];
   static const List<List<int>> twoN = [
     [
@@ -2740,7 +2742,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       2,
@@ -2774,7 +2776,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       4,
@@ -2808,7 +2810,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       8,
@@ -2842,7 +2844,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       16,
@@ -2876,7 +2878,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       32,
@@ -2910,7 +2912,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       64,
@@ -2944,7 +2946,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       128,
@@ -2978,7 +2980,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3012,7 +3014,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3046,7 +3048,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3080,7 +3082,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3114,7 +3116,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3148,7 +3150,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3182,7 +3184,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3216,7 +3218,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3250,7 +3252,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3284,7 +3286,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3318,7 +3320,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3352,7 +3354,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3386,7 +3388,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3420,7 +3422,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3454,7 +3456,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3488,7 +3490,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3522,7 +3524,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3556,7 +3558,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3590,7 +3592,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3624,7 +3626,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3658,7 +3660,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3692,7 +3694,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3726,7 +3728,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3760,7 +3762,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3794,7 +3796,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3828,7 +3830,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3862,7 +3864,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3896,7 +3898,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3930,7 +3932,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3964,7 +3966,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -3998,7 +4000,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4032,7 +4034,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4066,7 +4068,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4100,7 +4102,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4134,7 +4136,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4168,7 +4170,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4202,7 +4204,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4236,7 +4238,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4270,7 +4272,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4304,7 +4306,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4338,7 +4340,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4372,7 +4374,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4406,7 +4408,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4440,7 +4442,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4474,7 +4476,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4508,7 +4510,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4542,7 +4544,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4576,7 +4578,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4610,7 +4612,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4644,7 +4646,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4678,7 +4680,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4712,7 +4714,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4746,7 +4748,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4780,7 +4782,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4814,7 +4816,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4848,7 +4850,7 @@ class RCTConst {
       0,
       0,
       0,
-      0
+      0,
     ],
     [
       0,
@@ -4882,8 +4884,8 @@ class RCTConst {
       0,
       0,
       0,
-      0
-    ]
+      0,
+    ],
   ];
 
   static const List<String> geBi = [
@@ -4894,6 +4896,6 @@ class RCTConst {
     "c0f1225584444ec730446e231390781ffdd2f256e9fcbeb2f40dddc2c2233d7f",
     "1337036ac32d8f30d4589c3c1c595812ce0fff40e37c6f5a97ab213f318290ad",
     "801f40eaaee1ef8723279a28b2cf4037b889dad222604678748b53ed0db0db92",
-    "df5c2eadc44c6d94a19a9aa118afe5ac3193d26401f76251f522ff042dfbcb92"
+    "df5c2eadc44c6d94a19a9aa118afe5ac3193d26401f76251f522ff042dfbcb92",
   ];
 }

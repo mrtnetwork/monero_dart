@@ -14,9 +14,9 @@ class OutKeyResponse {
     required this.unlocked,
     required this.height,
     required RctKey? txId,
-  })  : key = key.asImmutableBytes,
-        mask = mask.asImmutableBytes,
-        txid = txId?.asImmutableBytes;
+  }) : key = key.asImmutableBytes,
+       mask = mask.asImmutableBytes,
+       txid = txId?.asImmutableBytes;
   factory OutKeyResponse.fromJson(Map<String, dynamic> json) {
     return OutKeyResponse(
       key: BytesUtils.fromHexString(json["key"]),
@@ -31,16 +31,17 @@ class OutKeyResponse {
 class GetOutResponse extends DaemonBaseResponse {
   final List<OutKeyResponse> outs;
 
-  GetOutResponse(
-      {required List<OutKeyResponse> outs,
-      required super.credits,
-      required super.status,
-      required super.topHash,
-      required bool super.untrusted})
-      : outs = outs.immutable;
+  GetOutResponse({
+    required List<OutKeyResponse> outs,
+    required super.credits,
+    required super.status,
+    required super.topHash,
+    required bool super.untrusted,
+  }) : outs = outs.immutable;
   GetOutResponse.fromJson(super.json)
-      : outs = (json["outs"] as List)
-            .map((e) => OutKeyResponse.fromJson(e))
-            .toList(),
-        super.fromJson();
+    : outs =
+          (json["outs"] as List)
+              .map((e) => OutKeyResponse.fromJson(e))
+              .toList(),
+      super.fromJson();
 }

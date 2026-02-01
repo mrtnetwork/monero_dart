@@ -4,20 +4,25 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Send all of a specific unlocked output to an address.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#sweep_single
-class WalletRequestSweepSingle extends MoneroWalletRequestParam<
-    WalletRPCSweepSingleResponse, Map<String, dynamic>> {
-  WalletRequestSweepSingle(
-      {required this.address,
-      required this.keyImage,
-      this.priority,
-      required this.outputs,
-      required this.ringSize,
-      required this.unlockTime,
-      this.paymentId,
-      this.getTxKeys,
-      this.doNotRelay,
-      this.getTxHex,
-      this.getTxMetadata});
+class WalletRequestSweepSingle
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCSweepSingleResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestSweepSingle({
+    required this.address,
+    required this.keyImage,
+    this.priority,
+    required this.outputs,
+    required this.ringSize,
+    required this.unlockTime,
+    this.paymentId,
+    this.getTxKeys,
+    this.doNotRelay,
+    this.getTxHex,
+    this.getTxMetadata,
+  });
 
   /// Destination public address.
   final MoneroAddress address;
@@ -60,18 +65,18 @@ class WalletRequestSweepSingle extends MoneroWalletRequestParam<
   String get method => "sweep_single";
   @override
   Map<String, dynamic> get params => {
-        "address": address.address,
-        "priority": priority,
-        "outputs": outputs,
-        "ring_size": ringSize,
-        "unlock_time": unlockTime,
-        "payment_id": paymentId,
-        "get_tx_keys": getTxKeys,
-        "key_image": keyImage,
-        "do_not_relay": doNotRelay,
-        "get_tx_hex": getTxHex,
-        "get_tx_metadata": getTxMetadata,
-      };
+    "address": address.address,
+    "priority": priority,
+    "outputs": outputs,
+    "ring_size": ringSize,
+    "unlock_time": unlockTime,
+    "payment_id": paymentId,
+    "get_tx_keys": getTxKeys,
+    "key_image": keyImage,
+    "do_not_relay": doNotRelay,
+    "get_tx_hex": getTxHex,
+    "get_tx_metadata": getTxMetadata,
+  };
 
   @override
   WalletRPCSweepSingleResponse onResonse(Map<String, dynamic> result) {

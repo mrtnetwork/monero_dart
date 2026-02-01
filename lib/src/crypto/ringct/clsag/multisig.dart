@@ -51,32 +51,32 @@ class CLSAGContext {
   final KeyV _s;
   final int numAlphaComponents;
 
-  CLSAGContext(
-      {required this.n,
-      required KeyV cParams,
-      required this.cParamsLOffset,
-      required this.cParamsROffset,
-      required KeyV bParams,
-      required this.bParamsLOffset,
-      required this.bParamsROffset,
-      required RctKey muP,
-      required RctKey muC,
-      required GroupElementDsmp wHlprecomp,
-      required List<GroupElementDsmp> wPrecomp,
-      required List<GroupElementDsmp> hPrecomp,
-      required GroupElementDsmp gPrecomp,
-      required this.l,
-      required KeyV s,
-      required this.numAlphaComponents})
-      : _cParams = cParams,
-        _bParams = bParams,
-        _muP = muP,
-        _muC = muC,
-        _wHlprecomp = wHlprecomp,
-        _wPrecomp = wPrecomp,
-        _hPrecomp = hPrecomp,
-        _gPrecomp = gPrecomp,
-        _s = s;
+  CLSAGContext({
+    required this.n,
+    required KeyV cParams,
+    required this.cParamsLOffset,
+    required this.cParamsROffset,
+    required KeyV bParams,
+    required this.bParamsLOffset,
+    required this.bParamsROffset,
+    required RctKey muP,
+    required RctKey muC,
+    required GroupElementDsmp wHlprecomp,
+    required List<GroupElementDsmp> wPrecomp,
+    required List<GroupElementDsmp> hPrecomp,
+    required GroupElementDsmp gPrecomp,
+    required this.l,
+    required KeyV s,
+    required this.numAlphaComponents,
+  }) : _cParams = cParams,
+       _bParams = bParams,
+       _muP = muP,
+       _muC = muC,
+       _wHlprecomp = wHlprecomp,
+       _wPrecomp = wPrecomp,
+       _hPrecomp = hPrecomp,
+       _gPrecomp = gPrecomp,
+       _s = s;
 
   factory CLSAGContext.init(
     KeyV P,
@@ -127,14 +127,16 @@ class CLSAGContext {
     cParamsLOffset = cParams.length;
     bParamsLOffset = bParams.length;
     cParams.add(RCT.zero()); // Placeholder for L
-    bParams.addAll(List.filled(
-        numAlphaComponents, RCT.zero())); // Placeholders for L multisig nonces
+    bParams.addAll(
+      List.filled(numAlphaComponents, RCT.zero()),
+    ); // Placeholders for L multisig nonces
 
     cParamsROffset = cParams.length;
     bParamsROffset = bParams.length;
     cParams.add(RCT.zero()); // Placeholder for R
-    bParams.addAll(List.generate(numAlphaComponents,
-        (_) => RCT.zero())); // Placeholders for R multisig nonces
+    bParams.addAll(
+      List.generate(numAlphaComponents, (_) => RCT.zero()),
+    ); // Placeholders for R multisig nonces
 
     // Add I and D
     bParams.add(I);
@@ -181,10 +183,14 @@ class CLSAGContext {
     final RctKey wHL = RCT.zero();
     RCT.addKeys3_(wHL, muP, iPrecomp, muC, dPrecomp);
     RCT.precomp(wHLprecomp, wHL);
-    final List<GroupElementDsmp> wPrecomp =
-        List.generate(n, (i) => GroupElementCached.dsmp);
-    final List<GroupElementDsmp> hPrecomp =
-        List.generate(n, (i) => GroupElementCached.dsmp);
+    final List<GroupElementDsmp> wPrecomp = List.generate(
+      n,
+      (i) => GroupElementCached.dsmp,
+    );
+    final List<GroupElementDsmp> hPrecomp = List.generate(
+      n,
+      (i) => GroupElementCached.dsmp,
+    );
 
     for (int i = 0; i < n; ++i) {
       final GroupElementDsmp pPrecomp = GroupElementCached.dsmp;
@@ -204,22 +210,23 @@ class CLSAGContext {
     RCT.precomp(gPrecomp, RCTConst.g);
 
     return CLSAGContext(
-        n: n,
-        cParams: cParams,
-        cParamsLOffset: cParamsLOffset,
-        cParamsROffset: cParamsROffset,
-        bParams: bParams,
-        bParamsLOffset: bParamsLOffset,
-        bParamsROffset: bParamsROffset,
-        muP: muP,
-        muC: muC,
-        wHlprecomp: wHLprecomp,
-        wPrecomp: wPrecomp,
-        hPrecomp: hPrecomp,
-        gPrecomp: gPrecomp,
-        l: l,
-        s: s,
-        numAlphaComponents: numAlphaComponents);
+      n: n,
+      cParams: cParams,
+      cParamsLOffset: cParamsLOffset,
+      cParamsROffset: cParamsROffset,
+      bParams: bParams,
+      bParamsLOffset: bParamsLOffset,
+      bParamsROffset: bParamsROffset,
+      muP: muP,
+      muC: muC,
+      wHlprecomp: wHLprecomp,
+      wPrecomp: wPrecomp,
+      hPrecomp: hPrecomp,
+      gPrecomp: gPrecomp,
+      l: l,
+      s: s,
+      numAlphaComponents: numAlphaComponents,
+    );
   }
 
   void combineAlphaAndComputeChallenge({
@@ -253,9 +260,13 @@ class CLSAGContext {
     CryptoOps.scZero(alphaCombinedR);
     for (int i = 0; i < numAlphaComponents; ++i) {
       _cParams[cParamsLOffset] = RCT.addKeysVar(
-          _cParams[cParamsLOffset], RCT.scalarmultKey(totalAlphaG[i], bI));
+        _cParams[cParamsLOffset],
+        RCT.scalarmultKey(totalAlphaG[i], bI),
+      );
       _cParams[cParamsROffset] = RCT.addKeysVar(
-          _cParams[cParamsROffset], RCT.scalarmultKey(totalAlphaH[i], bI));
+        _cParams[cParamsROffset],
+        RCT.scalarmultKey(totalAlphaH[i], bI),
+      );
       CryptoOps.scMulAdd(alphaCombinedR, alpha[i], bI, alphaCombinedR);
       CryptoOps.scMul(bI, bI, b);
     }
@@ -263,9 +274,19 @@ class CLSAGContext {
     for (int i = (l + 1) % n; i != l; i = (i + 1) % n) {
       if (i == 0) c0 = c.clone();
       RCT.addKeys3_(
-          _cParams[cParamsLOffset], _s[i], _gPrecomp, c, _wPrecomp[i]);
+        _cParams[cParamsLOffset],
+        _s[i],
+        _gPrecomp,
+        c,
+        _wPrecomp[i],
+      );
       RCT.addKeys3_(
-          _cParams[cParamsROffset], _s[i], _hPrecomp[i], c, _wHlprecomp);
+        _cParams[cParamsROffset],
+        _s[i],
+        _hPrecomp[i],
+        c,
+        _wHlprecomp,
+      );
       c = RCT.hashToScalarKeys(_cParams);
     }
     if (l == 0) {
@@ -278,7 +299,7 @@ class CLSAGContext {
   List<int> get muP => _muP.clone();
   List<int> get muC => _muC.clone();
 
-  Tuple<RctKey, RctKey> getMu() {
-    return Tuple(_muP.clone(), _muC.clone());
+  (RctKey, RctKey) getMu() {
+    return (_muP.clone(), _muC.clone());
   }
 }

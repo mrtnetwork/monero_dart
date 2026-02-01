@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Give the node current version.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_version
-class DaemonRequestGetVersion extends MoneroDaemonRequestParam<
-    DaemonGetVersionResponse, Map<String, dynamic>> {
+class DaemonRequestGetVersion
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetVersionResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestGetVersion();
 
   @override

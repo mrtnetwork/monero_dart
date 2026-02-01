@@ -23,17 +23,18 @@ class Gamma {
     return left;
   }
 
-  Gamma._(
-      {required this.gammaDistribution,
-      required List<BigInt> rctOffsets,
-      required this.end,
-      required this.avarageOutsTime,
-      required this.numRctOuts})
-      : _rctOffsets = rctOffsets;
-  factory Gamma(
-      {required List<BigInt> rctOffsets,
-      double shape = MoneroNetworkConst.gammaShape,
-      double scale = MoneroNetworkConst.gammaScale}) {
+  Gamma._({
+    required this.gammaDistribution,
+    required List<BigInt> rctOffsets,
+    required this.end,
+    required this.avarageOutsTime,
+    required this.numRctOuts,
+  }) : _rctOffsets = rctOffsets;
+  factory Gamma({
+    required List<BigInt> rctOffsets,
+    double shape = MoneroNetworkConst.gammaShape,
+    double scale = MoneroNetworkConst.gammaScale,
+  }) {
     if (rctOffsets.length <
         MoneroNetworkConst.cryptonoteDefaultTxSpendableAge) {
       throw const MoneroCryptoException("Bad offset calculation");
@@ -41,23 +42,27 @@ class Gamma {
     const int blocksInYear =
         86400 * 365 ~/ MoneroNetworkConst.difficultyTargetV2;
     final int blocksConsider = IntUtils.min(rctOffsets.length, blocksInYear);
-    final BigInt outputsConsider = rctOffsets.last -
+    final BigInt outputsConsider =
+        rctOffsets.last -
         (blocksConsider < rctOffsets.length
             ? rctOffsets[rctOffsets.length - blocksConsider - 1]
             : BigInt.zero);
-    final int end = rctOffsets.length -
+    final int end =
+        rctOffsets.length -
         (IntUtils.max(1, MoneroNetworkConst.cryptonoteDefaultTxSpendableAge) -
             1);
     final numRctOuts = rctOffsets[end - 1];
-    final avgOutputTime = MoneroNetworkConst.difficultyTargetV2 *
+    final avgOutputTime =
+        MoneroNetworkConst.difficultyTargetV2 *
         (BigInt.from(blocksConsider) / outputsConsider);
 
     return Gamma._(
-        gammaDistribution: GammaDistribution(shape, scale),
-        rctOffsets: rctOffsets,
-        end: end,
-        avarageOutsTime: avgOutputTime,
-        numRctOuts: numRctOuts);
+      gammaDistribution: GammaDistribution(shape, scale),
+      rctOffsets: rctOffsets,
+      end: end,
+      avarageOutsTime: avgOutputTime,
+      numRctOuts: numRctOuts,
+    );
   }
 
   BigInt pick() {
@@ -66,13 +71,14 @@ class Gamma {
     if (x > MoneroNetworkConst.defaultUnlockTime) {
       x -= MoneroNetworkConst.defaultUnlockTime;
     } else {
-      x = gammaDistribution
-          .randomIndex(MoneroNetworkConst.recentSpendWindow)
-          .toDouble();
+      x =
+          gammaDistribution
+              .randomIndex(MoneroNetworkConst.recentSpendWindow)
+              .toDouble();
     }
     BigInt outIndex = BigInt.from(x ~/ avarageOutsTime);
     if (outIndex >= numRctOuts) {
-      return maxU64;
+      return BinaryOps.maxU64;
     }
     outIndex = numRctOuts - BigInt.one - outIndex;
     final index = lowerBound(outIndex);

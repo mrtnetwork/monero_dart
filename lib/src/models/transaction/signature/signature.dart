@@ -19,8 +19,10 @@ abstract class MoneroTxSignatures extends MoneroSerialization {
     } else if (json.containsKey("v2")) {
       return RCTSignature.fromStruct(json);
     }
-    throw DartMoneroPluginException("Invalid MoneroTxSignatures json struct.",
-        details: {"data": json});
+    throw DartMoneroPluginException(
+      "Invalid MoneroTxSignatures json struct.",
+      details: {"data": json},
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({
@@ -34,24 +36,28 @@ abstract class MoneroTxSignatures extends MoneroSerialization {
   }) {
     if (version == 1) {
       return MoneroV1Signature.layout(
-          inputLength: inputLength,
-          signatureLength: v1SignaturesLen,
-          property: property);
+        inputLength: inputLength,
+        signatureLength: v1SignaturesLen,
+        property: property,
+      );
     } else if (version == 2) {
       return RCTSignature.layout(
-          property: property,
-          inputLength: inputLength,
-          outputLength: outputLength,
-          mixinLength: mixinLength,
-          forcePrunable: forcePrunable);
+        property: property,
+        inputLength: inputLength,
+        outputLength: outputLength,
+        mixinLength: mixinLength,
+        forcePrunable: forcePrunable,
+      );
     }
     throw const DartMoneroPluginException("Invalid monero tx version.");
   }
 
   T cast<T extends MoneroTxSignatures>() {
     if (this is! T) {
-      throw DartMoneroPluginException("MoneroTxSignatures casting failed.",
-          details: {"expected": "$T", "type": runtimeType.toString()});
+      throw DartMoneroPluginException(
+        "MoneroTxSignatures casting failed.",
+        details: {"expected": "$T", "type": runtimeType.toString()},
+      );
     }
     return this as T;
   }
@@ -64,106 +70,112 @@ class RCTSignature<S extends RCTSignatureBase, P extends RctSigPrunable>
   const RCTSignature({required this.signature, this.rctSigPrunable});
   RCTSignature<S, P> copyWith({S? signature, P? rctSigPrunable}) {
     return RCTSignature<S, P>(
-        signature: signature ?? this.signature,
-        rctSigPrunable: rctSigPrunable ?? this.rctSigPrunable);
+      signature: signature ?? this.signature,
+      rctSigPrunable: rctSigPrunable ?? this.rctSigPrunable,
+    );
   }
 
   factory RCTSignature.fromStruct(Map<String, dynamic> json) {
     final sig = RCTSignatureBase.fromStruct(json.asMap("v2"));
     final p = json.mybeAs<RctSigPrunable?, Map<String, dynamic>?>(
-        key: "rctSigPrunable",
-        onValue: (e) {
-          if (e?.isEmpty ?? true) return null;
-          final rSigType = sig.type;
-          return RctSigPrunable.fromStruct(e!, rSigType);
-        });
+      key: "rctSigPrunable",
+      onValue: (e) {
+        if (e?.isEmpty ?? true) return null;
+        final rSigType = sig.type;
+        return RctSigPrunable.fromStruct(e!, rSigType);
+      },
+    );
     if (sig is! S) {
       throw const DartMoneroPluginException("RCTSignature casting failed.");
     }
     return RCTSignature(signature: sig, rctSigPrunable: p as P?);
   }
-  static Layout<Map<String, dynamic>> layout(
-      {int? outputLength,
-      int? inputLength,
-      MoneroTransaction? transaction,
-      int? mixinLength,
-      String? property,
-      bool forcePrunable = false}) {
+  static Layout<Map<String, dynamic>> layout({
+    int? outputLength,
+    int? inputLength,
+    MoneroTransaction? transaction,
+    int? mixinLength,
+    String? property,
+    bool forcePrunable = false,
+  }) {
     return LayoutConst.lazyStruct([
-      LazyLayout(
-          layout: ({property}) {
-            return RCTSignatureBase.layout(
-                property: property,
-                inputLength: inputLength,
-                outputLength: outputLength);
-          },
-          property: "v2"),
-      ConditionalLazyLayout<Map<String, dynamic>>(
-          layout: (
-              {required action,
-              property,
-              required sourceOrResult,
-              required remindBytes}) {
-            if (transaction != null) {
-              if (transaction.signature.cast<RCTSignature>().rctSigPrunable ==
-                  null) {
-                return LayoutConst.noArgs();
-              }
-              int mixinLength = 0;
-              if (transaction.vin.isNotEmpty &&
-                  transaction.vin[0].type == MoneroTxinType.txinToKey) {
-                final inp = transaction.vin[0].cast<TxinToKey>();
-                mixinLength = inp.keyOffsets.length;
-              }
-              return RctSigPrunable.layout(
-                  outputLength: outputLength ?? 0,
-                  type:
-                      transaction.signature.cast<RCTSignature>().signature.type,
-                  inputLength: inputLength ?? 0,
-                  mixinLength: mixinLength);
-            }
-
-            final String? ringTypeStr = (sourceOrResult?["v2"] as Map?)?["key"];
-            if (ringTypeStr == null) {
+      LazyStructLayoutBuilder(
+        layout: (property, params) {
+          return RCTSignatureBase.layout(
+            property: property,
+            inputLength: inputLength,
+            outputLength: outputLength,
+          );
+        },
+        property: "v2",
+      ),
+      LazyStructLayoutBuilder(
+        layout: (property, params) {
+          if (transaction != null) {
+            if (transaction.signature.cast<RCTSignature>().rctSigPrunable ==
+                null) {
               return LayoutConst.noArgs();
             }
-            if (remindBytes == 0 && !forcePrunable) {
-              return LayoutConst.noArgs();
-            }
-
-            final type = RCTType.fromName(ringTypeStr);
-            if (type == RCTType.rctTypeNull) {
-              return LayoutConst.noArgs();
+            int mixinLength = 0;
+            if (transaction.vin.isNotEmpty &&
+                transaction.vin[0].type == MoneroTxinType.txinToKey) {
+              final inp = transaction.vin[0].cast<TxinToKey>();
+              mixinLength = inp.keyOffsets.length;
             }
             return RctSigPrunable.layout(
-                outputLength: outputLength ?? 0,
-                type: type,
-                inputLength: inputLength ?? 0,
-                mixinLength: mixinLength ?? 0);
-          },
-          property: "rctSigPrunable")
+              outputLength: outputLength ?? 0,
+              type: transaction.signature.cast<RCTSignature>().signature.type,
+              inputLength: inputLength ?? 0,
+              mixinLength: mixinLength,
+            );
+          }
+
+          final String? ringTypeStr =
+              (params.sourceOrResult["v2"] as Map?)?["key"];
+          if (ringTypeStr == null) {
+            return LayoutConst.noArgs();
+          }
+          if (params.remainBytes == 0 && !forcePrunable) {
+            return LayoutConst.noArgs();
+          }
+
+          final type = RCTType.fromName(ringTypeStr);
+          if (type == RCTType.rctTypeNull) {
+            return LayoutConst.noArgs();
+          }
+          return RctSigPrunable.layout(
+            outputLength: outputLength ?? 0,
+            type: type,
+            inputLength: inputLength ?? 0,
+            mixinLength: mixinLength ?? 0,
+          );
+        },
+        property: "rctSigPrunable",
+      ),
     ], property: property);
   }
 
   @override
-  Layout<Map<String, dynamic>> createLayout(
-      {int? outputLength,
-      int? inputLength,
-      int? mixinLength,
-      String? property}) {
+  Layout<Map<String, dynamic>> createLayout({
+    int? outputLength,
+    int? inputLength,
+    int? mixinLength,
+    String? property,
+  }) {
     return layout(
-        property: property,
-        inputLength: inputLength,
-        outputLength: outputLength,
-        mixinLength: mixinLength,
-        forcePrunable: rctSigPrunable != null);
+      property: property,
+      inputLength: inputLength,
+      outputLength: outputLength,
+      mixinLength: mixinLength,
+      forcePrunable: rctSigPrunable != null,
+    );
   }
 
   @override
   Map<String, dynamic> toLayoutStruct() {
     return {
       "v2": signature.toVariantLayoutStruct(),
-      "rctSigPrunable": rctSigPrunable?.toLayoutStruct() ?? {}
+      "rctSigPrunable": rctSigPrunable?.toLayoutStruct() ?? {},
     };
   }
 
@@ -175,57 +187,65 @@ class MoneroV1Signature extends MoneroTxSignatures {
   const MoneroV1Signature(this.signature);
   factory MoneroV1Signature.fromStruct(Map<String, dynamic> json) {
     if (json.isEmpty) return const MoneroV1Signature(null);
-    return MoneroV1Signature(json
-        .asListOfMap("v1")!
-        .map((e) => List<int>.from(e["signature"]))
-        .toList());
+    return MoneroV1Signature(
+      json
+          .asListOfMap("v1")!
+          .map((e) => List<int>.from(e["signature"]))
+          .toList(),
+    );
   }
-  static Layout<Map<String, dynamic>> layout(
-      {List<int>? signatureLength, int? inputLength, String? property}) {
+  static Layout<Map<String, dynamic>> layout({
+    List<int>? signatureLength,
+    int? inputLength,
+    String? property,
+  }) {
     int offset = 0;
     return LayoutConst.lazyStruct([
-      LazyLayout(
-          layout: ({property}) {
-            return LayoutConst.seq(
-                LayoutConst.lazyStruct([
-                  ConditionalLazyLayout(
-                      layout: (
-                          {required action,
-                          property,
-                          required remindBytes,
-                          required sourceOrResult}) {
-                        try {
-                          final sigLen = (signatureLength?[offset] ?? 0) * 64;
-                          return LayoutConst.fixedBlobN(sigLen);
-                        } finally {
-                          if (action == LayoutAction.decode &&
-                              signatureLength != null &&
-                              offset + 1 < signatureLength.length) {
-                            offset++;
-                          }
-                        }
-                      },
-                      property: "signature")
-                ]),
-                LayoutConst.constant(inputLength ?? 0, property: "aa"));
-          },
-          property: "v1")
+      LazyStructLayoutBuilder(
+        layout: (property, params) {
+          return LayoutConst.seq(
+            LayoutConst.lazyStruct([
+              LazyStructLayoutBuilder(
+                layout: (property, params) {
+                  try {
+                    final sigLen = (signatureLength?[offset] ?? 0) * 64;
+                    return LayoutConst.fixedBlobN(sigLen);
+                  } finally {
+                    if (params.action == LayoutAction.decode &&
+                        signatureLength != null &&
+                        offset + 1 < signatureLength.length) {
+                      offset++;
+                    }
+                  }
+                },
+                property: "signature",
+              ),
+            ]),
+            LayoutConst.constant(inputLength ?? 0, property: "aa"),
+          );
+        },
+        property: "v1",
+      ),
     ], property: property);
   }
 
   @override
-  Layout<Map<String, dynamic>> createLayout(
-      {List<int>? signatureLength, int? inputLength, String? property}) {
+  Layout<Map<String, dynamic>> createLayout({
+    List<int>? signatureLength,
+    int? inputLength,
+    String? property,
+  }) {
     return layout(
-        property: property,
-        inputLength: inputLength,
-        signatureLength: signatureLength);
+      property: property,
+      inputLength: inputLength,
+      signatureLength: signatureLength,
+    );
   }
 
   @override
   Map<String, dynamic> toLayoutStruct() {
     return {
-      "v1": signature?.map((e) => {"signature": e}).toList() ?? {}
+      "v1": signature?.map((e) => {"signature": e}).toList() ?? {},
     };
   }
 }
@@ -240,11 +260,15 @@ class RCTType {
   static const RCTType rctTypeFull = RCTType._('rctTypeFull', 1);
   static const RCTType rctTypeSimple = RCTType._('rctTypeSimple', 2);
   static const RCTType rctTypeBulletproof = RCTType._('rctTypeBulletproof', 3);
-  static const RCTType rctTypeBulletproof2 =
-      RCTType._('rctTypeBulletproof2', 4);
+  static const RCTType rctTypeBulletproof2 = RCTType._(
+    'rctTypeBulletproof2',
+    4,
+  );
   static const RCTType rctTypeCLSAG = RCTType._('rctTypeCLSAG', 5);
-  static const RCTType rctTypeBulletproofPlus =
-      RCTType._('rctTypeBulletproofPlus', 6);
+  static const RCTType rctTypeBulletproofPlus = RCTType._(
+    'rctTypeBulletproofPlus',
+    6,
+  );
   static const List<RCTType> values = [
     rctTypeNull,
     rctTypeFull,
@@ -252,12 +276,18 @@ class RCTType {
     rctTypeBulletproof,
     rctTypeBulletproof2,
     rctTypeCLSAG,
-    rctTypeBulletproofPlus
+    rctTypeBulletproofPlus,
   ];
   static RCTType fromName(String? name) {
-    return values.firstWhere((e) => e.name == name,
-        orElse: () => throw DartMoneroPluginException("Invalid RCTSig type.",
-            details: {"type": name}));
+    return values.firstWhere(
+      (e) => e.name == name,
+      orElse:
+          () =>
+              throw DartMoneroPluginException(
+                "Invalid RCTSig type.",
+                details: {"type": name},
+              ),
+    );
   }
 
   bool get isSimple {
@@ -334,10 +364,12 @@ class EcdhTuple {
   final RctKey mask;
   final RctKey amount;
   final EcdhInfoVersion version;
-  EcdhTuple(
-      {required RctKey mask, required RctKey amount, required this.version})
-      : mask = mask.asImmutableBytes,
-        amount = amount.asImmutableBytes;
+  EcdhTuple({
+    required RctKey mask,
+    required RctKey amount,
+    required this.version,
+  }) : mask = mask.asImmutableBytes,
+       amount = amount.asImmutableBytes;
 }
 
 abstract class EcdhInfo extends MoneroSerialization {
@@ -345,8 +377,10 @@ abstract class EcdhInfo extends MoneroSerialization {
   abstract final EcdhInfoVersion version;
   T cast<T extends EcdhInfo>() {
     if (this is! T) {
-      throw DartMoneroPluginException("EcdhInfo casting failed.",
-          details: {"expected": "$T", "type": runtimeType.toString()});
+      throw DartMoneroPluginException(
+        "EcdhInfo casting failed.",
+        details: {"expected": "$T", "type": runtimeType.toString()},
+      );
     }
     return this as T;
   }
@@ -362,15 +396,29 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
     required CtKeyM? mixRing,
     required KeyV? pseudoOuts,
     required BigInt txnFee,
-  })  : ecdhInfo = ecdhInfo.immutable,
-        outPk = outPk.immutable,
-        txnFee = txnFee.asUint64,
-        pseudoOuts = pseudoOuts
-            ?.map((e) => e.asImmutableBytes.exc(32, name: "pseudoOuts"))
-            .toList()
-            .immutable,
-        mixRing = mixRing?.map((e) => e.immutable).toList().immutable,
-        message = message?.exc(32, name: "message").asImmutableBytes;
+  }) : ecdhInfo = ecdhInfo.immutable,
+       outPk = outPk.immutable,
+       txnFee = txnFee.asU64,
+       pseudoOuts =
+           pseudoOuts
+               ?.map(
+                 (e) => e.asImmutableBytes.exc(
+                   length: 32,
+                   operation: "RCTSignatureBase",
+                   reason: "Invalid pseudoOuts bytes length.",
+                 ),
+               )
+               .toList()
+               .immutable,
+       mixRing = mixRing?.map((e) => e.immutable).toList().immutable,
+       message =
+           message
+               ?.exc(
+                 length: 32,
+                 operation: "RCTSignatureBase",
+                 reason: "Invalid message bytes length.",
+               )
+               .asImmutableBytes;
   final List<EcdhInfo> ecdhInfo;
   final CtKeyV outPk;
   final RctKey? message;
@@ -396,49 +444,74 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
       case RCTType.rctTypeBulletproofPlus:
         return RCTBulletproofPlus.fromStruct(decode.value);
       default:
-        throw DartMoneroPluginException("Invalid RCTSignature.",
-            details: {"type": type, "data": decode.value});
+        throw DartMoneroPluginException(
+          "Invalid RCTSignature.",
+          details: {"type": type, "data": decode.value},
+        );
     }
   }
-  static Layout<Map<String, dynamic>> layout(
-      {int? outputLength, int? inputLength, String? property}) {
+  static Layout<Map<String, dynamic>> layout({
+    int? outputLength,
+    int? inputLength,
+    String? property,
+  }) {
     return LayoutConst.lazyEnum([
       LazyVariantModel(
-          layout: RCTNull.layout,
-          property: RCTType.rctTypeNull.name,
-          index: RCTType.rctTypeNull.value),
+        layout: RCTNull.layout,
+        property: RCTType.rctTypeNull.name,
+        index: RCTType.rctTypeNull.value,
+      ),
       LazyVariantModel(
-          layout: ({property}) =>
-              RCTFull.layout(property: property, outputLength: outputLength),
-          property: RCTType.rctTypeFull.name,
-          index: RCTType.rctTypeFull.value),
+        layout:
+            ({property}) =>
+                RCTFull.layout(property: property, outputLength: outputLength),
+        property: RCTType.rctTypeFull.name,
+        index: RCTType.rctTypeFull.value,
+      ),
       LazyVariantModel(
-          layout: ({property}) => RCTSimple.layout(
+        layout:
+            ({property}) => RCTSimple.layout(
               property: property,
               outputLength: outputLength,
-              inputLength: inputLength),
-          property: RCTType.rctTypeSimple.name,
-          index: RCTType.rctTypeSimple.value),
+              inputLength: inputLength,
+            ),
+        property: RCTType.rctTypeSimple.name,
+        index: RCTType.rctTypeSimple.value,
+      ),
       LazyVariantModel(
-          layout: ({property}) => RCTBulletproof.layout(
-              outputLength: outputLength, property: property),
-          property: RCTType.rctTypeBulletproof.name,
-          index: RCTType.rctTypeBulletproof.value),
+        layout:
+            ({property}) => RCTBulletproof.layout(
+              outputLength: outputLength,
+              property: property,
+            ),
+        property: RCTType.rctTypeBulletproof.name,
+        index: RCTType.rctTypeBulletproof.value,
+      ),
       LazyVariantModel(
-          layout: ({property}) => RCTBulletproof2.layout(
-              property: property, outputLength: outputLength),
-          property: RCTType.rctTypeBulletproof2.name,
-          index: RCTType.rctTypeBulletproof2.value),
+        layout:
+            ({property}) => RCTBulletproof2.layout(
+              property: property,
+              outputLength: outputLength,
+            ),
+        property: RCTType.rctTypeBulletproof2.name,
+        index: RCTType.rctTypeBulletproof2.value,
+      ),
       LazyVariantModel(
-          layout: ({property}) =>
-              RCTCLSAG.layout(property: property, outputLength: outputLength),
-          property: RCTType.rctTypeCLSAG.name,
-          index: RCTType.rctTypeCLSAG.value),
+        layout:
+            ({property}) =>
+                RCTCLSAG.layout(property: property, outputLength: outputLength),
+        property: RCTType.rctTypeCLSAG.name,
+        index: RCTType.rctTypeCLSAG.value,
+      ),
       LazyVariantModel(
-          layout: ({property}) => RCTBulletproofPlus.layout(
-              property: property, outputLength: outputLength),
-          property: RCTType.rctTypeBulletproofPlus.name,
-          index: RCTType.rctTypeBulletproofPlus.value),
+        layout:
+            ({property}) => RCTBulletproofPlus.layout(
+              property: property,
+              outputLength: outputLength,
+            ),
+        property: RCTType.rctTypeBulletproofPlus.name,
+        index: RCTType.rctTypeBulletproofPlus.value,
+      ),
     ], property: property);
   }
 
@@ -452,8 +525,10 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
 
   T cast<T extends RCTSignatureBase>() {
     if (this is! T) {
-      throw DartMoneroPluginException("RCTSignatureBase casting failed.",
-          details: {"expected": "$T", "type": runtimeType.toString()});
+      throw DartMoneroPluginException(
+        "RCTSignatureBase casting failed.",
+        details: {"expected": "$T", "type": runtimeType.toString()},
+      );
     }
     return this as T;
   }
@@ -461,12 +536,17 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
 
 class EcdhInfoV2 extends EcdhInfo {
   EcdhInfoV2(List<int> amount)
-      : amount = amount.asImmutableBytes.exc(8, name: "EcdhInfoV2");
+    : amount = amount.asImmutableBytes.exc(
+        length: 8,
+        operation: "EcdhInfoV2",
+        reason: "Invalid amount bytes length.",
+      );
   @override
   final List<int> amount;
   static Layout<Map<String, dynamic>> layout({String? property}) {
-    return LayoutConst.struct([LayoutConst.fixedBlobN(8, property: "amount")],
-        property: property);
+    return LayoutConst.struct([
+      LayoutConst.fixedBlobN(8, property: "amount"),
+    ], property: property);
   }
 
   factory EcdhInfoV2.fromStruct(Map<String, dynamic> json) {
@@ -491,16 +571,26 @@ class EcdhInfoV1 extends EcdhInfo {
   @override
   final List<int> amount;
   EcdhInfoV1({required List<int> amount, required List<int> mask})
-      : amount = amount.asImmutableBytes.exc(32, name: "amount"),
-        mask = mask.asImmutableBytes.exc(32, name: "mask");
+    : amount = amount.asImmutableBytes.exc(
+        length: 32,
+        operation: "EcdhInfoV1",
+        reason: "Invalid amount bytes length.",
+      ),
+      mask = mask.asImmutableBytes.exc(
+        length: 32,
+        operation: "EcdhInfoV1",
+        reason: "Invalid mask bytes length.",
+      );
   factory EcdhInfoV1.fromStruct(Map<String, dynamic> json) {
     return EcdhInfoV1(
-        amount: json.asBytes("amount"), mask: json.asBytes("mask"));
+      amount: json.asBytes("amount"),
+      mask: json.asBytes("mask"),
+    );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       LayoutConst.fixedBlob32(property: "mask"),
-      LayoutConst.fixedBlob32(property: "amount")
+      LayoutConst.fixedBlob32(property: "amount"),
     ], property: property);
   }
 
@@ -520,14 +610,15 @@ class EcdhInfoV1 extends EcdhInfo {
 
 class RCTNull extends RCTSignatureBase {
   RCTNull()
-      : super(
-            type: RCTType.rctTypeNull,
-            ecdhInfo: [],
-            outPk: [],
-            message: null,
-            mixRing: null,
-            pseudoOuts: null,
-            txnFee: BigInt.zero);
+    : super(
+        type: RCTType.rctTypeNull,
+        ecdhInfo: [],
+        outPk: [],
+        message: null,
+        mixRing: null,
+        pseudoOuts: null,
+        txnFee: BigInt.zero,
+      );
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.noArgs(property: property);
   }
@@ -547,14 +638,20 @@ class RCTNull extends RCTSignatureBase {
   }
 
   @override
-  List<EcdhInfoV2> get ecdhInfo => throw const DartMoneroPluginException(
-      "RCTNULL does not support ECDH information.");
+  List<EcdhInfoV2> get ecdhInfo =>
+      throw const DartMoneroPluginException(
+        "RCTNULL does not support ECDH information.",
+      );
   @override
-  List<CtKey> get outPk => throw const DartMoneroPluginException(
-      "RCTNULL does not support public key information.");
+  List<CtKey> get outPk =>
+      throw const DartMoneroPluginException(
+        "RCTNULL does not support public key information.",
+      );
   @override
-  BigInt get txnFee => throw const DartMoneroPluginException(
-      "RCTNULL does not support txnFee information.");
+  BigInt get txnFee =>
+      throw const DartMoneroPluginException(
+        "RCTNULL does not support txnFee information.",
+      );
 }
 
 class RCTCLSAG extends RCTSignatureBase {
@@ -576,26 +673,35 @@ class RCTCLSAG extends RCTSignatureBase {
   }) : super(type: RCTType.rctTypeCLSAG, pseudoOuts: null);
   factory RCTCLSAG.fromStruct(Map<String, dynamic> json) {
     return RCTCLSAG(
-        ecdhInfo: json
-            .asListOfMap("ecdhInfo")!
-            .map((e) => EcdhInfoV2.fromStruct(e))
-            .toList(),
-        txnFee: json.as("txnFee"),
-        outPk: json
-            .asListBytes("outPk")!
-            .map((e) => CtKey(dest: RCT.zero(), mask: e))
-            .toList());
+      ecdhInfo:
+          json
+              .asListOfMap("ecdhInfo")!
+              .map((e) => EcdhInfoV2.fromStruct(e))
+              .toList(),
+      txnFee: json.as("txnFee"),
+      outPk:
+          json
+              .asListBytes("outPk")!
+              .map((e) => CtKey(dest: RCT.zero(), mask: e))
+              .toList(),
+    );
   }
-  static Layout<Map<String, dynamic>> layout(
-      {String? property, required int? outputLength}) {
+  static Layout<Map<String, dynamic>> layout({
+    String? property,
+    required int? outputLength,
+  }) {
     return LayoutConst.struct([
       MoneroLayoutConst.varintBigInt(property: "txnFee"),
       LayoutConst.seq(
-          EcdhInfoV2.layout(), ConstantLayout<int>(outputLength ?? 0),
-          property: "ecdhInfo"),
+        EcdhInfoV2.layout(),
+        ConstantLayout<int>(outputLength ?? 0),
+        property: "ecdhInfo",
+      ),
       LayoutConst.seq(
-          LayoutConst.fixedBlob32(), ConstantLayout<int>(outputLength ?? 0),
-          property: "outPk"),
+        LayoutConst.fixedBlob32(),
+        ConstantLayout<int>(outputLength ?? 0),
+        property: "outPk",
+      ),
     ], property: property);
   }
 
@@ -609,7 +715,7 @@ class RCTCLSAG extends RCTSignatureBase {
     return {
       "txnFee": txnFee,
       "ecdhInfo": ecdhInfo.map((e) => e.toLayoutStruct()).toList(),
-      "outPk": outPk.map((e) => e.mask).toList()
+      "outPk": outPk.map((e) => e.mask).toList(),
     };
   }
 }
@@ -625,39 +731,52 @@ class RCTSimple extends RCTSignatureBase {
   }) : super(type: RCTType.rctTypeSimple);
   factory RCTSimple.fromStruct(Map<String, dynamic> json) {
     return RCTSimple(
-        ecdhInfo: json
-            .asListOfMap("ecdhInfo")!
-            .map((e) => EcdhInfoV1.fromStruct(e))
-            .toList(),
-        txnFee: json.as("txnFee"),
-        pseudoOuts: json.asListBytes("pseudoOuts")!,
-        outPk: json
-            .asListBytes("outPk")!
-            .map((e) => CtKey(dest: RCT.zero(), mask: e))
-            .toList());
+      ecdhInfo:
+          json
+              .asListOfMap("ecdhInfo")!
+              .map((e) => EcdhInfoV1.fromStruct(e))
+              .toList(),
+      txnFee: json.as("txnFee"),
+      pseudoOuts: json.asListBytes("pseudoOuts")!,
+      outPk:
+          json
+              .asListBytes("outPk")!
+              .map((e) => CtKey(dest: RCT.zero(), mask: e))
+              .toList(),
+    );
   }
-  static Layout<Map<String, dynamic>> layout(
-      {String? property, int? outputLength, int? inputLength}) {
+  static Layout<Map<String, dynamic>> layout({
+    String? property,
+    int? outputLength,
+    int? inputLength,
+  }) {
     return LayoutConst.struct([
       MoneroLayoutConst.varintBigInt(property: "txnFee"),
       LayoutConst.seq(
-          LayoutConst.fixedBlob32(), LayoutConst.constant(inputLength ?? 0),
-          property: "pseudoOuts"),
+        LayoutConst.fixedBlob32(),
+        LayoutConst.constant(inputLength ?? 0),
+        property: "pseudoOuts",
+      ),
       LayoutConst.seq(
-          EcdhInfoV1.layout(), LayoutConst.constant(outputLength ?? 0),
-          property: "ecdhInfo"),
+        EcdhInfoV1.layout(),
+        LayoutConst.constant(outputLength ?? 0),
+        property: "ecdhInfo",
+      ),
       LayoutConst.seq(
-          LayoutConst.fixedBlob32(), LayoutConst.constant(outputLength ?? 0),
-          property: "outPk")
+        LayoutConst.fixedBlob32(),
+        LayoutConst.constant(outputLength ?? 0),
+        property: "outPk",
+      ),
     ], property: property);
   }
 
   @override
   Layout<Map<String, dynamic>> createLayout({String? property}) {
     return layout(
-        property: property,
-        outputLength: outPk.length,
-        inputLength: pseudoOuts!.length);
+      property: property,
+      outputLength: outPk.length,
+      inputLength: pseudoOuts!.length,
+    );
   }
 
   @override
@@ -666,7 +785,7 @@ class RCTSimple extends RCTSignatureBase {
       "txnFee": txnFee,
       "pseudoOuts": pseudoOuts,
       "ecdhInfo": ecdhInfo.map((e) => e.toLayoutStruct()).toList(),
-      "outPk": outPk.map((e) => e.mask).toList()
+      "outPk": outPk.map((e) => e.mask).toList(),
     };
   }
 }
@@ -681,18 +800,23 @@ class RCTBulletproof2 extends RCTCLSAG {
   }) : super._(type: RCTType.rctTypeBulletproof2);
   factory RCTBulletproof2.fromStruct(Map<String, dynamic> json) {
     return RCTBulletproof2(
-        ecdhInfo: json
-            .asListOfMap("ecdhInfo")!
-            .map((e) => EcdhInfoV2.fromStruct(e))
-            .toList(),
-        txnFee: json.as("txnFee"),
-        outPk: json
-            .asListBytes("outPk")!
-            .map((e) => CtKey(dest: RCT.zero(), mask: e))
-            .toList());
+      ecdhInfo:
+          json
+              .asListOfMap("ecdhInfo")!
+              .map((e) => EcdhInfoV2.fromStruct(e))
+              .toList(),
+      txnFee: json.as("txnFee"),
+      outPk:
+          json
+              .asListBytes("outPk")!
+              .map((e) => CtKey(dest: RCT.zero(), mask: e))
+              .toList(),
+    );
   }
-  static Layout<Map<String, dynamic>> layout(
-      {String? property, required int? outputLength}) {
+  static Layout<Map<String, dynamic>> layout({
+    String? property,
+    required int? outputLength,
+  }) {
     return RCTCLSAG.layout(property: property, outputLength: outputLength);
   }
 }
@@ -705,22 +829,27 @@ class RCTBulletproofPlus extends RCTCLSAG {
     super.message,
     super.mixRing,
   }) : super._(type: RCTType.rctTypeBulletproofPlus);
-  static Layout<Map<String, dynamic>> layout(
-      {String? property, required int? outputLength}) {
+  static Layout<Map<String, dynamic>> layout({
+    String? property,
+    required int? outputLength,
+  }) {
     return RCTCLSAG.layout(property: property, outputLength: outputLength);
   }
 
   factory RCTBulletproofPlus.fromStruct(Map<String, dynamic> json) {
     return RCTBulletproofPlus(
-        ecdhInfo: json
-            .asListOfMap("ecdhInfo")!
-            .map((e) => EcdhInfoV2.fromStruct(e))
-            .toList(),
-        txnFee: json.as("txnFee"),
-        outPk: json
-            .asListBytes("outPk")!
-            .map((e) => CtKey(dest: RCT.zero(), mask: e))
-            .toList());
+      ecdhInfo:
+          json
+              .asListOfMap("ecdhInfo")!
+              .map((e) => EcdhInfoV2.fromStruct(e))
+              .toList(),
+      txnFee: json.as("txnFee"),
+      outPk:
+          json
+              .asListBytes("outPk")!
+              .map((e) => CtKey(dest: RCT.zero(), mask: e))
+              .toList(),
+    );
   }
 }
 
@@ -734,26 +863,35 @@ class RCTFull extends RCTSignatureBase {
   }) : super(type: RCTType.rctTypeFull, pseudoOuts: null);
   factory RCTFull.fromStruct(Map<String, dynamic> json) {
     return RCTFull(
-        ecdhInfo: json
-            .asListOfMap("ecdhInfo")!
-            .map((e) => EcdhInfoV1.fromStruct(e))
-            .toList(),
-        txnFee: json.as("txnFee"),
-        outPk: json
-            .asListBytes("outPk")!
-            .map((e) => CtKey(dest: RCT.zero(), mask: e))
-            .toList());
+      ecdhInfo:
+          json
+              .asListOfMap("ecdhInfo")!
+              .map((e) => EcdhInfoV1.fromStruct(e))
+              .toList(),
+      txnFee: json.as("txnFee"),
+      outPk:
+          json
+              .asListBytes("outPk")!
+              .map((e) => CtKey(dest: RCT.zero(), mask: e))
+              .toList(),
+    );
   }
-  static Layout<Map<String, dynamic>> layout(
-      {String? property, int? outputLength}) {
+  static Layout<Map<String, dynamic>> layout({
+    String? property,
+    int? outputLength,
+  }) {
     return LayoutConst.struct([
       MoneroLayoutConst.varintBigInt(property: "txnFee"),
       LayoutConst.seq(
-          EcdhInfoV1.layout(), LayoutConst.constant(outputLength ?? 0),
-          property: "ecdhInfo"),
+        EcdhInfoV1.layout(),
+        LayoutConst.constant(outputLength ?? 0),
+        property: "ecdhInfo",
+      ),
       LayoutConst.seq(
-          LayoutConst.fixedBlob32(), LayoutConst.constant(outputLength ?? 0),
-          property: "outPk")
+        LayoutConst.fixedBlob32(),
+        LayoutConst.constant(outputLength ?? 0),
+        property: "outPk",
+      ),
     ], property: property);
   }
 
@@ -767,7 +905,7 @@ class RCTFull extends RCTSignatureBase {
     return {
       "txnFee": txnFee,
       "ecdhInfo": ecdhInfo.map((e) => e.toLayoutStruct()).toList(),
-      "outPk": outPk.map((e) => e.mask).toList()
+      "outPk": outPk.map((e) => e.mask).toList(),
     };
   }
 }
@@ -782,26 +920,35 @@ class RCTBulletproof extends RCTSignatureBase {
   }) : super(type: RCTType.rctTypeBulletproof, pseudoOuts: null);
   factory RCTBulletproof.fromStruct(Map<String, dynamic> json) {
     return RCTBulletproof(
-        ecdhInfo: json
-            .asListOfMap("ecdhInfo")!
-            .map((e) => EcdhInfoV1.fromStruct(e))
-            .toList(),
-        txnFee: json.as("txnFee"),
-        outPk: json
-            .asListBytes("outPk")!
-            .map((e) => CtKey(dest: RCT.zero(), mask: e))
-            .toList());
+      ecdhInfo:
+          json
+              .asListOfMap("ecdhInfo")!
+              .map((e) => EcdhInfoV1.fromStruct(e))
+              .toList(),
+      txnFee: json.as("txnFee"),
+      outPk:
+          json
+              .asListBytes("outPk")!
+              .map((e) => CtKey(dest: RCT.zero(), mask: e))
+              .toList(),
+    );
   }
-  static Layout<Map<String, dynamic>> layout(
-      {String? property, int? outputLength}) {
+  static Layout<Map<String, dynamic>> layout({
+    String? property,
+    int? outputLength,
+  }) {
     return LayoutConst.struct([
       MoneroLayoutConst.varintBigInt(property: "txnFee"),
       LayoutConst.seq(
-          EcdhInfoV1.layout(), LayoutConst.constant(outputLength ?? 0),
-          property: "ecdhInfo"),
+        EcdhInfoV1.layout(),
+        LayoutConst.constant(outputLength ?? 0),
+        property: "ecdhInfo",
+      ),
       LayoutConst.seq(
-          LayoutConst.fixedBlob32(), LayoutConst.constant(outputLength ?? 0),
-          property: "outPk")
+        LayoutConst.fixedBlob32(),
+        LayoutConst.constant(outputLength ?? 0),
+        property: "outPk",
+      ),
     ], property: property);
   }
 
@@ -815,7 +962,7 @@ class RCTBulletproof extends RCTSignatureBase {
     return {
       "txnFee": txnFee,
       "ecdhInfo": ecdhInfo.map((e) => e.toLayoutStruct()).toList(),
-      "outPk": outPk.map((e) => e.mask).toList()
+      "outPk": outPk.map((e) => e.mask).toList(),
     };
   }
 }

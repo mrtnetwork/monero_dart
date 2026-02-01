@@ -17,14 +17,15 @@ class MoneroStorage {
   }
   factory MoneroStorage.deserialize(List<int> bytes) {
     return MoneroStorage(
-        MoneroSection.fromJson(MoneroStorageSerializer.deserialize(bytes)));
+      MoneroSection.fromJson(MoneroStorageSerializer.deserialize(bytes)),
+    );
   }
 
   /// encode storage to bytes.
   List<int> serialize() {
     return [
       ...MoneroSerializationConst.signaturePartBAndVersionVersion,
-      ...section.serialize()
+      ...section.serialize(),
     ];
   }
 
@@ -39,13 +40,15 @@ class MoneroSection {
   /// entries of section
   final List<MoneroStorageEntry> enteries;
   MoneroSection(List<MoneroStorageEntry> enteries)
-      : enteries = enteries.immutable;
+    : enteries = enteries.immutable;
 
   factory MoneroSection.fromJson(Map<String, dynamic> json) {
     final sortedMap = json.keys.toList()..sort();
-    return MoneroSection(sortedMap
-        .map((k) => MoneroStorageEntry.fromObject(name: k, value: json[k]))
-        .toList());
+    return MoneroSection(
+      sortedMap
+          .map((k) => MoneroStorageEntry.fromObject(name: k, value: json[k]))
+          .toList(),
+    );
   }
 
   /// check section has any entries or should be serialize as empty section.
@@ -57,7 +60,7 @@ class MoneroSection {
     final enteries = this.enteries.where((e) => e.hasValue);
     return [
       ...MoneroStorageSerializer.encodeVarintInt(enteries.length),
-      ...enteries.expand((e) => e.serialize())
+      ...enteries.expand((e) => e.serialize()),
     ];
   }
 
@@ -77,9 +80,11 @@ abstract class MoneroStorageEntry<T> {
   final MoneroStorageTypes type;
 
   bool get hasValue => value != null;
-  MoneroStorageEntry(
-      {required this.type, required String name, required this.value})
-      : name = MoneroStorageFormatValidator.asValidName(name);
+  MoneroStorageEntry({
+    required this.type,
+    required String name,
+    required this.value,
+  }) : name = MoneroStorageFormatValidator.asValidName(name);
   factory MoneroStorageEntry.fromObject({required String name, Object? value}) {
     final MoneroStorageEntry entry;
     if (value == null) {
@@ -91,10 +96,14 @@ abstract class MoneroStorageEntry<T> {
         entry = MoneroStorageEntryPromitive(name: name, value: value);
       } else if (type == MoneroStorageTypes.object) {
         entry = MoneroStorageEntrySection(
-            json: MoneroStorageFormatValidator.asMap(value), name: name);
+          json: MoneroStorageFormatValidator.asMap(value),
+          name: name,
+        );
       } else {
-        final list = MoneroStorageFormatValidator.asArrayOf<Object>(value,
-            allowEmpty: true);
+        final list = MoneroStorageFormatValidator.asArrayOf<Object>(
+          value,
+          allowEmpty: true,
+        );
         if (list.isEmpty) {
           entry = MoneroStorageEntryNull(name);
         } else {
@@ -104,8 +113,9 @@ abstract class MoneroStorageEntry<T> {
     }
     if (entry is! MoneroStorageEntry<T>) {
       throw MoneroSerializationException(
-          "Incorrect MoneroStorageEntry<$T> type",
-          details: {"expected": "$T", "entery": entry.runtimeType});
+        "Incorrect MoneroStorageEntry<$T> type",
+        details: {"expected": "$T", "entery": entry.runtimeType},
+      );
     }
     return entry;
   }
@@ -118,9 +128,8 @@ abstract class MoneroStorageEntry<T> {
 
 /// Entery for null objects
 class MoneroStorageEntryNull extends MoneroStorageEntry<Null> {
-  MoneroStorageEntryNull._({
-    required super.name,
-  }) : super(type: MoneroStorageTypes.unknown, value: null);
+  MoneroStorageEntryNull._({required super.name})
+    : super(type: MoneroStorageTypes.unknown, value: null);
   factory MoneroStorageEntryNull(String name) {
     return MoneroStorageEntryNull._(name: name);
   }
@@ -134,23 +143,27 @@ class MoneroStorageEntryNull extends MoneroStorageEntry<Null> {
 class MoneroStorageEntryPromitive<T> extends MoneroStorageEntry<T> {
   @override
   final bool hasValue;
-  MoneroStorageEntryPromitive._(
-      {required super.name,
-      required super.type,
-      required super.value,
-      required this.hasValue});
-  factory MoneroStorageEntryPromitive(
-      {required String name, required T value}) {
+  MoneroStorageEntryPromitive._({
+    required super.name,
+    required super.type,
+    required super.value,
+    required this.hasValue,
+  });
+  factory MoneroStorageEntryPromitive({
+    required String name,
+    required T value,
+  }) {
     final correctValue = MoneroStorageFormatValidator.asPrimitiveType<T>(value);
-    bool hasValue = correctValue.item1 != null;
+    bool hasValue = correctValue.$1 != null;
     if (hasValue && value is MoneroStorageContainer) {
       hasValue = value.hasValue;
     }
     return MoneroStorageEntryPromitive._(
-        name: name,
-        type: correctValue.item2,
-        value: correctValue.item1,
-        hasValue: hasValue);
+      name: name,
+      type: correctValue.$2,
+      value: correctValue.$1,
+      hasValue: hasValue,
+    );
   }
 
   @override
@@ -158,7 +171,7 @@ class MoneroStorageEntryPromitive<T> extends MoneroStorageEntry<T> {
     return [
       name.length,
       ...StringUtils.encode(name),
-      ...MoneroStorageSerializer.encodePrimitive(type: type, value: value!)
+      ...MoneroStorageSerializer.encodePrimitive(type: type, value: value!),
     ];
   }
 }
@@ -166,19 +179,23 @@ class MoneroStorageEntryPromitive<T> extends MoneroStorageEntry<T> {
 class MoneroStorageEntryList<T extends Object>
     extends MoneroStorageEntry<List<T>> {
   final MoneroStorageTypes childType;
-  MoneroStorageEntryList._(
-      {required super.name,
-      required this.childType,
-      required super.type,
-      required super.value});
-  factory MoneroStorageEntryList(
-      {required String name, required List<T> value}) {
+  MoneroStorageEntryList._({
+    required super.name,
+    required this.childType,
+    required super.type,
+    required super.value,
+  });
+  factory MoneroStorageEntryList({
+    required String name,
+    required List<T> value,
+  }) {
     final values = MoneroStorageFormatValidator.toArrayObject<T>(value);
     return MoneroStorageEntryList._(
-        name: name,
-        childType: values.item1,
-        type: MoneroStorageTypes.array,
-        value: values.item2);
+      name: name,
+      childType: values.$1,
+      type: MoneroStorageTypes.array,
+      value: values.$2,
+    );
   }
   @override
   bool get hasValue => value.isNotEmpty;
@@ -187,20 +204,26 @@ class MoneroStorageEntryList<T extends Object>
     return [
       name.length,
       ...StringUtils.encode(name),
-      ...MoneroStorageSerializer.encodeList(childType: childType, value: value)
+      ...MoneroStorageSerializer.encodeList(childType: childType, value: value),
     ];
   }
 }
 
 class MoneroStorageEntrySection extends MoneroStorageEntry<MoneroSection> {
-  MoneroStorageEntrySection._(
-      {required super.name, required super.type, required super.value});
-  factory MoneroStorageEntrySection(
-      {required Map<String, dynamic> json, required String name}) {
+  MoneroStorageEntrySection._({
+    required super.name,
+    required super.type,
+    required super.value,
+  });
+  factory MoneroStorageEntrySection({
+    required Map<String, dynamic> json,
+    required String name,
+  }) {
     return MoneroStorageEntrySection._(
-        name: name,
-        type: MoneroStorageTypes.object,
-        value: MoneroSection.fromJson(json));
+      name: name,
+      type: MoneroStorageTypes.object,
+      value: MoneroSection.fromJson(json),
+    );
   }
 
   @override

@@ -3,8 +3,9 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Get list of banned IPs.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_bans
-class DaemonRequestGetBans extends MoneroDaemonRequestParam<
-    DaemonGetBanResponse, Map<String, dynamic>> {
+class DaemonRequestGetBans
+    extends
+        MoneroDaemonRequestParam<DaemonGetBanResponse, Map<String, dynamic>> {
   DaemonRequestGetBans();
   @override
   String get method => "get_bans";

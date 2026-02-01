@@ -45,9 +45,11 @@ void _multBase() {
 
 void _multAdd() {
   final add = EDPoint.fromBytes(
-      curve: Curves.curveEd25519,
-      data: BytesUtils.fromHexString(
-          "e604ed48048c124f8dd492deca78714c1296da13c63aa0e3a0124458602a0ac3"));
+    curve: Curves.curveEd25519,
+    data: BytesUtils.fromHexString(
+      "e604ed48048c124f8dd492deca78714c1296da13c63aa0e3a0124458602a0ac3",
+    ),
+  );
   test("mult base + p", () {
     for (int i = 0; i < 100; i++) {
       final rand = QuickCrypto.generateRandom();

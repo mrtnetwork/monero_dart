@@ -10,7 +10,8 @@ class ProviderUtils {
     }
     if (hex.length % blockLengthHex != 0) {
       throw const DartMoneroPluginException(
-          "Invalid block ids response bytes.");
+        "Invalid block ids response bytes.",
+      );
     }
     final List<String> blockIds = [];
     int offset = 0;

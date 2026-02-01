@@ -13,8 +13,10 @@ class DaemonRequestFlushCache
   @override
   String get method => "flush_cache";
   @override
-  Map<String, dynamic> get params =>
-      {"bad_txs": badTxs, "bad_blocks": badBlocks};
+  Map<String, dynamic> get params => {
+    "bad_txs": badTxs,
+    "bad_blocks": badBlocks,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.jsonRPC;
   @override

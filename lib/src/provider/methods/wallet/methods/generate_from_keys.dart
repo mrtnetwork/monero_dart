@@ -4,16 +4,21 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Restores a wallet from a given wallet address, view key, and optional spend key.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#generate_from_keys
-class WalletRequestGenerateFromKeys extends MoneroWalletRequestParam<
-    WalletRPCGenerateFromKeysResponse, Map<String, dynamic>> {
-  WalletRequestGenerateFromKeys(
-      {this.restoreHeight,
-      required this.fileName,
-      required this.address,
-      this.spendKey,
-      required this.viewKey,
-      required this.password,
-      this.autosaveCurrent});
+class WalletRequestGenerateFromKeys
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCGenerateFromKeysResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestGenerateFromKeys({
+    this.restoreHeight,
+    required this.fileName,
+    required this.address,
+    this.spendKey,
+    required this.viewKey,
+    required this.password,
+    this.autosaveCurrent,
+  });
 
   /// The block height to restore the wallet from.
   final int? restoreHeight;
@@ -39,14 +44,14 @@ class WalletRequestGenerateFromKeys extends MoneroWalletRequestParam<
   String get method => "generate_from_keys";
   @override
   Map<String, dynamic> get params => {
-        "restore_height": restoreHeight,
-        "autosave_current": autosaveCurrent,
-        "filename": fileName,
-        "address": address.address,
-        "spendkey": spendKey,
-        "viewkey": viewKey,
-        "password": password
-      };
+    "restore_height": restoreHeight,
+    "autosave_current": autosaveCurrent,
+    "filename": fileName,
+    "address": address.address,
+    "spendkey": spendKey,
+    "viewkey": viewKey,
+    "password": password,
+  };
 
   @override
   WalletRPCGenerateFromKeysResponse onResonse(Map<String, dynamic> result) {

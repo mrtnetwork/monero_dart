@@ -17,9 +17,10 @@ abstract class MoneroApiInterface {
   /// - [transactions] : A list of Monero transactions to analyze.
   /// - [account] : The base account keys (view and spend keys) used for
   ///   identifying relevant outputs.
-  List<MoneroLockedOutput> watchTransactionOutputs(
-      {required List<MoneroTransaction> transactions,
-      required MoneroBaseAccountKeys account});
+  List<MoneroLockedOutput> watchTransactionOutputs({
+    required List<MoneroTransaction> transactions,
+    required MoneroBaseAccountKeys account,
+  });
 
   /// Observes and decodes transaction outputs based on transaction hashes for a watch-only wallet.
   ///
@@ -34,8 +35,10 @@ abstract class MoneroApiInterface {
   /// - [txHashes] : A list of transaction hashes to fetch and analyze.
   /// - [account] : The base account keys (view and spend keys) used for identifying
   ///   relevant outputs.
-  Future<List<MoneroLockedOutput>> watchTxHashesOutputs(
-      {required List<String> txHashes, required MoneroBaseAccountKeys account});
+  Future<List<MoneroLockedOutput>> watchTxHashesOutputs({
+    required List<String> txHashes,
+    required MoneroBaseAccountKeys account,
+  });
 
   /// Decodes transaction amounts and generates key images for the provided transactions.
   ///
@@ -47,9 +50,10 @@ abstract class MoneroApiInterface {
   /// - [transactions] : A list of Monero transactions to analyze and decode.
   /// - [account] : The base account keys (view and spend keys) used for identifying
   ///   relevant outputs and generating key images.
-  List<MoneroUnlockedOutput> unlockTransactionOutputs(
-      {required List<MoneroTransaction> transactions,
-      required MoneroBaseAccountKeys account});
+  List<MoneroUnlockedOutput> unlockTransactionOutputs({
+    required List<MoneroTransaction> transactions,
+    required MoneroBaseAccountKeys account,
+  });
 
   /// Decodes transaction amounts and generates key images for the specified transaction hashes.
   ///
@@ -62,8 +66,10 @@ abstract class MoneroApiInterface {
   /// - [txHashes] : A list of transaction hashes to fetch, decode, and analyze.
   /// - [account] : The base account keys (view and spend keys) used for identifying
   ///   relevant outputs and generating key images.
-  Future<List<MoneroUnlockedOutput>> unlockTxHashesOutputs(
-      {required List<String> txHashes, required MoneroBaseAccountKeys account});
+  Future<List<MoneroUnlockedOutput>> unlockTxHashesOutputs({
+    required List<String> txHashes,
+    required MoneroBaseAccountKeys account,
+  });
 
   /// Reads and extracts transaction payments for watch-only wallets.
   ///
@@ -82,9 +88,10 @@ abstract class MoneroApiInterface {
   ///   and associated output indices to analyze.
   /// - [account] : The base account keys (view and spend keys) used to identify relevant payments.
   ///
-  List<MoneroLockedPayment> watchTransactipnsPayments(
-      {required List<MoneroTransactionWithOutputIndeces> transactions,
-      required MoneroBaseAccountKeys account});
+  List<MoneroLockedPayment> watchTransactipnsPayments({
+    required List<MoneroTransactionWithOutputIndeces> transactions,
+    required MoneroBaseAccountKeys account,
+  });
 
   /// Reads transaction outputs and retrieves payments for watch-only wallets.
   ///
@@ -106,8 +113,10 @@ abstract class MoneroApiInterface {
   /// Returns:
   /// - A [Future] that resolves to a list of [MoneroLockedPayment], representing the payments
   ///   associated with the provided account, including output metadata and payment-specific details.
-  Future<List<MoneroLockedPayment>> watchTxHashesPayments(
-      {required List<String> txHashes, required MoneroBaseAccountKeys account});
+  Future<List<MoneroLockedPayment>> watchTxHashesPayments({
+    required List<String> txHashes,
+    required MoneroBaseAccountKeys account,
+  });
 
   /// Reads transaction outputs and retrieves key images for unlocked payments.
   ///
@@ -126,10 +135,11 @@ abstract class MoneroApiInterface {
   ///   and generating key images.
   /// - [cleanUpSpent] : A [bool] flag (default: `false`) indicating whether to exclude outputs
   ///   that have already been spent.
-  Future<List<MoneroUnLockedPayment>> unlockTransactionsPayments(
-      {required List<MoneroTransactionWithOutputIndeces> transactions,
-      required MoneroBaseAccountKeys account,
-      bool cleanUpSpent = false});
+  Future<List<MoneroUnLockedPayment>> unlockTransactionsPayments({
+    required List<MoneroTransactionWithOutputIndeces> transactions,
+    required MoneroBaseAccountKeys account,
+    bool cleanUpSpent = false,
+  });
 
   /// Reads transaction outputs and retrieves key images for unlocked payments.
   ///
@@ -147,10 +157,11 @@ abstract class MoneroApiInterface {
   ///   and generating key images.
   /// - [cleanUpSpent] : A [bool] flag (default: `false`) indicating whether to exclude outputs
   ///   that have already been spent.
-  Future<List<MoneroUnLockedPayment>> unlockTxHashesPayments(
-      {required List<String> txHashes,
-      required MoneroBaseAccountKeys account,
-      bool cleanUpSpent = false});
+  Future<List<MoneroUnLockedPayment>> unlockTxHashesPayments({
+    required List<String> txHashes,
+    required MoneroBaseAccountKeys account,
+    bool cleanUpSpent = false,
+  });
 
   /// Converts unlocked payments to multisig unlocked payments for use with the transaction builder.
   ///
@@ -169,10 +180,11 @@ abstract class MoneroApiInterface {
   ///   to be converted into multisig unlocked payments.
   /// - [cleanUpSpent]: A [bool] flag (default: `false`) indicating whether to exclude outputs
   ///   that have already been spent.
-  Future<List<MoneroUnlockedMultisigPayment>> unlockMultisigPayments(
-      {required MoneroMultisigAccountKeys account,
-      required List<UnlockMultisigOutputRequest> payments,
-      bool cleanUpSpent = false});
+  Future<List<MoneroUnlockedMultisigPayment>> unlockMultisigPayments({
+    required MoneroMultisigAccountKeys account,
+    required List<UnlockMultisigOutputRequest> payments,
+    bool cleanUpSpent = false,
+  });
 
   /// Creates and signs a Ring Confidential Transaction (RingCT) for transferring funds.
   ///
@@ -237,9 +249,11 @@ abstract class MoneroApiInterface {
   /// The method is generic and works with any type that extends [MoneroUnLockedPayment],
   /// allowing it to be used for both standard and multisig payments.
   Future<List<T>> cleanUpSpent<T extends MoneroUnLockedPayment>(
-      List<T> payments);
+    List<T> payments,
+  );
 
-  List<MoneroUnlockedOutput> unlockSingleTxOutputs(
-      {required MoneroTransaction transaction,
-      required MoneroBaseAccountKeys account});
+  List<MoneroUnlockedOutput> unlockSingleTxOutputs({
+    required MoneroTransaction transaction,
+    required MoneroBaseAccountKeys account,
+  });
 }

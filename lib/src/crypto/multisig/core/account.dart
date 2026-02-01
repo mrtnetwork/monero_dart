@@ -73,9 +73,12 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       "multisig_pub_key": multisigPubKey.key,
       "common_pub_key": commonPubKey.key,
       "kex_round_message": message,
-      "kex_keys": _kexKeysInMap.map((k, v) =>
-          MapEntry<List<int>, List<List<int>>>(
-              k.key, v.map((e) => e.key).toList()))
+      "kex_keys": _kexKeysInMap.map(
+        (k, v) => MapEntry<List<int>, List<List<int>>>(
+          k.key,
+          v.map((e) => e.key).toList(),
+        ),
+      ),
     };
   }
 
@@ -83,21 +86,26 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     return LayoutConst.struct([
       MoneroLayoutConst.varintInt(property: "threshold"),
       MoneroLayoutConst.varintInt(property: "kex_rounds_complete"),
-      MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
-          property: "signers"),
+      MoneroLayoutConst.variantVec(
+        LayoutConst.fixedBlob32(),
+        property: "signers",
+      ),
       LayoutConst.fixedBlob32(property: "base_private_key"),
       LayoutConst.fixedBlob32(property: "base_public_key"),
       LayoutConst.fixedBlob32(property: "base_common_private_key"),
-      MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32(),
-          property: "multisig_private_keys"),
+      MoneroLayoutConst.variantVec(
+        LayoutConst.fixedBlob32(),
+        property: "multisig_private_keys",
+      ),
       LayoutConst.fixedBlob32(property: "common_private_key"),
       LayoutConst.fixedBlob32(property: "multisig_pub_key"),
       LayoutConst.fixedBlob32(property: "common_pub_key"),
       MoneroLayoutConst.variantString(property: "kex_round_message"),
       MoneroLayoutConst.map(
-          keyLayout: LayoutConst.fixedBlob32(),
-          valueLayout: MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32()),
-          property: "kex_keys"),
+        keyLayout: LayoutConst.fixedBlob32(),
+        valueLayout: MoneroLayoutConst.variantVec(LayoutConst.fixedBlob32()),
+        property: "kex_keys",
+      ),
     ], property: property);
   }
 
@@ -106,33 +114,35 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     return layout(property: property);
   }
 
-  MoneroMultisigAccountCore(
-      {required int threshold,
-      required List<MoneroPublicKey> signers,
-      required this.basePrivateKey,
-      required this.basePublicKey,
-      required this.baseCommonPrivateKey,
-      required List<MoneroPrivateKey> multisigPrivateKeys,
-      required MoneroPrivateKey commonPrivateKey,
-      required MoneroPublicKey multisigPubKey,
-      required MoneroPublicKey commonPubKey,
-      required int kexRoundsComplete,
-      required MultisigKexMessageSerializable nextRoundKexMessage,
-      required Map<MoneroPublicKey, Set<MoneroPublicKey>> kexKeysToOriginsMap})
-      : _signers = signers.clone(),
-        _multisigPrivateKeys = multisigPrivateKeys.clone(),
-        _commonPrivateKey = commonPrivateKey,
-        _multisigPubKey = multisigPubKey,
-        _commonPubKey = commonPubKey,
-        _kexRoundsComplete = kexRoundsComplete,
-        _nextRoundKexMessage = nextRoundKexMessage,
-        _threshold = threshold,
-        _kexKeysInMap = {
-          for (final i in kexKeysToOriginsMap.entries) i.key: i.value.clone()
-        };
+  MoneroMultisigAccountCore({
+    required int threshold,
+    required List<MoneroPublicKey> signers,
+    required this.basePrivateKey,
+    required this.basePublicKey,
+    required this.baseCommonPrivateKey,
+    required List<MoneroPrivateKey> multisigPrivateKeys,
+    required MoneroPrivateKey commonPrivateKey,
+    required MoneroPublicKey multisigPubKey,
+    required MoneroPublicKey commonPubKey,
+    required int kexRoundsComplete,
+    required MultisigKexMessageSerializable nextRoundKexMessage,
+    required Map<MoneroPublicKey, Set<MoneroPublicKey>> kexKeysToOriginsMap,
+  }) : _signers = signers.clone(),
+       _multisigPrivateKeys = multisigPrivateKeys.clone(),
+       _commonPrivateKey = commonPrivateKey,
+       _multisigPubKey = multisigPubKey,
+       _commonPubKey = commonPubKey,
+       _kexRoundsComplete = kexRoundsComplete,
+       _nextRoundKexMessage = nextRoundKexMessage,
+       _threshold = threshold,
+       _kexKeysInMap = {
+         for (final i in kexKeysToOriginsMap.entries) i.key: i.value.clone(),
+       };
 
   void _initializeKexUpdate(
-      List<MultisigKexMessage> expandedMsgs, int kexRoundsRequired) {
+    List<MultisigKexMessage> expandedMsgs,
+    int kexRoundsRequired,
+  ) {
     // Initialization is only needed during the first round
     if (_kexRoundsComplete > 0) return;
 
@@ -152,7 +162,8 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       }
     }
     _commonPrivateKey = MoneroMultisigKexUtils.makeMultisigCommonPrivkey(
-        participantBaseCommonPrivkeys);
+      participantBaseCommonPrivkeys,
+    );
 
     // Set common pubkey
     _commonPubKey = _commonPrivateKey.publicKey;
@@ -163,19 +174,23 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     }
   }
 
-  void _finalizeKexUpdate(int kexRoundsRequired,
-      Map<MoneroPublicKey, Set<MoneroPublicKey>> resultKeysToOriginsMap) {
+  void _finalizeKexUpdate(
+    int kexRoundsRequired,
+    Map<MoneroPublicKey, Set<MoneroPublicKey>> resultKeysToOriginsMap,
+  ) {
     List<MoneroPublicKey> nextMsgKeys = [];
 
     if (_kexRoundsComplete == kexRoundsRequired) {
       // Post-KEX Verification
       if (!resultKeysToOriginsMap.containsKey(_multisigPubKey)) {
         throw const MoneroMultisigAccountException(
-            "Multisig post-kex round: expected multisig pubkey not found.");
+          "Multisig post-kex round: expected multisig pubkey not found.",
+        );
       }
       if (!resultKeysToOriginsMap.containsKey(_commonPubKey)) {
         throw const MoneroMultisigAccountException(
-            "Multisig post-kex round: expected common pubkey not found.");
+          "Multisig post-kex round: expected common pubkey not found.",
+        );
       }
 
       nextMsgKeys.add(_multisigPubKey);
@@ -185,9 +200,11 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       final List<MoneroPublicKey> resultKeys =
           resultKeysToOriginsMap.keys.toList();
       final aggregateKey = MoneroMultisigKexUtils.generateMultisigAggregateKey(
-          resultKeys, _multisigPrivateKeys);
-      _multisigPubKey = aggregateKey.item1;
-      _multisigPrivateKeys = aggregateKey.item2;
+        resultKeys,
+        _multisigPrivateKeys,
+      );
+      _multisigPubKey = aggregateKey.$1;
+      _multisigPrivateKeys = aggregateKey.$2;
       // Reset mapping for the next round
       _kexKeysInMap.clear();
 
@@ -201,10 +218,11 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       for (final derivationAndOrigins in resultKeysToOriginsMap.entries) {
         final derivedPubkey =
             MoneroMultisigKexUtils.calculateMultisigKeypairFromDerivation(
-                derivationAndOrigins.key.key);
-        _multisigPrivateKeys.add(derivedPubkey.item1);
-        _kexKeysInMap[derivedPubkey.item2] = derivationAndOrigins.value.toSet();
-        nextMsgKeys.add(derivedPubkey.item2);
+              derivationAndOrigins.key.key,
+            );
+        _multisigPrivateKeys.add(derivedPubkey.$1);
+        _kexKeysInMap[derivedPubkey.$2] = derivationAndOrigins.value.toSet();
+        nextMsgKeys.add(derivedPubkey.$2);
       }
     } else {
       // Intermediate Round (Pass Keys to Other Participants)
@@ -216,35 +234,45 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     _kexRoundsComplete++;
 
     // Prepare the next round KEX message (or finalize if KEX is complete)
-    _nextRoundKexMessage = MultisigKexMessage.generate(
-      round: (_kexRoundsComplete > kexRoundsRequired
-              ? kexRoundsRequired
-              : _kexRoundsComplete) +
-          1,
-      signingPrivateKey: basePrivateKey,
-      msgPubKeys: nextMsgKeys,
-    ).message;
+    _nextRoundKexMessage =
+        MultisigKexMessage.generate(
+          round:
+              (_kexRoundsComplete > kexRoundsRequired
+                  ? kexRoundsRequired
+                  : _kexRoundsComplete) +
+              1,
+          signingPrivateKey: basePrivateKey,
+          msgPubKeys: nextMsgKeys,
+        ).message;
   }
 
   void _kexUpdateImpl(
-      List<MultisigKexMessage> expandedMsgs, bool incompleteSignerSet) {
+    List<MultisigKexMessage> expandedMsgs,
+    bool incompleteSignerSet,
+  ) {
     // Check if the messages are for the expected KEX round
     MoneroMultisigKexUtils.checkMessagesRound(
-        expandedMsgs, _kexRoundsComplete + 1);
+      expandedMsgs,
+      _kexRoundsComplete + 1,
+    );
 
     // Calculate the number of required KEX rounds
     final int kexRoundsRequired =
         MoneroMultisigKexUtils.multisigKexRoundsRequired(
-            _signers.length, threshold);
+          _signers.length,
+          threshold,
+        );
 
     if (kexRoundsRequired <= 0) {
       throw const MoneroMultisigAccountException(
-          'Multisig kex rounds required unexpectedly 0.');
+        'Multisig kex rounds required unexpectedly 0.',
+      );
     }
 
     if (_kexRoundsComplete >= kexRoundsRequired + 1) {
       throw const MoneroMultisigAccountException(
-          'Multisig kex has already completed all required rounds (including post-kex verification).');
+        'Multisig kex has already completed all required rounds (including post-kex verification).',
+      );
     }
 
     // Initialize account update
@@ -252,19 +280,21 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
 
     // Process messages into a map of pubkey to origins
     final excludePubKeys = MoneroMultisigKexUtils.getKexExcludePubkeys(
-        kexRoundsComplete: kexRoundsComplete,
-        basePublicKey: basePublicKey,
-        kexKeys: _kexKeysInMap.keys.toSet());
+      kexRoundsComplete: kexRoundsComplete,
+      basePublicKey: basePublicKey,
+      kexKeys: _kexKeysInMap.keys.toSet(),
+    );
     final resultKeysToOriginsMap =
         MoneroMultisigKexUtils.multisigKexProcessRoundMsgs(
-            basePrivateKey,
-            basePublicKey,
-            _kexRoundsComplete + 1,
-            threshold,
-            _signers,
-            expandedMsgs,
-            excludePubKeys,
-            incompleteSignerSet);
+          basePrivateKey,
+          basePublicKey,
+          _kexRoundsComplete + 1,
+          threshold,
+          _signers,
+          expandedMsgs,
+          excludePubKeys,
+          incompleteSignerSet,
+        );
 
     // Finalize account update
     _finalizeKexUpdate(kexRoundsRequired, resultKeysToOriginsMap);
@@ -278,7 +308,9 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     if (accountIsActive) {
       return kexRoundsComplete >=
           MoneroMultisigKexUtils.multisigKexRoundsRequired(
-              _signers.length, _threshold);
+            _signers.length,
+            _threshold,
+          );
     } else {
       return false;
     }
@@ -288,32 +320,45 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     if (mainKexRoundsDone) {
       return kexRoundsComplete >=
           MoneroMultisigKexUtils.multisigSetupRoundsRequired(
-              _signers.length, threshold);
+            _signers.length,
+            threshold,
+          );
     }
     return false;
   }
 
-  void initializeKex(int threshold, List<MoneroPublicKey> signers,
-      List<MultisigKexMessage> messages) {
+  void initializeKex(
+    int threshold,
+    List<MoneroPublicKey> signers,
+    List<MultisigKexMessage> messages,
+  ) {
     if (accountIsActive) {
       throw const MoneroCryptoException(
-          "multisig account: tried to initialize kex, but already initialized.");
+        "multisig account: tried to initialize kex, but already initialized.",
+      );
     }
     _signers = MoneroMultisigKexUtils.validateConfig(
-        threshold: threshold, signers: signers, basePublicKey: basePublicKey);
+      threshold: threshold,
+      signers: signers,
+      basePublicKey: basePublicKey,
+    );
     _threshold = threshold;
     _kexUpdateImpl(messages, false);
   }
 
-  void kexUpdate(List<MultisigKexMessage> expandedMessages,
-      {bool forceUpdate = false}) {
+  void kexUpdate(
+    List<MultisigKexMessage> expandedMessages, {
+    bool forceUpdate = false,
+  }) {
     if (!accountIsActive) {
       throw const MoneroCryptoException(
-          "multisig account: tried to update kex, but kex isn't initialized yet.");
+        "multisig account: tried to update kex, but kex isn't initialized yet.",
+      );
     }
     if (multisigIsReady) {
       throw const MoneroCryptoException(
-          "multisig account: tried to update kex, but kex is already complete.");
+        "multisig account: tried to update kex, but kex is already complete.",
+      );
     }
     _kexUpdateImpl(expandedMessages, forceUpdate);
   }

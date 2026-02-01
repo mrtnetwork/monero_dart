@@ -34,7 +34,12 @@ import 'package:monero_dart/src/crypto/types/types.dart';
 
 class CLSAGUtils {
   static (RctKey, RctKey, RctKey) _clsagPrepare(
-      RctKey p, RctKey z, RctKey H, RctKey a, RctKey aG) {
+    RctKey p,
+    RctKey z,
+    RctKey H,
+    RctKey a,
+    RctKey aG,
+  ) {
     RCT.skpkGen(a, aG);
     final aH = RCT.scalarmultKey(H, a);
     final I = RCT.scalarmultKey(H, p);
@@ -42,8 +47,15 @@ class CLSAGUtils {
     return (aH, I, D);
   }
 
-  static void _clsagSign(RctKey c, RctKey a, RctKey p, RctKey z, RctKey muP,
-      RctKey muC, RctKey s) {
+  static void _clsagSign(
+    RctKey c,
+    RctKey a,
+    RctKey p,
+    RctKey z,
+    RctKey muP,
+    RctKey muC,
+    RctKey s,
+  ) {
     final RctKey s0PmuP = RCT.zero();
     CryptoOps.scMul(s0PmuP, muP, p);
     final RctKey s0AddZMuC = RCT.zero();
@@ -51,16 +63,26 @@ class CLSAGUtils {
     CryptoOps.scMulSub(s, c, s0AddZMuC, a);
   }
 
-  static Clsag generate(RctKey message, KeyV P, RctKey p, KeyV C, RctKey z,
-      KeyV cNonZero, RctKey cOffset, int l) {
+  static Clsag generate(
+    RctKey message,
+    KeyV P,
+    RctKey p,
+    KeyV C,
+    RctKey z,
+    KeyV cNonZero,
+    RctKey cOffset,
+    int l,
+  ) {
     final int n = P.length;
     if (n != C.length) {
       throw const MoneroCryptoException(
-          "Signing and commitment key vector sizes must match!");
+        "Signing and commitment key vector sizes must match!",
+      );
     }
     if (n != cNonZero.length) {
       throw const MoneroCryptoException(
-          "Signing and commitment key vector sizes must match!");
+        "Signing and commitment key vector sizes must match!",
+      );
     }
     if (l >= n) {
       throw const MoneroCryptoException("Signing index out of range!");
@@ -133,8 +155,14 @@ class CLSAGUtils {
       final L = RCT.addKeysAGbBcCVar(sigS[i], cP, pPrecomp, cC, cPrecomp);
       final hiP3 = RCT.hashToPoint(P[i]);
       final hPrecomp = CryptoOps.geDsmPrecompVar(hiP3);
-      final R =
-          RCT.addKeysAAbBcCVar(sigS[i], hPrecomp, cP, iPrecomp, cC, dPrecomp);
+      final R = RCT.addKeysAAbBcCVar(
+        sigS[i],
+        hPrecomp,
+        cP,
+        iPrecomp,
+        cC,
+        dPrecomp,
+      );
 
       cToHash[2 * n + 3] = L;
       cToHash[2 * n + 4] = R;
@@ -155,7 +183,8 @@ class CLSAGUtils {
       }
       if (n != sig.s.length) {
         throw const MoneroCryptoException(
-            "Signature scalar vector is the wrong size!");
+          "Signature scalar vector is the wrong size!",
+        );
       }
 
       for (int i = 0; i < n; i++) {
@@ -175,7 +204,7 @@ class CLSAGUtils {
       final EDPoint cOffsetCached = RCT.asPoint(cOffset);
       RctKey c = sig.c1.clone();
       final d8 = RCT.scalarmult8PointVar(sig.d);
-      if (d8.isInfinity) {
+      if (d8.isZero()) {
         throw const MoneroCryptoException("Bad auxiliary key image!");
       }
       if (sig.i == null) {
@@ -227,7 +256,13 @@ class CLSAGUtils {
         final hash8P3 = RCT.hashToPoint(pubs[i].dest);
         final hashPrecomp = CryptoOps.geDsmPrecompVar(hash8P3);
         final R = RCT.addKeysAAbBcCVar(
-            sig.s[i], hashPrecomp, cP, iPrecomp, cC, dPrecomp);
+          sig.s[i],
+          hashPrecomp,
+          cP,
+          iPrecomp,
+          cC,
+          dPrecomp,
+        );
 
         cToHash[2 * n + 3] = L;
         cToHash[2 * n + 4] = R;
@@ -248,14 +283,21 @@ class CLSAGUtils {
 
   static Clsag fakeProve(int ringSize) {
     return Clsag(
-        s: List.filled(ringSize, RCT.identity(clone: false)),
-        c1: RCT.identity(clone: false),
-        d: RCT.identity(clone: false),
-        i: RCT.identity(clone: false));
+      s: List.filled(ringSize, RCT.identity(clone: false)),
+      c1: RCT.identity(clone: false),
+      d: RCT.identity(clone: false),
+      i: RCT.identity(clone: false),
+    );
   }
 
-  static Clsag prove(RctKey message, CtKeyV pubs, CtKey inSk, RctKey a,
-      RctKey cout, int index) {
+  static Clsag prove(
+    RctKey message,
+    CtKeyV pubs,
+    CtKey inSk,
+    RctKey a,
+    RctKey cout,
+    int index,
+  ) {
     if (pubs.isEmpty) {
       throw const MoneroCryptoException("Empty pubs");
     }
@@ -273,8 +315,16 @@ class CLSAGUtils {
     }
     sk[0] = inSk.dest.clone();
     CryptoOps.scSub(sk[1], inSk.mask, a);
-    final Clsag result =
-        generate(message, P, sk[0], C, sk[1], cNonZero, cout, index);
+    final Clsag result = generate(
+      message,
+      P,
+      sk[0],
+      C,
+      sk[1],
+      cNonZero,
+      cout,
+      index,
+    );
     return result;
   }
 }

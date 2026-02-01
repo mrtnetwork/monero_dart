@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Retrieves entries from the address book.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_address_book
-class WalletRequestGetAddressBook extends MoneroWalletRequestParam<
-    List<WalletRPCAddressBookResponse>, Map<String, dynamic>> {
+class WalletRequestGetAddressBook
+    extends
+        MoneroWalletRequestParam<
+          List<WalletRPCAddressBookResponse>,
+          Map<String, dynamic>
+        > {
   WalletRequestGetAddressBook(this.entries);
 
   /// indices of the requested address book entries.

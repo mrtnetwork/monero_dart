@@ -3,18 +3,26 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Get the known peers list.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_peer_list
-class DaemonRequestGetPeerList extends MoneroDaemonRequestParam<
-    DaemonGetPeerListResponse, Map<String, dynamic>> {
-  const DaemonRequestGetPeerList(
-      {this.includeBlock = false, this.publicOnly = true});
+class DaemonRequestGetPeerList
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetPeerListResponse,
+          Map<String, dynamic>
+        > {
+  const DaemonRequestGetPeerList({
+    this.includeBlock = false,
+    this.publicOnly = true,
+  });
   final bool publicOnly;
   final bool includeBlock;
 
   @override
   String get method => "get_peer_list";
   @override
-  Map<String, dynamic> get params =>
-      {"public_only": publicOnly, "include_blocked": includeBlock};
+  Map<String, dynamic> get params => {
+    "public_only": publicOnly,
+    "include_blocked": includeBlock,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.json;
 

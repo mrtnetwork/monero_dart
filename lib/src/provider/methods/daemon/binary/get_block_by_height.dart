@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/block.dart';
 
 /// Get blocks by height. Binary request.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_blocks_by_heightbin
-class DaemonRequestGetBlocksByHeightBin extends MoneroDaemonRequestParam<
-    DaemonGetBlocksByHeightResponse, Map<String, dynamic>> {
+class DaemonRequestGetBlocksByHeightBin
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetBlocksByHeightResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestGetBlocksByHeightBin(this.heights);
 
   /// array of unsigned int; list of block heights

@@ -4,8 +4,12 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 /// Returns details for each transaction in an unsigned or multisig transaction set.
 /// Transaction sets are obtained as return values from one of the following RPC methods:
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#describe_transfer
-class WalletRequestDescribeTransfer extends MoneroWalletRequestParam<
-    WalletRPCDescribeTransferResponse, Map<String, dynamic>> {
+class WalletRequestDescribeTransfer
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCDescribeTransferResponse,
+          Map<String, dynamic>
+        > {
   WalletRequestDescribeTransfer({this.unsignedTxSet, this.multisigTxSet});
 
   /// A hexadecimal string representing a set of unsigned transactions
@@ -19,8 +23,10 @@ class WalletRequestDescribeTransfer extends MoneroWalletRequestParam<
   @override
   String get method => "describe_transfer";
   @override
-  Map<String, dynamic> get params =>
-      {"unsigned_txset": unsignedTxSet, "multisig_txset": multisigTxSet};
+  Map<String, dynamic> get params => {
+    "unsigned_txset": unsignedTxSet,
+    "multisig_txset": multisigTxSet,
+  };
 
   @override
   WalletRPCDescribeTransferResponse onResonse(Map<String, dynamic> result) {

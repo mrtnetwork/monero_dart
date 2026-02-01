@@ -4,8 +4,12 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 /// Return the wallet's addresses for an account.
 /// Optionally filter for specific set of subaddresses.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#get_address
-class WalletRequestGetAddress extends MoneroWalletRequestParam<
-    WalletRPCGetAddressResponse, Map<String, dynamic>> {
+class WalletRequestGetAddress
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCGetAddressResponse,
+          Map<String, dynamic>
+        > {
   WalletRequestGetAddress({required this.accountIndex, this.addressIndex});
 
   /// Return the addresses for this account.
@@ -17,8 +21,10 @@ class WalletRequestGetAddress extends MoneroWalletRequestParam<
   @override
   String get method => "get_address";
   @override
-  Map<String, dynamic> get params =>
-      {"account_index": accountIndex, "address_index": addressIndex};
+  Map<String, dynamic> get params => {
+    "account_index": accountIndex,
+    "address_index": addressIndex,
+  };
 
   @override
   WalletRPCGetAddressResponse onResonse(Map<String, dynamic> result) {

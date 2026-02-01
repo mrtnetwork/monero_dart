@@ -4,10 +4,17 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Check a transaction in the blockchain with its secret key.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#check_tx_key
-class WalletRequestCheckTxKey extends MoneroWalletRequestParam<
-    WalletRPCCheckTxKeyResponse, Map<String, dynamic>> {
-  WalletRequestCheckTxKey(
-      {required this.txId, required this.txKey, required this.address});
+class WalletRequestCheckTxKey
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCCheckTxKeyResponse,
+          Map<String, dynamic>
+        > {
+  WalletRequestCheckTxKey({
+    required this.txId,
+    required this.txKey,
+    required this.address,
+  });
 
   ///  transaction id.
   final String txId;
@@ -21,8 +28,11 @@ class WalletRequestCheckTxKey extends MoneroWalletRequestParam<
   @override
   String get method => "check_tx_key";
   @override
-  Map<String, dynamic> get params =>
-      {"txid": txId, "tx_key": txKey, "address": address.address};
+  Map<String, dynamic> get params => {
+    "txid": txId,
+    "tx_key": txKey,
+    "address": address.address,
+  };
 
   @override
   WalletRPCCheckTxKeyResponse onResonse(Map<String, dynamic> result) {

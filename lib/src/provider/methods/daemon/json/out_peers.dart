@@ -3,8 +3,9 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Limit number of Outgoing peers.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#out_peers
-class DaemonRequestOutPeers extends MoneroDaemonRequestParam<
-    DaemonOutPeersResponse, Map<String, dynamic>> {
+class DaemonRequestOutPeers
+    extends
+        MoneroDaemonRequestParam<DaemonOutPeersResponse, Map<String, dynamic>> {
   const DaemonRequestOutPeers({this.set = true, required this.outPeers});
   final bool set;
 

@@ -15,8 +15,10 @@ class WalletRequestChangeWalletPassword
   @override
   String get method => "change_wallet_password";
   @override
-  Map<String, dynamic> get params =>
-      {"old_password": oldPassword, "new_password": newPassword};
+  Map<String, dynamic> get params => {
+    "old_password": oldPassword,
+    "new_password": newPassword,
+  };
 
   @override
   Null onResonse(Map<String, dynamic> result) {

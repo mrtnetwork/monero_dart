@@ -8,12 +8,14 @@ class MECSignature extends MoneroSerialization {
   final RctKey c;
   final RctKey r;
   MECSignature({required RctKey c, required RctKey r})
-      : c = c.as32Bytes("EcSignature").asImmutableBytes,
-        r = r.as32Bytes("EcSignature").asImmutableBytes;
+    : c = c.as32Bytes("EcSignature").asImmutableBytes,
+      r = r.as32Bytes("EcSignature").asImmutableBytes;
   factory MECSignature.fromBytes(List<int> bytes) {
     if (bytes.length != 64) {
-      throw DartMoneroPluginException("Invalid EcSignature bytes length.",
-          details: {"expected": 64, "length": bytes.length});
+      throw DartMoneroPluginException(
+        "Invalid EcSignature bytes length.",
+        details: {"expected": 64, "length": bytes.length},
+      );
     }
     return MECSignature(c: bytes.sublist(0, 32), r: bytes.sublist(32));
   }

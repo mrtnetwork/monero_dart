@@ -42,8 +42,11 @@ class BulletproofsPlusGenerator {
       return RCT.asPoint(BytesUtils.fromHexString(cached));
     }
     final indexBytes = MoneroLayoutConst.varintInt().serialize(idx);
-    final hash = QuickCrypto.keccack256Hash(
-        [...base, ...RCTConst.bulletproofPlusHashKey, ...indexBytes]);
+    final hash = QuickCrypto.keccack256Hash([
+      ...base,
+      ...RCTConst.bulletproofPlusHashKey,
+      ...indexBytes,
+    ]);
 
     return RCT.asPoint(RCT.hashToP3Bytes(hash));
   }
@@ -56,24 +59,28 @@ class BulletproofsPlusGenerator {
     return _getExponentBytes(base: RCTConst.h, idx: index * 2);
   }
 
-  static RctKey _multiexp(
-      {required List<MultiexpData> data, int higiSize = 0}) {
+  static RctKey _multiexp({
+    required List<MultiexpData> data,
+    int higiSize = 0,
+  }) {
     if (higiSize > 0) {
       if (higiSize <= 232 && data.length == higiSize) {
         return Multiexp.straus(data: data, step: 0).toBytes();
       }
       return Multiexp.pippenger(
-              data: data,
-              cacheSize: higiSize,
-              c: Multiexp.getPippengerC(data.length))
-          .toBytes();
+        data: data,
+        cacheSize: higiSize,
+        c: Multiexp.getPippengerC(data.length),
+      ).toBytes();
     }
     if (data.length <= 95) {
       return Multiexp.straus(data: data).toBytes();
     }
     return Multiexp.pippenger(
-            data: data, cacheSize: 0, c: Multiexp.getPippengerC(data.length))
-        .toBytes();
+      data: data,
+      cacheSize: 0,
+      c: Multiexp.getPippengerC(data.length),
+    ).toBytes();
   }
 
   static List<int> _vectorExponentVar({required KeyV a, required KeyV b}) {
@@ -85,27 +92,28 @@ class BulletproofsPlusGenerator {
     }
     final List<MultiexpData> multiexpDataVar = [];
     for (int i = 0; i < a.length; i++) {
-      multiexpDataVar.add(MultiexpData(
-          scalar: a[i],
-          point: _getGiP3Bytes(i))); // Assuming MultiexpData has a constructor
+      multiexpDataVar.add(
+        MultiexpData(scalar: a[i], point: _getGiP3Bytes(i)),
+      ); // Assuming MultiexpData has a constructor
       multiexpDataVar.add(MultiexpData(scalar: b[i], point: _getHiP3Bytes(i)));
     }
     return _multiexp(data: multiexpDataVar, higiSize: a.length * 2);
   }
 
   static RctKey _computeLRVar(
-      int size,
-      RctKey y,
-      List<EDPoint> G,
-      int g0,
-      List<EDPoint> H,
-      int h0,
-      KeyV a,
-      int a0,
-      KeyV b,
-      int b0,
-      RctKey c,
-      RctKey d) {
+    int size,
+    RctKey y,
+    List<EDPoint> G,
+    int g0,
+    List<EDPoint> H,
+    int h0,
+    KeyV a,
+    int a0,
+    KeyV b,
+    int b0,
+    RctKey c,
+    RctKey d,
+  ) {
     if (size + g0 > G.length) {
       throw const MoneroCryptoException("Incompatible size for G");
     }
@@ -125,11 +133,15 @@ class BulletproofsPlusGenerator {
     RctKey temp = RCT.zero();
     for (int i = 0; i < size; ++i) {
       temp = Ed25519Utils.scMulVar(a[a0 + i], y);
-      final RctKey scalar =
-          Ed25519Utils.scMulVarBigInt(temp, RCTConst.invEightBig);
+      final RctKey scalar = Ed25519Utils.scMulVarBigInt(
+        temp,
+        RCTConst.invEightBig,
+      );
       multiexpData[i * 2] = MultiexpData(scalar: scalar, point: G[g0 + i]);
-      final RctKey scalar2 =
-          Ed25519Utils.scMulVarBigInt(b[b0 + i], RCTConst.invEightBig);
+      final RctKey scalar2 = Ed25519Utils.scMulVarBigInt(
+        b[b0 + i],
+        RCTConst.invEightBig,
+      );
       multiexpData[i * 2 + 1] = MultiexpData(scalar: scalar2, point: H[h0 + i]);
     }
     RctKey scBytes = Ed25519Utils.scMulVarBigInt(c, RCTConst.invEightBig);
@@ -209,7 +221,10 @@ class BulletproofsPlusGenerator {
   }
 
   static RctKey _weightedInnerProduct(
-      List<RctKey> a, List<RctKey> b, RctKey y) {
+    List<RctKey> a,
+    List<RctKey> b,
+    RctKey y,
+  ) {
     if (a.length != b.length) {
       throw const MoneroCryptoException("Incompatible sizes of a and b");
     }
@@ -232,10 +247,11 @@ class BulletproofsPlusGenerator {
     final int size = v.length ~/ 2;
     for (int n = 0; n < size; ++n) {
       vC[n] = CryptoOps.geDoubleScalarMultPrecompPointVar(
-          a,
-          CryptoOps.geDsmPrecompVar(v[n]),
-          b,
-          CryptoOps.geDsmPrecompVar(v[size + n]));
+        a,
+        CryptoOps.geDsmPrecompVar(v[n]),
+        b,
+        CryptoOps.geDsmPrecompVar(v[size + n]),
+      );
     }
     return vC.sublist(0, size);
   }
@@ -366,7 +382,10 @@ class BulletproofsPlusGenerator {
   }
 
   static RctKey _transcriptUpdateThree(
-      RctKey transcript, RctKey update0, RctKey update1) {
+    RctKey transcript,
+    RctKey update0,
+    RctKey update1,
+  ) {
     return RCT.hashToScalarBytesVar([...transcript, ...update0, ...update1]);
   }
 
@@ -378,8 +397,10 @@ class BulletproofsPlusGenerator {
     try {
       return _bulletproofPlusPROVE(sv, gamma);
     } catch (e) {
-      throw MoneroCryptoException("Failed to generate Bulletproof Plus.",
-          details: {"error": e.toString()});
+      throw MoneroCryptoException(
+        "Failed to generate Bulletproof Plus.",
+        details: {"error": e.toString()},
+      );
     }
   }
 
@@ -416,10 +437,14 @@ class BulletproofsPlusGenerator {
     RctKey temp = RCT.zero();
     RctKey temp2 = RCT.zero();
     for (int i = 0; i < sv.length; ++i) {
-      final RctKey gamma8 =
-          Ed25519Utils.scMulVarBigInt(gamma[i], RCTConst.invEightBig);
-      final RctKey sv8 =
-          Ed25519Utils.scMulVarBigInt(sv[i], RCTConst.invEightBig);
+      final RctKey gamma8 = Ed25519Utils.scMulVarBigInt(
+        gamma[i],
+        RCTConst.invEightBig,
+      );
+      final RctKey sv8 = Ed25519Utils.scMulVarBigInt(
+        sv[i],
+        RCTConst.invEightBig,
+      );
       V.add(RCT.addKeys2Var(gamma8, sv8, RCTConst.h));
     }
 
@@ -511,20 +536,51 @@ class BulletproofsPlusGenerator {
       while (nprime > 1) {
         nprime ~/= 2;
         final RctKey cL = _weightedInnerProduct(
-            aprime.sublist(0, nprime), bprime.sublist(nprime), y);
+          aprime.sublist(0, nprime),
+          bprime.sublist(nprime),
+          y,
+        );
         final RctKey cR = _weightedInnerProduct(
-            _vectorScalar(aprime.sublist(nprime), yPowers[nprime]),
-            bprime.sublist(0, nprime),
-            y);
+          _vectorScalar(aprime.sublist(nprime), yPowers[nprime]),
+          bprime.sublist(0, nprime),
+          y,
+        );
         final RctKey dL = RCT.skGen_();
         final RctKey dR = RCT.skGen_();
-        L[round] = _computeLRVar(nprime, yinvpow[nprime], gPrime, nprime,
-            hPrime, 0, aprime, 0, bprime, nprime, cL, dL);
-        R[round] = _computeLRVar(nprime, yPowers[nprime], gPrime, 0, hPrime,
-            nprime, aprime, nprime, bprime, 0, cR, dR);
+        L[round] = _computeLRVar(
+          nprime,
+          yinvpow[nprime],
+          gPrime,
+          nprime,
+          hPrime,
+          0,
+          aprime,
+          0,
+          bprime,
+          nprime,
+          cL,
+          dL,
+        );
+        R[round] = _computeLRVar(
+          nprime,
+          yPowers[nprime],
+          gPrime,
+          0,
+          hPrime,
+          nprime,
+          aprime,
+          nprime,
+          bprime,
+          0,
+          cR,
+          dR,
+        );
 
-        final RctKey challenge =
-            _transcriptUpdateThree(transcript, L[round], R[round]);
+        final RctKey challenge = _transcriptUpdateThree(
+          transcript,
+          L[round],
+          R[round],
+        );
         transcript = challenge.clone();
         if (BytesUtils.bytesEqual(challenge, RCT.zero(clone: false))) {
           return tryAgain();
@@ -535,11 +591,13 @@ class BulletproofsPlusGenerator {
         hPrime = _hadamardFoldVar(hPrime, challenge, cInv);
         temp = Ed25519Utils.scMulVar(cInv, yPowers[nprime]);
         aprime = _vectorAddComponentwise(
-            _vectorScalar(aprime.sublist(0, nprime), challenge),
-            _vectorScalar(aprime.sublist(nprime), temp));
+          _vectorScalar(aprime.sublist(0, nprime), challenge),
+          _vectorScalar(aprime.sublist(nprime), temp),
+        );
         bprime = _vectorAddComponentwise(
-            _vectorScalar(bprime.sublist(0, nprime), cInv),
-            _vectorScalar(bprime.sublist(nprime), challenge));
+          _vectorScalar(bprime.sublist(0, nprime), cInv),
+          _vectorScalar(bprime.sublist(nprime), challenge),
+        );
         final RctKey cSq = Ed25519Utils.scMulVar(challenge, challenge);
         final RctKey cSqInv = Ed25519Utils.scMulVar(cInv, cInv);
         alpha1 = Ed25519Utils.scMulAddVar(dL, cSq, alpha1);
@@ -582,24 +640,39 @@ class BulletproofsPlusGenerator {
       RctKey d1 = Ed25519Utils.scMulAddVar(d_, e, eta);
       d1 = Ed25519Utils.scMulAddVar(alpha1, eSq, d1);
       return BulletproofPlus(
-          a: A, a1: a1, b: B, r1: r1, d1: d1, s1: s1, l: L, r: R, v: V);
+        a: A,
+        a1: a1,
+        b: B,
+        r1: r1,
+        d1: d1,
+        s1: s1,
+        l: L,
+        r: R,
+        v: V,
+      );
     }
 
     return tryAgain();
   }
 
   static BulletproofPlus bulletproofPlusPROVEAmouts(
-      List<BigInt> v, KeyV gamma) {
+    List<BigInt> v,
+    KeyV gamma,
+  ) {
     try {
       return _bulletproofPlusPROVEAmouts(v, gamma);
     } catch (e) {
-      throw MoneroCryptoException("Failed to generate Bulletproof Plus.",
-          details: {"error": e.toString()});
+      throw MoneroCryptoException(
+        "Failed to generate Bulletproof Plus.",
+        details: {"error": e.toString()},
+      );
     }
   }
 
   static BulletproofPlus _bulletproofPlusPROVEAmouts(
-      List<BigInt> v, KeyV gamma) {
+    List<BigInt> v,
+    KeyV gamma,
+  ) {
     if (v.length != gamma.length) {
       throw const MoneroCryptoException("Incompatible sizes of v and gamma");
     }
@@ -616,8 +689,10 @@ class BulletproofsPlusGenerator {
     try {
       return _bulletproofPlusVerify(proofs);
     } catch (e) {
-      throw MoneroCryptoException("Failed to verify Bulletproof Plus.",
-          details: {"error": e.toString()});
+      throw MoneroCryptoException(
+        "Failed to verify Bulletproof Plus.",
+        details: {"error": e.toString()},
+      );
     }
   }
 
@@ -642,7 +717,8 @@ class BulletproofsPlusGenerator {
 
       if (proof.v.isEmpty) {
         throw const MoneroCryptoException(
-            "V does not have at least one element");
+          "V does not have at least one element",
+        );
       }
       if (proof.l.length != proof.l.length) {
         throw const MoneroCryptoException("Mismatched L and R sizes");
@@ -652,8 +728,10 @@ class BulletproofsPlusGenerator {
       }
       maxLength = IntUtils.max(maxLength, proof.l.length);
       RctKey transcript = RCTConst.bulletproofPlusinitialTranscript.clone();
-      transcript =
-          _transcriptUpdateTwo(transcript, RCT.hashToScalarKeysVar(proof.v));
+      transcript = _transcriptUpdateTwo(
+        transcript,
+        RCT.hashToScalarKeysVar(proof.v),
+      );
       final y = transcript = _transcriptUpdateTwo(transcript, proof.a);
       if (BytesUtils.bytesEqual(y, RCT.zero(clone: false))) {
         throw const MoneroCryptoException("y == 0");
@@ -674,11 +752,17 @@ class BulletproofsPlusGenerator {
       if (rounds <= 0) {
         throw const MoneroCryptoException("Zero rounds");
       }
-      final List<RctKey> challenges =
-          List<RctKey>.generate(rounds, (_) => RCT.zero());
+      final List<RctKey> challenges = List<RctKey>.generate(
+        rounds,
+        (_) => RCT.zero(),
+      );
       for (int j = 0; j < rounds; ++j) {
-        final update = transcript =
-            _transcriptUpdateThree(transcript, proof.l[j], proof.r[j]);
+        final update =
+            transcript = _transcriptUpdateThree(
+              transcript,
+              proof.l[j],
+              proof.r[j],
+            );
         challenges[j] = update;
 
         if (BytesUtils.bytesEqual(challenges[j], RCT.zero(clone: false))) {
@@ -694,13 +778,16 @@ class BulletproofsPlusGenerator {
         toInvert.add(challenges[j]);
       }
       toInvert.add(y);
-      proofData.add(BpPlusProofData(
+      proofData.add(
+        BpPlusProofData(
           y: y,
           z: z,
           e: e,
           challenges: challenges,
           logM: logM,
-          invOffset: invOffset));
+          invOffset: invOffset,
+        ),
+      );
       invOffset += rounds + 1;
     }
 
@@ -788,7 +875,9 @@ class BulletproofsPlusGenerator {
       }
       // final RctKey sumD = RCT.zero();
       final sumD = Ed25519Utils.scMulVar(
-          RCTConst.twoSixtyFourMinusOne, _sumOfEvenPowers(pd.z, 2 * M));
+        RCTConst.twoSixtyFourMinusOne,
+        _sumOfEvenPowers(pd.z, 2 * M),
+      );
 
       final RctKey sumY = _sumOfScalarPowers(pd.y, mn);
       temp = Ed25519Utils.scSubVar(zSquared, pd.z);
@@ -824,8 +913,10 @@ class BulletproofsPlusGenerator {
       eS1W = Ed25519Utils.scMulVar(eS1W, weight);
       RctKey eSquaredZW = Ed25519Utils.scMulVar(eSq, pd.z);
       eSquaredZW = Ed25519Utils.scMulVar(eSquaredZW, weight);
-      final RctKey minusESquaredZW =
-          Ed25519Utils.scSubVar(RCTConst.z, eSquaredZW);
+      final RctKey minusESquaredZW = Ed25519Utils.scSubVar(
+        RCTConst.z,
+        eSquaredZW,
+      );
       RctKey minusESquaredWY = Ed25519Utils.scSubVar(RCTConst.z, eSq);
       minusESquaredWY = Ed25519Utils.scMulVar(minusESquaredWY, weight);
       minusESquaredWY = Ed25519Utils.scMulVar(minusESquaredWY, yMN);
@@ -836,7 +927,10 @@ class BulletproofsPlusGenerator {
         // Use the binary decomposition of the index
         gSc = Ed25519Utils.scMulAddVar(gSc, cCache[i], eSquaredZW);
         hSc = Ed25519Utils.scMulAddVar(
-            eS1W, cCache[(~i) & (mn - 1)], minusESquaredZW);
+          eS1W,
+          cCache[(~i) & (mn - 1)],
+          minusESquaredZW,
+        );
 
         // Complete the scalar derivation
         giScalars[i] = Ed25519Utils.scAddVar(giScalars[i], gSc);
@@ -864,8 +958,10 @@ class BulletproofsPlusGenerator {
     final List<MultiexpData?> nd = List.filled(2 * maxMN, null);
     for (int i = 0; i < maxMN; ++i) {
       nd[i * 2] = MultiexpData(scalar: giScalars[i], point: _getGiP3Bytes(i));
-      nd[i * 2 + 1] =
-          MultiexpData(scalar: hiScalars[i], point: _getHiP3Bytes(i));
+      nd[i * 2 + 1] = MultiexpData(
+        scalar: hiScalars[i],
+        point: _getHiP3Bytes(i),
+      );
     }
     data = [...nd.cast(), ...data];
 

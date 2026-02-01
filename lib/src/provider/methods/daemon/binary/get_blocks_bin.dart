@@ -5,8 +5,12 @@ import 'package:monero_dart/src/serialization/storage_format/types/binary_contai
 
 /// Get all blocks info. Binary request.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_blocksbin
-class DaemonRequestGetBlocksBin extends MoneroDaemonRequestParam<
-    DaemonGetBlockBinResponse, Map<String, dynamic>> {
+class DaemonRequestGetBlocksBin
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetBlockBinResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestGetBlocksBin({
     List<String> blockIds = const [],
     this.startHeight = 0,
@@ -30,14 +34,14 @@ class DaemonRequestGetBlocksBin extends MoneroDaemonRequestParam<
   String get method => "getblocks.bin";
   @override
   Map<String, dynamic> get params => {
-        "block_ids": MoneroStorageBinary.fromListOfHex(blockIds),
-        "start_height": startHeight,
-        "requested_info": requestedInfo.index,
-        "no_miner_tx": noMinerTx,
-        "prune": prune,
-        "high_height_ok": highHeightOk,
-        "pool_info_since": poolInfoSince ?? BigInt.zero
-      };
+    "block_ids": MoneroStorageBinary.fromListOfHex(blockIds),
+    "start_height": startHeight,
+    "requested_info": requestedInfo.index,
+    "no_miner_tx": noMinerTx,
+    "prune": prune,
+    "high_height_ok": highHeightOk,
+    "pool_info_since": poolInfoSince ?? BigInt.zero,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.binary;
   @override

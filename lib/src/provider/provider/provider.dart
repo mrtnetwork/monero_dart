@@ -13,9 +13,10 @@ class MoneroProvider extends BaseProvider<MoneroRequestDetails> {
 
   int _id = 0;
 
-  static SERVICERESPONSE _findError<SERVICERESPONSE>(
-      {required MoneroServiceResponse response,
-      required MoneroRequestDetails params}) {
+  static SERVICERESPONSE _findError<SERVICERESPONSE>({
+    required MoneroServiceResponse response,
+    required MoneroRequestDetails params,
+  }) {
     switch (params.requestType) {
       case DemonRequestType.json:
       case DemonRequestType.jsonRPC:
@@ -24,24 +25,33 @@ class MoneroProvider extends BaseProvider<MoneroRequestDetails> {
             .getResult(params);
         if (params.requestType == DemonRequestType.json) {
           return ServiceProviderUtils.parseResponse(
-              object: data, params: params);
+            object: data,
+            params: params,
+          );
         }
-        final error =
-            StringUtils.tryToJson<Map<String, dynamic>>(data["error"]);
+        final error = StringUtils.tryToJson<Map<String, dynamic>>(
+          data["error"],
+        );
         if (error != null) {
           throw RPCError(
-              message: error["message"]?.toString() ?? '',
-              errorCode: IntUtils.tryParse(error["code"]),
-              details: error);
+            message: error["message"]?.toString() ?? '',
+            errorCode: IntUtils.tryParse(error["code"]),
+            details: error,
+          );
         }
         return ServiceProviderUtils.parseResponse(
-            object: data["result"], params: params);
+          object: data["result"],
+          params: params,
+        );
       case DemonRequestType.binary:
-        final data =
-            response.cast<BaseServiceResponse<List<int>>>().getResult(params);
+        final data = response.cast<BaseServiceResponse<List<int>>>().getResult(
+          params,
+        );
         final jsonData = MoneroStorageSerializer.deserialize(data);
         return ServiceProviderUtils.parseResponse(
-            object: jsonData, params: params);
+          object: jsonData,
+          params: params,
+        );
     }
   }
 
@@ -50,8 +60,9 @@ class MoneroProvider extends BaseProvider<MoneroRequestDetails> {
   /// The [timeout] parameter, if provided, sets the maximum duration for the request.
   @override
   Future<RESULT> request<RESULT, SERVICERESPONSE>(
-      BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request,
-      {Duration? timeout}) async {
+    BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request, {
+    Duration? timeout,
+  }) async {
     final r = await requestDynamic(request, timeout: timeout);
     return request.onResonse(r);
   }
@@ -62,15 +73,17 @@ class MoneroProvider extends BaseProvider<MoneroRequestDetails> {
   /// Whatever is received will be returned
   @override
   Future<SERVICERESPONSE> requestDynamic<RESULT, SERVICERESPONSE>(
-      BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request,
-      {Duration? timeout}) async {
+    BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request, {
+    Duration? timeout,
+  }) async {
     final params = request.buildRequest(_id++);
     final response = switch (params.requestType) {
-      DemonRequestType.json ||
-      DemonRequestType.jsonRPC =>
-        await rpc.doRequest<Map<String, dynamic>>(params, timeout: timeout),
-      DemonRequestType.binary =>
-        await rpc.doRequest<List<int>>(params, timeout: timeout)
+      DemonRequestType.json || DemonRequestType.jsonRPC => await rpc
+          .doRequest<Map<String, dynamic>>(params, timeout: timeout),
+      DemonRequestType.binary => await rpc.doRequest<List<int>>(
+        params,
+        timeout: timeout,
+      ),
     };
     return _findError(response: response, params: params);
   }
@@ -80,8 +93,9 @@ class MoneroProvider extends BaseProvider<MoneroRequestDetails> {
   /// The [timeout] parameter, if provided, sets the maximum duration for the request.
   /// response binary data will be returned
   Future<List<int>> requestBinary<RESULT, SERVICERESPONSE>(
-      BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request,
-      {Duration? timeout}) async {
+    BaseServiceRequest<RESULT, SERVICERESPONSE, MoneroRequestDetails> request, {
+    Duration? timeout,
+  }) async {
     final params = request.buildRequest(_id++);
     final response = await rpc.doRequest<List<int>>(params, timeout: timeout);
     return response.getResult(params);

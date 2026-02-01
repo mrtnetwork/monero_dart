@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// Block header information for the most recent block is easily retrieved with this method. No inputs are needed.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_last_block_header
-class DaemonRequestGetLastBlockHeader extends MoneroDaemonRequestParam<
-    DaemonGetLastBlockHeaderResponse, Map<String, dynamic>> {
+class DaemonRequestGetLastBlockHeader
+    extends
+        MoneroDaemonRequestParam<
+          DaemonGetLastBlockHeaderResponse,
+          Map<String, dynamic>
+        > {
   DaemonRequestGetLastBlockHeader({this.fillPowHash = false});
 
   /// Add PoW hash to block_header response.

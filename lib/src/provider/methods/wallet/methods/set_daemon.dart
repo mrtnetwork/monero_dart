@@ -34,18 +34,18 @@ class WalletRequestSetDaemon
   String get method => "set_daemon";
   @override
   Map<String, dynamic> get params => {
-        "address": address,
-        "trusted": trusted,
-        "ssl_support": sslSupport,
-        "ssl_private_key_path": sslPrivateKeyPath,
-        "ssl_certificate_path": sslCertificatePath,
-        "ssl_ca_file": sslCaFile,
-        "ssl_allowed_fingerprints": sslAllowedFingerprints,
-        "ssl_allow_any_cert": sslAllowAnyCert,
-        "username": username,
-        "password": password,
-        "proxy": proxy,
-      };
+    "address": address,
+    "trusted": trusted,
+    "ssl_support": sslSupport,
+    "ssl_private_key_path": sslPrivateKeyPath,
+    "ssl_certificate_path": sslCertificatePath,
+    "ssl_ca_file": sslCaFile,
+    "ssl_allowed_fingerprints": sslAllowedFingerprints,
+    "ssl_allow_any_cert": sslAllowAnyCert,
+    "username": username,
+    "password": password,
+    "proxy": proxy,
+  };
 
   @override
   void onResonse(Map<String, dynamic> result) {}

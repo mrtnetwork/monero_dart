@@ -4,8 +4,12 @@ import 'package:monero_dart/src/provider/models/daemon/distribution.dart';
 /// Get a histogram of output amounts. For all amounts (possibly filtered by parameters),
 /// gives the number of outputs on the chain for that amount. RingCT outputs counts as 0 amount.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_output_distribution
-class DaemonRequestGetOutputDistribution extends MoneroDaemonRequestParam<
-    OutputDistributionResponse, Map<String, dynamic>> {
+class DaemonRequestGetOutputDistribution
+    extends
+        MoneroDaemonRequestParam<
+          OutputDistributionResponse,
+          Map<String, dynamic>
+        > {
   const DaemonRequestGetOutputDistribution({
     required this.amounts,
     this.cumulative = false,

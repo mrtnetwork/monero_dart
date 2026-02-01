@@ -21,9 +21,9 @@ class DaemonRequestGetOuts
   String get method => "get_outs.bin";
   @override
   Map<String, dynamic> get params => {
-        "outputs": outputs.map((e) => e.toJson()).toList(),
-        "get_txid ": getTxId
-      };
+    "outputs": outputs.map((e) => e.toJson()).toList(),
+    "get_txid ": getTxId,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.binary;
 

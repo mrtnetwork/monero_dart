@@ -3,8 +3,12 @@ import 'package:monero_dart/src/provider/models/wallet/basic_models.dart';
 
 /// Sign a transaction in multisig.
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#sign_multisig
-class WalletRequestSignMultisig extends MoneroWalletRequestParam<
-    WalletRPCSignMultisigResponse, Map<String, dynamic>> {
+class WalletRequestSignMultisig
+    extends
+        MoneroWalletRequestParam<
+          WalletRPCSignMultisigResponse,
+          Map<String, dynamic>
+        > {
   WalletRequestSignMultisig(this.txDataHex);
 
   /// Multisig transaction in hex format, as returned by transfer under multisig_txset.

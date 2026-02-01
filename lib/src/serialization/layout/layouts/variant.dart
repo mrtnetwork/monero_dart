@@ -3,7 +3,7 @@ import 'package:blockchain_utils/layout/layout.dart';
 
 class MoneroBigIntVarInt extends Layout<BigInt> {
   MoneroBigIntVarInt(this.layout, {String? property})
-      : super(-1, property: property);
+    : super(-1, property: property);
   final BigIntLayout layout;
   static BigInt readVarintBig(List<int> bytes) {
     BigInt result = BigInt.zero;
@@ -34,10 +34,9 @@ class MoneroBigIntVarInt extends Layout<BigInt> {
     return dest;
   }
 
-  @override
-  int getSpan(LayoutByteReader? bytes, {int offset = 0, BigInt? source}) {
+  int _getSpan(LayoutByteReader bytes, int offset) {
     int span = 0;
-    while ((bytes!.at(offset + span) & 0x80) != 0) {
+    while ((bytes.at(offset + span) & 0x80) != 0) {
       span++;
     }
     return span + 1;
@@ -45,7 +44,7 @@ class MoneroBigIntVarInt extends Layout<BigInt> {
 
   @override
   LayoutDecodeResult<BigInt> decode(LayoutByteReader bytes, {int offset = 0}) {
-    final span = getSpan(bytes, offset: offset);
+    final span = _getSpan(bytes, offset);
     final decode = readVarintBig(bytes.sublist(offset, offset + span));
 
     return LayoutDecodeResult(consumed: span, value: decode);
@@ -67,7 +66,7 @@ class MoneroBigIntVarInt extends Layout<BigInt> {
 
 class MoneroIntVarInt extends Layout<int> {
   MoneroIntVarInt(this.layout, {String? property})
-      : super(-1, property: property);
+    : super(-1, property: property);
   final IntegerLayout layout;
   int readVarint(List<int> bytes, {int startIndex = 0}) {
     int result = 0;
@@ -94,10 +93,9 @@ class MoneroIntVarInt extends Layout<int> {
     return dest;
   }
 
-  @override
-  int getSpan(LayoutByteReader? bytes, {int offset = 0, int? source}) {
+  int _getSpan(LayoutByteReader bytes, int offset) {
     int span = 0;
-    while ((bytes!.at(offset + span) & 0x80) != 0) {
+    while ((bytes.at(offset + span) & 0x80) != 0) {
       span++;
     }
     return span + 1;
@@ -105,9 +103,8 @@ class MoneroIntVarInt extends Layout<int> {
 
   @override
   LayoutDecodeResult<int> decode(LayoutByteReader bytes, {int offset = 0}) {
-    final span = getSpan(bytes, offset: offset);
+    final span = _getSpan(bytes, offset);
     final decode = readVarint(bytes.sublist(offset, offset + span));
-
     return LayoutDecodeResult(consumed: span, value: decode);
   }
 

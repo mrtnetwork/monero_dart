@@ -5,11 +5,12 @@ import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#set_bootstrap_daemon
 class DaemonRequestSetBootstrapDaemon
     extends MoneroDaemonRequestParam<DaemonBaseResponse, Map<String, dynamic>> {
-  const DaemonRequestSetBootstrapDaemon(
-      {required this.address,
-      required this.username,
-      required this.password,
-      required this.proxy});
+  const DaemonRequestSetBootstrapDaemon({
+    required this.address,
+    required this.username,
+    required this.password,
+    required this.proxy,
+  });
   final String address;
   final String username;
   final String password;
@@ -19,11 +20,11 @@ class DaemonRequestSetBootstrapDaemon
   String get method => "set_bootstrap_daemon";
   @override
   Map<String, dynamic> get params => {
-        "address": address,
-        "username": username,
-        "password": password,
-        "proxy": proxy
-      };
+    "address": address,
+    "username": username,
+    "password": password,
+    "proxy": proxy,
+  };
   @override
   DemonRequestType get encodingType => DemonRequestType.json;
 

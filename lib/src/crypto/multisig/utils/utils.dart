@@ -28,43 +28,59 @@ class MoneroMultisigUtils {
   }) {
     final l = RCT.zero();
     final r = generateMultisigLr(
-        pubKey: outPybKey, secretKey: secretKey, resultKeyL: l);
+      pubKey: outPybKey,
+      secretKey: secretKey,
+      resultKeyL: l,
+    );
     return MultisigKLRKI(k: secretKey, L: l, R: r, ki: keyImage);
   }
 
-  static RctKey generateMultisigLr(
-      {required List<int> pubKey,
-      required List<int> secretKey,
-      RctKey? resultKeyL,
-      RctKey? resultKeyR}) {
+  static RctKey generateMultisigLr({
+    required List<int> pubKey,
+    required List<int> secretKey,
+    RctKey? resultKeyL,
+    RctKey? resultKeyR,
+  }) {
     resultKeyL ??= RCT.zero();
     resultKeyR ??= RCT.zero();
     RCT.scalarmultBase(secretKey, result: resultKeyL);
     MoneroCrypto.generateKeyImageBytes(
-        pubkey: pubKey, secretKey: secretKey, resultKey: resultKeyR);
+      pubkey: pubKey,
+      secretKey: secretKey,
+      resultKey: resultKeyR,
+    );
     return resultKeyR;
   }
 
-  static RctKey generateMultisigKeyImageBytes(
-      {required List<int> outputPubKey,
-      required List<int> multisigKey,
-      RctKey? resultKey}) {
+  static RctKey generateMultisigKeyImageBytes({
+    required List<int> outputPubKey,
+    required List<int> multisigKey,
+    RctKey? resultKey,
+  }) {
     return MoneroCrypto.generateKeyImageBytes(
-        pubkey: outputPubKey, secretKey: multisigKey, resultKey: resultKey);
+      pubkey: outputPubKey,
+      secretKey: multisigKey,
+      resultKey: resultKey,
+    );
   }
 
-  static RctKey generateMultisigKeyImage(
-      {required MoneroPublicKey outputPubKey,
-      required MoneroPrivateKey multisigKey,
-      RctKey? resultKey}) {
+  static RctKey generateMultisigKeyImage({
+    required MoneroPublicKey outputPubKey,
+    required MoneroPrivateKey multisigKey,
+    RctKey? resultKey,
+  }) {
     return MoneroCrypto.generateKeyImage(
-        pubkey: outputPubKey, secretKey: multisigKey, resultKey: resultKey);
+      pubkey: outputPubKey,
+      secretKey: multisigKey,
+      resultKey: resultKey,
+    );
   }
 
-  static RctKey generateMultisigCompositeKeyImage(
-      {required List<MoneroMultisigOutputInfo> infos,
-      required RctKey keyImage,
-      required List<RctKey> exclude}) {
+  static RctKey generateMultisigCompositeKeyImage({
+    required List<MoneroMultisigOutputInfo> infos,
+    required RctKey keyImage,
+    required List<RctKey> exclude,
+  }) {
     RctKey kImage = keyImage.clone();
     for (final i in infos) {
       for (final p in i.partialKeyImages) {
@@ -77,16 +93,20 @@ class MoneroMultisigUtils {
     return kImage;
   }
 
-  static MultisigKLRKI getMultisigCompositeKLRki(
-      {required List<int> outPubKey,
-      required RctKey keyImage,
-      required List<MoneroMultisigOutputInfo> infos,
-      required List<RctKey> usedL,
-      required List<RctKey> newUsedL,
-      required int threshHold}) {
+  static MultisigKLRKI getMultisigCompositeKLRki({
+    required List<int> outPubKey,
+    required RctKey keyImage,
+    required List<MoneroMultisigOutputInfo> infos,
+    required List<RctKey> usedL,
+    required List<RctKey> newUsedL,
+    required int threshHold,
+  }) {
     final sk = RCT.skGen_().asImmutableBytes;
     final klrki = getMultisigKLRki(
-        outPybKey: outPubKey, secretKey: sk, keyImage: keyImage);
+      outPybKey: outPubKey,
+      secretKey: sk,
+      keyImage: keyImage,
+    );
     RctKey L = klrki.L.clone();
     RctKey R = klrki.R.clone();
     int signers = 1;
@@ -106,7 +126,8 @@ class MoneroMultisigUtils {
     }
     if (signers < threshHold) {
       throw const MoneroMultisigAccountException(
-          "LR not found for enough participants");
+        "LR not found for enough participants",
+      );
     }
 
     return MultisigKLRKI(k: klrki.k, L: L, R: R, ki: klrki.ki);

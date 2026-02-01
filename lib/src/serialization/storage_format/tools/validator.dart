@@ -11,7 +11,8 @@ class MoneroStorageFormatValidator {
   static String asValidName(String name) {
     if (name.isEmpty || name.length > 255) {
       throw const MoneroSerializationException(
-          "The entry name must be between 1 and 255 characters.");
+        "The entry name must be between 1 and 255 characters.",
+      );
     }
     return name;
   }
@@ -21,8 +22,10 @@ class MoneroStorageFormatValidator {
     try {
       return value as T;
     } catch (_) {
-      throw MoneroSerializationException("Failed to cast to type $T.",
-          details: {"value": value.toString()});
+      throw MoneroSerializationException(
+        "Failed to cast to type $T.",
+        details: {"value": value.toString()},
+      );
     }
   }
 
@@ -32,21 +35,25 @@ class MoneroStorageFormatValidator {
       return (value as Map).cast<String, dynamic>();
     } catch (_) {
       throw const MoneroSerializationException(
-          "Invalid map: Object must be a Map<String, dynamic>.");
+        "Invalid map: Object must be a Map<String, dynamic>.",
+      );
     }
   }
 
   /// check and validate numeric data with current type.
-  static BigInt validateNumricData(
-      {required Object? value, required MoneroStorageTypes type}) {
+  static BigInt validateNumricData({
+    required Object? value,
+    required MoneroStorageTypes type,
+  }) {
     final typeData = MoneroStorageSerializer.getNumericTypesBitLength(type);
     final toBig = BigintUtils.tryParse(value);
     if (toBig == null ||
-        toBig.bitLength > typeData.item1 ||
-        toBig.isNegative && !typeData.item2) {
+        toBig.bitLength > typeData.$1 ||
+        toBig.isNegative && !typeData.$2) {
       throw MoneroSerializationException(
-          "Invalid numeric for type ${type.name}",
-          details: {"type": type.name, "value": value.toString()});
+        "Invalid numeric for type ${type.name}",
+        details: {"type": type.name, "value": value.toString()},
+      );
     }
     return toBig;
   }
@@ -57,58 +64,68 @@ class MoneroStorageFormatValidator {
       final toList = (value as List).cast<Object?>();
       if (toList.isEmpty && !allowEmpty) {
         throw const MoneroSerializationException(
-            "Invalid array values: Array must not be empty.");
+          "Invalid array values: Array must not be empty.",
+        );
       }
       if (toList.any((e) => e == null)) {
         throw MoneroSerializationException(
-            "Invalid array values: Array cannot contain null elements.",
-            details: {"elements": toList.map((e) => e.toString()).join(", ")});
+          "Invalid array values: Array cannot contain null elements.",
+          details: {"elements": toList.map((e) => e.toString()).join(", ")},
+        );
       }
 
       return toList.cast<T>();
     } on MoneroSerializationException {
       rethrow;
     } catch (_) {
-      throw MoneroSerializationException("Invalid array of $T.",
-          details: {"value": value.toString()});
+      throw MoneroSerializationException(
+        "Invalid array of $T.",
+        details: {"value": value.toString()},
+      );
     }
   }
 
   /// check array and return type of element with casting list to [T]
-  static Tuple<MoneroStorageTypes, List<T>> toArrayObject<T>(Object? value) {
+  static (MoneroStorageTypes, List<T>) toArrayObject<T>(Object? value) {
     try {
       final asList = asArrayOf<Object>(value);
       final type = findType(asList[0]);
       if (type.isPrimitive) {
-        final List<Tuple<Object, MoneroStorageTypes>> toPromitive =
+        final List<(Object, MoneroStorageTypes)> toPromitive =
             asList.map((e) => asPrimitiveType<Object>(e)).toList();
-        final MoneroStorageTypes type = toPromitive[0].item2;
-        if (toPromitive.any((e) => e.item2 != type)) {
+        final MoneroStorageTypes type = toPromitive[0].$2;
+        if (toPromitive.any((e) => e.$2 != type)) {
           throw MoneroSerializationException(
-              "Invalid array values: All elements in the array must be of the same type.",
-              details: {
-                "type": type.name,
-                "values": asList.map((e) => e.toString()).join(", ")
-              });
+            "Invalid array values: All elements in the array must be of the same type.",
+            details: {
+              "type": type.name,
+              "values": asList.map((e) => e.toString()).join(", "),
+            },
+          );
         }
-        return Tuple(type, toPromitive.map((e) => e.item1).toList().cast<T>());
+        return (type, toPromitive.map((e) => e.$1).toList().cast<T>());
       }
       if (type == MoneroStorageTypes.object) {
         try {
           final List<Map<String, dynamic>> values =
               asList.map((e) => (e as Map).cast<String, dynamic>()).toList();
-          return Tuple(MoneroStorageTypes.object,
-              values.map((e) => MoneroSection.fromJson(e)).toList().cast<T>());
+          return (
+            MoneroStorageTypes.object,
+            values.map((e) => MoneroSection.fromJson(e)).toList().cast<T>(),
+          );
         } catch (_) {}
       }
       throw MoneroSerializationException(
-          "Invalid array values: Unable to determine the element type.",
-          details: {"value": value.toString()});
+        "Invalid array values: Unable to determine the element type.",
+        details: {"value": value.toString()},
+      );
     } on MoneroSerializationException {
       rethrow;
     } catch (e) {
-      throw MoneroSerializationException("Invalid array of type $T",
-          details: {"value": value.toString()});
+      throw MoneroSerializationException(
+        "Invalid array of type $T",
+        details: {"value": value.toString()},
+      );
     }
   }
 
@@ -136,34 +153,43 @@ class MoneroStorageFormatValidator {
       return MoneroStorageTypes.object;
     }
     throw MoneroSerializationException(
-        "Unknown storage format: Unable to determine the correct type for the provided value.",
-        details: {"value": value});
+      "Unknown storage format: Unable to determine the correct type for the provided value.",
+      details: {"value": value},
+    );
   }
 
   /// force object as primitive type. exception if failed.
-  static Tuple<T, MoneroStorageTypes> asPrimitiveType<T>(Object? value) {
+  static (T, MoneroStorageTypes) asPrimitiveType<T>(Object? value) {
     final type = findType(value);
     if (type.isPrimitive) {
       final currentValue = validatePrimitiveObjects(value: value, type: type);
       if (currentValue is! T) {
-        throw MoneroSerializationException("Incorrect primitive $T value.",
-            details: {"value": value});
+        throw MoneroSerializationException(
+          "Incorrect primitive $T value.",
+          details: {"value": value},
+        );
       }
-      return Tuple(currentValue as T, type);
+      return (currentValue as T, type);
     }
-    throw MoneroSerializationException("Invalid primitive value.",
-        details: {"value": value});
+    throw MoneroSerializationException(
+      "Invalid primitive value.",
+      details: {"value": value},
+    );
   }
 
   /// check and validate primitive type with current type and value.
-  static Object validatePrimitiveObjects(
-      {required Object? value, required MoneroStorageTypes type}) {
+  static Object validatePrimitiveObjects({
+    required Object? value,
+    required MoneroStorageTypes type,
+  }) {
     if (value is MoneroStorageContainer && value.type.isPrimitive) {
       return value;
     }
     if (type.isInteger) {
       return MoneroStorageFormatValidator.validateNumricData(
-          value: value, type: type);
+        value: value,
+        type: type,
+      );
     }
     switch (type) {
       case MoneroStorageTypes.double:
@@ -179,7 +205,9 @@ class MoneroStorageFormatValidator {
       default:
         break;
     }
-    throw MoneroSerializationException("Invalid value for type ${type.name}",
-        details: {"type": type.name, "value": value.toString()});
+    throw MoneroSerializationException(
+      "Invalid value for type ${type.name}",
+      details: {"type": type.name, "value": value.toString()},
+    );
   }
 }

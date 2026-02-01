@@ -7,9 +7,9 @@ class WalletRPCCheckReserveProofResponse {
   final BigInt? spent;
   final BigInt? total;
   WalletRPCCheckReserveProofResponse.fromJson(Map<String, dynamic> json)
-      : good = json["good"],
-        spent = BigintUtils.tryParse(json["spent"]),
-        total = BigintUtils.tryParse(json["total"]);
+    : good = json["good"],
+      spent = BigintUtils.tryParse(json["spent"]),
+      total = BigintUtils.tryParse(json["total"]);
 }
 
 class WalletRPCCheckTxKeyResponse {
@@ -22,9 +22,9 @@ class WalletRPCCheckTxKeyResponse {
   /// Amount of the transaction.
   final BigInt received;
   WalletRPCCheckTxKeyResponse.fromJson(Map<String, dynamic> json)
-      : confirmations = IntUtils.parse(json["confirmations"]),
-        inPool = json["in_pool"],
-        received = BigintUtils.parse(json["received"]);
+    : confirmations = IntUtils.parse(json["confirmations"]),
+      inPool = json["in_pool"],
+      received = BigintUtils.parse(json["received"]);
 }
 
 class WalletRPCCheckTxProofResponse {
@@ -40,10 +40,10 @@ class WalletRPCCheckTxProofResponse {
   /// Amount of the transaction.
   final BigInt received;
   WalletRPCCheckTxProofResponse.fromJson(Map<String, dynamic> json)
-      : confirmations = IntUtils.parse(json["confirmations"]),
-        inPool = json["in_pool"],
-        good = json["good"],
-        received = BigintUtils.parse(json["received"]);
+    : confirmations = IntUtils.parse(json["confirmations"]),
+      inPool = json["in_pool"],
+      good = json["good"],
+      received = BigintUtils.parse(json["received"]);
 }
 
 class WalletRPCCreateAccountResponse {
@@ -54,8 +54,8 @@ class WalletRPCCreateAccountResponse {
   final MoneroAddress address;
 
   WalletRPCCreateAccountResponse.fromJson(Map<String, dynamic> json)
-      : accountIndex = IntUtils.parse(json["account_index"]),
-        address = MoneroAddress(json["address"]);
+    : accountIndex = IntUtils.parse(json["account_index"]),
+      address = MoneroAddress(json["address"]);
 }
 
 class WalletRPCCreateAddressResponse {
@@ -72,13 +72,14 @@ class WalletRPCCreateAddressResponse {
   final List<MoneroAddress> addresses;
 
   WalletRPCCreateAddressResponse.fromJson(Map<String, dynamic> json)
-      : accountIndex = IntUtils.parse(json["account_index"]),
-        address = MoneroAddress(json["address"]),
-        addressIndices = (json["address_indices"] as List)
-            .map((e) => IntUtils.parse(e))
-            .toList(),
-        addresses =
-            (json["addresses"] as List).map((e) => MoneroAddress(e)).toList();
+    : accountIndex = IntUtils.parse(json["account_index"]),
+      address = MoneroAddress(json["address"]),
+      addressIndices =
+          (json["address_indices"] as List)
+              .map((e) => IntUtils.parse(e))
+              .toList(),
+      addresses =
+          (json["addresses"] as List).map((e) => MoneroAddress(e)).toList();
 }
 
 class WalletRPCTransferDescriptionResponse {
@@ -121,7 +122,8 @@ class WalletRPCTransferDescriptionResponse {
 
   // Factory constructor to create a Transaction instance from JSON
   factory WalletRPCTransferDescriptionResponse.fromJson(
-      Map<String, dynamic> json) {
+    Map<String, dynamic> json,
+  ) {
     return WalletRPCTransferDescriptionResponse(
       amountIn: BigintUtils.parse(json['amount_in']),
       amountOut: BigintUtils.parse(json['amount_out']),
@@ -131,9 +133,12 @@ class WalletRPCTransferDescriptionResponse {
       extra: json['extra'],
       fee: BigintUtils.parse(json['fee']),
       paymentId: json['payment_id'],
-      recipients: (json['recipients'] as List<dynamic>)
-          .map((recipient) => WalletRPCRecipientResponse.fromJson(recipient))
-          .toList(),
+      recipients:
+          (json['recipients'] as List<dynamic>)
+              .map(
+                (recipient) => WalletRPCRecipientResponse.fromJson(recipient),
+              )
+              .toList(),
     );
   }
 }
@@ -145,10 +150,7 @@ class WalletRPCRecipientResponse {
   /// The amount sent to the recipient in atomic-units.
   final BigInt amount;
 
-  WalletRPCRecipientResponse({
-    required this.address,
-    required this.amount,
-  });
+  WalletRPCRecipientResponse({required this.address, required this.amount});
 
   // Factory constructor to create a Recipient instance from JSON
   factory WalletRPCRecipientResponse.fromJson(Map<String, dynamic> json) {
@@ -169,11 +171,12 @@ class WalletRPCDescribeTransferResponse {
   /// The number of blocks before the monero can be spent (0 for no lock).
   final int unlockTime;
   WalletRPCDescribeTransferResponse.fromJson(Map<String, dynamic> json)
-      : desc = (json["desc"] as List)
-            .map((e) => WalletRPCTransferDescriptionResponse.fromJson(e))
-            .toList(),
-        unlockTime = IntUtils.parse(json["unlock_time"]),
-        ringSize = IntUtils.parse(json["ring_size"]);
+    : desc =
+          (json["desc"] as List)
+              .map((e) => WalletRPCTransferDescriptionResponse.fromJson(e))
+              .toList(),
+      unlockTime = IntUtils.parse(json["unlock_time"]),
+      ringSize = IntUtils.parse(json["ring_size"]);
 }
 
 class WalletRPCEstimateTxSizeAndWeightResponse {
@@ -181,8 +184,8 @@ class WalletRPCEstimateTxSizeAndWeightResponse {
   final int weight;
 
   WalletRPCEstimateTxSizeAndWeightResponse.fromJson(Map<String, dynamic> json)
-      : size = IntUtils.parse(json["size"]),
-        weight = IntUtils.parse(json["weight"]);
+    : size = IntUtils.parse(json["size"]),
+      weight = IntUtils.parse(json["weight"]);
 }
 
 class WalletRPCExchangeMultisigKeysResponse {
@@ -190,8 +193,8 @@ class WalletRPCExchangeMultisigKeysResponse {
   final String multisigInfo;
 
   WalletRPCExchangeMultisigKeysResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        multisigInfo = json["multisig_info"];
+    : address = MoneroAddress(json["address"]),
+      multisigInfo = json["multisig_info"];
 }
 
 class WalletRPCExportKeyImageResponse {
@@ -199,8 +202,8 @@ class WalletRPCExportKeyImageResponse {
   final String signature;
 
   WalletRPCExportKeyImageResponse.fromJson(Map<String, dynamic> json)
-      : keyImage = json["key_image"],
-        signature = json["signature"];
+    : keyImage = json["key_image"],
+      signature = json["signature"];
 }
 
 class WalletRPCExportKeyImagesResponse {
@@ -208,10 +211,11 @@ class WalletRPCExportKeyImagesResponse {
   final int offset;
 
   WalletRPCExportKeyImagesResponse.fromJson(Map<String, dynamic> json)
-      : signedKeyImages = (json["signed_key_images"] as List)
-            .map((e) => WalletRPCExportKeyImageResponse.fromJson(e))
-            .toList(),
-        offset = IntUtils.parse(json["offset"]);
+    : signedKeyImages =
+          (json["signed_key_images"] as List)
+              .map((e) => WalletRPCExportKeyImageResponse.fromJson(e))
+              .toList(),
+      offset = IntUtils.parse(json["offset"]);
 }
 
 class WalletRPCGenerateFromKeysResponse {
@@ -219,8 +223,8 @@ class WalletRPCGenerateFromKeysResponse {
   final String info;
 
   WalletRPCGenerateFromKeysResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        info = json["info"];
+    : address = MoneroAddress(json["address"]),
+      info = json["info"];
 }
 
 class WalletRPCGetAccountTagsResponse {
@@ -234,12 +238,11 @@ class WalletRPCGetAccountTagsResponse {
   final List<int> accounts;
 
   WalletRPCGetAccountTagsResponse.fromJson(Map<String, dynamic> json)
-      : tag = json["tag"],
-        label = json["label"],
-        accounts = (json["accounts"] as List?)
-                ?.map((e) => IntUtils.parse(e))
-                .toList() ??
-            [];
+    : tag = json["tag"],
+      label = json["label"],
+      accounts =
+          (json["accounts"] as List?)?.map((e) => IntUtils.parse(e)).toList() ??
+          [];
 }
 
 class WalletRPCSubAddressAcountResponse {
@@ -260,20 +263,21 @@ class WalletRPCSubAddressAcountResponse {
 
   /// unsigned int; Unlocked balance for the account.
   final BigInt unlockedBalance;
-  const WalletRPCSubAddressAcountResponse(
-      {required this.accountIndex,
-      required this.balance,
-      required this.baseAddress,
-      required this.label,
-      required this.tag,
-      required this.unlockedBalance});
+  const WalletRPCSubAddressAcountResponse({
+    required this.accountIndex,
+    required this.balance,
+    required this.baseAddress,
+    required this.label,
+    required this.tag,
+    required this.unlockedBalance,
+  });
   WalletRPCSubAddressAcountResponse.fromJson(Map<String, dynamic> json)
-      : accountIndex = IntUtils.parse(json["account_index"]),
-        label = json["label"],
-        tag = json["tag"],
-        unlockedBalance = BigintUtils.parse(json["unlocked_balance"]),
-        balance = BigintUtils.parse(json["balance"]),
-        baseAddress = MoneroAddress(json["base_address"]);
+    : accountIndex = IntUtils.parse(json["account_index"]),
+      label = json["label"],
+      tag = json["tag"],
+      unlockedBalance = BigintUtils.parse(json["unlocked_balance"]),
+      balance = BigintUtils.parse(json["balance"]),
+      baseAddress = MoneroAddress(json["base_address"]);
 }
 
 class WalletRPCGetAccountsResponse {
@@ -281,12 +285,12 @@ class WalletRPCGetAccountsResponse {
   final BigInt totalBalance;
   final BigInt totalUnlockedBalance;
   WalletRPCGetAccountsResponse.fromJson(Map<String, dynamic> json)
-      : subaddressAccounts = (json["subaddress_accounts"] as List)
-            .map((e) => WalletRPCSubAddressAcountResponse.fromJson(e))
-            .toList(),
-        totalBalance = BigintUtils.parse(json["total_balance"]),
-        totalUnlockedBalance =
-            BigintUtils.parse(json["total_unlocked_balance"]);
+    : subaddressAccounts =
+          (json["subaddress_accounts"] as List)
+              .map((e) => WalletRPCSubAddressAcountResponse.fromJson(e))
+              .toList(),
+      totalBalance = BigintUtils.parse(json["total_balance"]),
+      totalUnlockedBalance = BigintUtils.parse(json["total_unlocked_balance"]);
 }
 
 class WalletRPCAddressResponse {
@@ -302,10 +306,10 @@ class WalletRPCAddressResponse {
   /// states if the (sub)address has already received funds
   final bool used;
   WalletRPCAddressResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        label = json["label"],
-        addressIndex = IntUtils.parse(json["address_index"]),
-        used = json["used"];
+    : address = MoneroAddress(json["address"]),
+      label = json["label"],
+      addressIndex = IntUtils.parse(json["address_index"]),
+      used = json["used"];
 }
 
 class WalletRPCAddressBookResponse {
@@ -319,28 +323,29 @@ class WalletRPCAddressBookResponse {
 
   final String paymentId;
   WalletRPCAddressBookResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        description = json["description"],
-        index = IntUtils.parse(json["index"]),
-        paymentId = json["payment_id"];
+    : address = MoneroAddress(json["address"]),
+      description = json["description"],
+      index = IntUtils.parse(json["index"]),
+      paymentId = json["payment_id"];
 }
 
 class WalletRPCGetAddressResponse {
   final MoneroAddress address;
   final List<WalletRPCAddressResponse> addresses;
   WalletRPCGetAddressResponse.fromJson(Map<String, dynamic> json)
-      : addresses = (json["addresses"] as List)
-            .map((e) => WalletRPCAddressResponse.fromJson(e))
-            .toList(),
-        address = MoneroAddress(json["address"]);
+    : addresses =
+          (json["addresses"] as List)
+              .map((e) => WalletRPCAddressResponse.fromJson(e))
+              .toList(),
+      address = MoneroAddress(json["address"]);
 }
 
 class WalletRPCSubAddressIndexResponse {
   final int major;
   final int minor;
   WalletRPCSubAddressIndexResponse.fromJson(Map<String, dynamic> json)
-      : major = IntUtils.parse(json["major"]),
-        minor = IntUtils.parse(json["minor"]);
+    : major = IntUtils.parse(json["major"]),
+      minor = IntUtils.parse(json["minor"]);
   Map<String, dynamic> toJson() {
     return {"major": major, "minor": minor};
   }
@@ -369,16 +374,16 @@ class WalletRPCSubAddressBalanceInformationResponse {
   final int timeToUnlock;
   final int blocksToUnlock;
   WalletRPCSubAddressBalanceInformationResponse.fromJson(
-      Map<String, dynamic> json)
-      : accountIndex = IntUtils.parse(json["account_index"]),
-        addressIndex = IntUtils.parse(json["address_index"]),
-        address = MoneroAddress(json["address"]),
-        balance = BigintUtils.parse(json["balance"]),
-        unlockedBalance = BigintUtils.parse(json["unlocked_balance"]),
-        label = json["label"],
-        numUnspentOutputs = IntUtils.parse(json["num_unspent_outputs"]),
-        timeToUnlock = IntUtils.parse(json["time_to_unlock"]),
-        blocksToUnlock = IntUtils.parse(json["blocks_to_unlock"]);
+    Map<String, dynamic> json,
+  ) : accountIndex = IntUtils.parse(json["account_index"]),
+      addressIndex = IntUtils.parse(json["address_index"]),
+      address = MoneroAddress(json["address"]),
+      balance = BigintUtils.parse(json["balance"]),
+      unlockedBalance = BigintUtils.parse(json["unlocked_balance"]),
+      label = json["label"],
+      numUnspentOutputs = IntUtils.parse(json["num_unspent_outputs"]),
+      timeToUnlock = IntUtils.parse(json["time_to_unlock"]),
+      blocksToUnlock = IntUtils.parse(json["blocks_to_unlock"]);
 }
 
 class WalletRPCGetBalanceResponse {
@@ -401,15 +406,18 @@ class WalletRPCGetBalanceResponse {
   final List<WalletRPCSubAddressBalanceInformationResponse> perSubAddress;
 
   WalletRPCGetBalanceResponse.fromJson(Map<String, dynamic> json)
-      : balance = BigintUtils.parse(json["balance"]),
-        unlockedBalance = BigintUtils.parse(json["unlocked_balance"]),
-        multisiImportNeeded = json["multisig_import_needed"],
-        timeToUnlock = IntUtils.parse(json["time_to_unlock"]),
-        blocksToUnlock = IntUtils.parse(json["blocks_to_unlock"]),
-        perSubAddress = (json["per_subaddress"] as List)
-            .map((e) =>
-                WalletRPCSubAddressBalanceInformationResponse.fromJson(e))
-            .toList();
+    : balance = BigintUtils.parse(json["balance"]),
+      unlockedBalance = BigintUtils.parse(json["unlocked_balance"]),
+      multisiImportNeeded = json["multisig_import_needed"],
+      timeToUnlock = IntUtils.parse(json["time_to_unlock"]),
+      blocksToUnlock = IntUtils.parse(json["blocks_to_unlock"]),
+      perSubAddress =
+          (json["per_subaddress"] as List)
+              .map(
+                (e) =>
+                    WalletRPCSubAddressBalanceInformationResponse.fromJson(e),
+              )
+              .toList();
 }
 
 class WalletRPCPaymentResponse {
@@ -434,15 +442,16 @@ class WalletRPCPaymentResponse {
 
   final bool? locked;
   WalletRPCPaymentResponse.fromJson(Map<String, dynamic> json)
-      : paymentId = json["payment_id"],
-        txHash = json["tx_hash"],
-        amount = BigintUtils.parse(json["amount"]),
-        blockHeight = BigintUtils.parse(json["block_height"]),
-        unlockTIme = BigintUtils.parse(json["unlock_time"]),
-        subaddrIndex =
-            WalletRPCSubAddressIndexResponse.fromJson(json["subaddr_index"]),
-        address = MoneroAddress(json["address"]),
-        locked = json["locked"];
+    : paymentId = json["payment_id"],
+      txHash = json["tx_hash"],
+      amount = BigintUtils.parse(json["amount"]),
+      blockHeight = BigintUtils.parse(json["block_height"]),
+      unlockTIme = BigintUtils.parse(json["unlock_time"]),
+      subaddrIndex = WalletRPCSubAddressIndexResponse.fromJson(
+        json["subaddr_index"],
+      ),
+      address = MoneroAddress(json["address"]),
+      locked = json["locked"];
 }
 
 class WalletRPCTransferDestinationResponse {
@@ -452,8 +461,8 @@ class WalletRPCTransferDestinationResponse {
   /// Address for this destination. Base58 representation of the public keys.
   final MoneroAddress address;
   WalletRPCTransferDestinationResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        amount = BigintUtils.parse(json["amount"]);
+    : address = MoneroAddress(json["address"]),
+      amount = BigintUtils.parse(json["amount"]);
 }
 
 class WalletRPCTransferResponse {
@@ -508,33 +517,38 @@ class WalletRPCTransferResponse {
   final List<WalletRPCTransferDestinationResponse>? destinations;
 
   WalletRPCTransferResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        destinations = (json["destinations"] as List?)
-            ?.map((e) => WalletRPCTransferDestinationResponse.fromJson(e))
-            .toList(),
-        amount = BigintUtils.parse(json["amount"]),
-        amounts = (json["amounts"] as List?)
-                ?.map((e) => BigintUtils.parse(e))
-                .toList() ??
-            [],
-        confirmations = json["confirmations"],
-        doubleSpendSeen = json["double_spend_seen"],
-        fee = BigintUtils.parse(json["fee"]),
-        height = BigintUtils.parse(json["height"]),
-        locked = json["locked"],
-        note = json["note"],
-        paymentId = json["payment_id"],
-        subaddrIndex =
-            WalletRPCSubAddressIndexResponse.fromJson(json["subaddr_index"]),
-        subaddrIndices = (json["subaddr_indices"] as List<dynamic>)
-            .map((e) => WalletRPCSubAddressIndexResponse.fromJson(e))
-            .toList(),
-        suggestedConfirmationsThreshold =
-            IntUtils.parse(json["suggested_confirmations_threshold"]),
-        timestamp = BigintUtils.parse(json["timestamp"]),
-        txid = json["txid"],
-        type = json["type"],
-        unlockTime = IntUtils.parse(json["unlock_time"]);
+    : address = MoneroAddress(json["address"]),
+      destinations =
+          (json["destinations"] as List?)
+              ?.map((e) => WalletRPCTransferDestinationResponse.fromJson(e))
+              .toList(),
+      amount = BigintUtils.parse(json["amount"]),
+      amounts =
+          (json["amounts"] as List?)
+              ?.map((e) => BigintUtils.parse(e))
+              .toList() ??
+          [],
+      confirmations = json["confirmations"],
+      doubleSpendSeen = json["double_spend_seen"],
+      fee = BigintUtils.parse(json["fee"]),
+      height = BigintUtils.parse(json["height"]),
+      locked = json["locked"],
+      note = json["note"],
+      paymentId = json["payment_id"],
+      subaddrIndex = WalletRPCSubAddressIndexResponse.fromJson(
+        json["subaddr_index"],
+      ),
+      subaddrIndices =
+          (json["subaddr_indices"] as List<dynamic>)
+              .map((e) => WalletRPCSubAddressIndexResponse.fromJson(e))
+              .toList(),
+      suggestedConfirmationsThreshold = IntUtils.parse(
+        json["suggested_confirmations_threshold"],
+      ),
+      timestamp = BigintUtils.parse(json["timestamp"]),
+      txid = json["txid"],
+      type = json["type"],
+      unlockTime = IntUtils.parse(json["unlock_time"]);
 }
 
 class WalletRPCTransferByTxIdResponse {
@@ -544,11 +558,12 @@ class WalletRPCTransferByTxIdResponse {
   /// If the list length is > 1 then multiple outputs where received in this transaction, each of which has its own transfer
   final List<WalletRPCTransferResponse> transfers;
   WalletRPCTransferByTxIdResponse.fromJson(Map<String, dynamic> json)
-      : transfer = WalletRPCTransferResponse.fromJson(json["transfer"]),
-        transfers = (json["transfers"] as List?)
-                ?.map((e) => WalletRPCTransferResponse.fromJson(e))
-                .toList() ??
-            [];
+    : transfer = WalletRPCTransferResponse.fromJson(json["transfer"]),
+      transfers =
+          (json["transfers"] as List?)
+              ?.map((e) => WalletRPCTransferResponse.fromJson(e))
+              .toList() ??
+          [];
 }
 
 class WalletRPCGetTransfersResponse {
@@ -563,33 +578,40 @@ class WalletRPCGetTransfersResponse {
   final List<WalletRPCTransferResponse> poolTransfers;
 
   WalletRPCGetTransfersResponse.fromJson(Map<String, dynamic> json)
-      : inTransfers = (json["in"] as List?)
-                ?.map((e) => WalletRPCTransferResponse.fromJson(e))
-                .toList() ??
-            [],
-        outTransfers = (json["out"] as List?)
-                ?.map((e) => WalletRPCTransferResponse.fromJson(e))
-                .toList() ??
-            [],
-        pendingTransfers = (json["pending"] as List?)
-                ?.map((e) => WalletRPCTransferResponse.fromJson(e))
-                .toList() ??
-            [],
-        failedTransfers = (json["failed"] as List?)
-                ?.map((e) => WalletRPCTransferResponse.fromJson(e))
-                .toList() ??
-            [],
-        poolTransfers = (json["pool"] as List?)
-                ?.map((e) => WalletRPCTransferResponse.fromJson(e))
-                .toList() ??
-            [];
+    : inTransfers =
+          (json["in"] as List?)
+              ?.map((e) => WalletRPCTransferResponse.fromJson(e))
+              .toList() ??
+          [],
+      outTransfers =
+          (json["out"] as List?)
+              ?.map((e) => WalletRPCTransferResponse.fromJson(e))
+              .toList() ??
+          [],
+      pendingTransfers =
+          (json["pending"] as List?)
+              ?.map((e) => WalletRPCTransferResponse.fromJson(e))
+              .toList() ??
+          [],
+      failedTransfers =
+          (json["failed"] as List?)
+              ?.map((e) => WalletRPCTransferResponse.fromJson(e))
+              .toList() ??
+          [],
+      poolTransfers =
+          (json["pool"] as List?)
+              ?.map((e) => WalletRPCTransferResponse.fromJson(e))
+              .toList() ??
+          [];
 }
 
 class WalletRPCSignedKeyImagesParam {
   final String keyImage;
   final String signature;
-  const WalletRPCSignedKeyImagesParam(
-      {required this.keyImage, required this.signature});
+  const WalletRPCSignedKeyImagesParam({
+    required this.keyImage,
+    required this.signature,
+  });
   Map<String, dynamic> toJson() {
     return {"key_image": keyImage, "signature": signature};
   }
@@ -600,9 +622,9 @@ class WalletRPCImportKeyImagesResponse {
   final BigInt spent;
   final BigInt unspent;
   WalletRPCImportKeyImagesResponse.fromJson(Map<String, dynamic> json)
-      : height = BigintUtils.parse(json["height"]),
-        spent = BigintUtils.parse(json["spent"]),
-        unspent = BigintUtils.parse(json["unspent"]);
+    : height = BigintUtils.parse(json["height"]),
+      spent = BigintUtils.parse(json["spent"]),
+      unspent = BigintUtils.parse(json["unspent"]);
 }
 
 enum IncommingTransferType { available, unavailable }
@@ -636,22 +658,26 @@ class WalletRPCIncommingTransferResponse {
   final String? pubKey;
   final int? txSize;
   WalletRPCIncommingTransferResponse.fromJson(Map<String, dynamic> json)
-      : amount = BigintUtils.parse(json["amount"]),
-        globalIndex = IntUtils.parse(json["global_index"]),
-        keyImage = json["key_image"],
-        spent = json["spent"],
-        subAddrIndex = (json["subaddr_index"] is int)
-            ? null
-            : WalletRPCSubAddressIndexResponse.fromJson(json["subaddr_index"]),
-        mSubAddrIndex = (json["subaddr_index"] is int)
-            ? IntUtils.parse(json["subaddr_index"])
-            : null,
-        txHash = json["tx_hash"],
-        frozen = json["frozen"],
-        unlocked = json["unlocked"],
-        blockHeight = BigintUtils.tryParse(json["block_height"]),
-        pubKey = json["pubkey"],
-        txSize = json["tx_size"];
+    : amount = BigintUtils.parse(json["amount"]),
+      globalIndex = IntUtils.parse(json["global_index"]),
+      keyImage = json["key_image"],
+      spent = json["spent"],
+      subAddrIndex =
+          (json["subaddr_index"] is int)
+              ? null
+              : WalletRPCSubAddressIndexResponse.fromJson(
+                json["subaddr_index"],
+              ),
+      mSubAddrIndex =
+          (json["subaddr_index"] is int)
+              ? IntUtils.parse(json["subaddr_index"])
+              : null,
+      txHash = json["tx_hash"],
+      frozen = json["frozen"],
+      unlocked = json["unlocked"],
+      blockHeight = BigintUtils.tryParse(json["block_height"]),
+      pubKey = json["pubkey"],
+      txSize = json["tx_size"];
 }
 
 class WalletRPCIsMultisigResponse {
@@ -660,10 +686,10 @@ class WalletRPCIsMultisigResponse {
   final int threshhold;
   final int total;
   WalletRPCIsMultisigResponse.fromJson(Map<String, dynamic> json)
-      : multisig = json["multisig"],
-        ready = json["ready"],
-        threshhold = IntUtils.parse(json["threshold"]),
-        total = IntUtils.parse(json["total"]);
+    : multisig = json["multisig"],
+      ready = json["ready"],
+      threshhold = IntUtils.parse(json["threshold"]),
+      total = IntUtils.parse(json["total"]);
 }
 
 class WalletRPCValidateAddressResponse {
@@ -682,11 +708,11 @@ class WalletRPCValidateAddressResponse {
   /// Address which the OpenAlias-formatted address points to, if given.
   final String openaliasAddress;
   WalletRPCValidateAddressResponse.fromJson(Map<String, dynamic> json)
-      : valid = json["valid"],
-        integrated = json["integrated"],
-        subaddress = json["subaddress"],
-        nettype = json["nettype"],
-        openaliasAddress = json["openalias_address"];
+    : valid = json["valid"],
+      integrated = json["integrated"],
+      subaddress = json["subaddress"],
+      nettype = json["nettype"],
+      openaliasAddress = json["openalias_address"];
 }
 
 class WalletRPCMakeIntegratedAddressResponse {
@@ -694,8 +720,8 @@ class WalletRPCMakeIntegratedAddressResponse {
   final String paymentId;
 
   WalletRPCMakeIntegratedAddressResponse.fromJson(Map<String, dynamic> json)
-      : integratedAddress = MoneroAddress(json["integrated_address"]),
-        paymentId = json["payment_id"];
+    : integratedAddress = MoneroAddress(json["integrated_address"]),
+      paymentId = json["payment_id"];
 }
 
 class WalletRPCMakeMultisigResponse {
@@ -706,8 +732,8 @@ class WalletRPCMakeMultisigResponse {
   final String multisigInfo;
 
   WalletRPCMakeMultisigResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        multisigInfo = json["multisig_info"];
+    : address = MoneroAddress(json["address"]),
+      multisigInfo = json["multisig_info"];
 }
 
 class WalletRPCParseUriResponse {
@@ -726,11 +752,11 @@ class WalletRPCParseUriResponse {
   /// Description of the reason for the tx (empty if not provided)
   final String txDescription;
   WalletRPCParseUriResponse.fromJson(Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        paymentId = json["payment_id"],
-        recipientName = json["recipient_name"],
-        txDescription = json["tx_description"],
-        amount = BigintUtils.parse(json["amount"]);
+    : address = MoneroAddress(json["address"]),
+      paymentId = json["payment_id"],
+      recipientName = json["recipient_name"],
+      txDescription = json["tx_description"],
+      amount = BigintUtils.parse(json["amount"]);
 }
 
 class WalletRPCRefreshResponse {
@@ -741,8 +767,8 @@ class WalletRPCRefreshResponse {
   final bool receivedMoney;
 
   WalletRPCRefreshResponse.fromJson(Map<String, dynamic> json)
-      : blocksFetched = IntUtils.parse(json["blocks_fetched"]),
-        receivedMoney = json["received_money"];
+    : blocksFetched = IntUtils.parse(json["blocks_fetched"]),
+      receivedMoney = json["received_money"];
 }
 
 class WalletRPCRestoreDeterministicWalletResponse {
@@ -751,11 +777,11 @@ class WalletRPCRestoreDeterministicWalletResponse {
   final String seed;
   final bool wasDeprecated;
   WalletRPCRestoreDeterministicWalletResponse.fromJson(
-      Map<String, dynamic> json)
-      : address = MoneroAddress(json["address"]),
-        info = json["info"],
-        seed = json["seed"],
-        wasDeprecated = json["was_deprecated"];
+    Map<String, dynamic> json,
+  ) : address = MoneroAddress(json["address"]),
+      info = json["info"],
+      seed = json["seed"],
+      wasDeprecated = json["was_deprecated"];
 }
 
 class WalletRPCSignMultisigResponse {
@@ -765,8 +791,8 @@ class WalletRPCSignMultisigResponse {
   /// array of string; List of transaction Hash.
   final List<String> txHashList;
   WalletRPCSignMultisigResponse.fromJson(Map<String, dynamic> json)
-      : txDataHex = json["tx_data_hex"],
-        txHashList = (json["tx_hash_list"] as List).cast();
+    : txDataHex = json["tx_data_hex"],
+      txHashList = (json["tx_hash_list"] as List).cast();
 }
 
 class WalletRPCSignTransferResponse {
@@ -780,10 +806,10 @@ class WalletRPCSignTransferResponse {
   final List<String> txRawList;
   final List<String> txKeyList;
   WalletRPCSignTransferResponse.fromJson(Map<String, dynamic> json)
-      : signedTxSet = json["signed_txset"],
-        txHashList = (json["tx_hash_list"] as List).cast(),
-        txRawList = (json["tx_raw_list"] as List?)?.cast() ?? [],
-        txKeyList = (json["tx_key_list"] as List?)?.cast() ?? [];
+    : signedTxSet = json["signed_txset"],
+      txHashList = (json["tx_hash_list"] as List).cast(),
+      txRawList = (json["tx_raw_list"] as List?)?.cast() ?? [],
+      txKeyList = (json["tx_key_list"] as List?)?.cast() ?? [];
 }
 
 class WalletRPCSplitIntegratedAddressResponse {
@@ -793,9 +819,9 @@ class WalletRPCSplitIntegratedAddressResponse {
   final String payment;
 
   WalletRPCSplitIntegratedAddressResponse.fromJson(Map<String, dynamic> json)
-      : isSubAddress = json["is_subaddress"],
-        standardAddress = MoneroAddress(json["standard_address"]),
-        payment = json["payment"];
+    : isSubAddress = json["is_subaddress"],
+      standardAddress = MoneroAddress(json["standard_address"]),
+      payment = json["payment"];
 }
 
 class WalletRPCSweepResponse {
@@ -863,15 +889,18 @@ class WalletRPCSweepResponse {
     return WalletRPCSweepResponse(
       txHashList: List<String>.from(json["tx_hash_list"] ?? []),
       txKeyList: List<String>.from(json["tx_key_list"] ?? []),
-      amountList: (json["amount_list"] as List?)
+      amountList:
+          (json["amount_list"] as List?)
               ?.map((e) => BigintUtils.parse(e))
               .toList() ??
           [],
-      feeList: (json["fee_list"] as List?)
+      feeList:
+          (json["fee_list"] as List?)
               ?.map((e) => BigintUtils.parse(e))
               .toList() ??
           [],
-      weightList: (json["weight_list"] as List?)
+      weightList:
+          (json["weight_list"] as List?)
               ?.map((e) => BigintUtils.parse(e))
               .toList() ??
           [],
@@ -879,7 +908,8 @@ class WalletRPCSweepResponse {
       txMetadataList: List<String>.from(json["tx_metadata_list"] ?? []),
       multisigTxSet: json["multisig_txset"],
       unsignedTxSet: json["unsigned_txset"],
-      spentKeyImagesList: (json["spent_key_images_list"] as List?)
+      spentKeyImagesList:
+          (json["spent_key_images_list"] as List?)
               ?.map((e) => WalletRPCSpentKeyImagesResponse.fromJson(e))
               .toList() ??
           [],
@@ -890,7 +920,7 @@ class WalletRPCSweepResponse {
 class WalletRPCSpentKeyImagesResponse {
   final List<String> keyImages;
   WalletRPCSpentKeyImagesResponse.fromJson(Map<String, dynamic> json)
-      : keyImages = (json["key_images"] as List?)?.cast() ?? [];
+    : keyImages = (json["key_images"] as List?)?.cast() ?? [];
   Map<String, dynamic> toJson() {
     return {"key_images": keyImages};
   }
@@ -968,7 +998,8 @@ class WalletRPCSweepSingleResponse {
       multisigTxSet: json["multisig_txset"],
       unsignedTxSet: json["unsigned_txset"],
       spentKeyImages: WalletRPCSpentKeyImagesResponse.fromJson(
-          json["spent_key_images"] ?? {}),
+        json["spent_key_images"] ?? {},
+      ),
     );
   }
 }
@@ -979,8 +1010,10 @@ class WalletRPCTransferDestinationParam {
 
   /// Amount to send to each destination, in atomic-units.
   final BigInt amount;
-  const WalletRPCTransferDestinationParam(
-      {required this.address, required this.amount});
+  const WalletRPCTransferDestinationParam({
+    required this.address,
+    required this.amount,
+  });
   Map<String, dynamic> toJson() {
     return {"address": address.address, "amount": amount.toString()};
   }
@@ -989,10 +1022,11 @@ class WalletRPCTransferDestinationParam {
 class WalletRPCAmountsByDestResponse {
   final List<BigInt> amounts;
   WalletRPCAmountsByDestResponse.fromJson(Map<String, dynamic> json)
-      : amounts = (json["amounts"] as List?)
-                ?.map((e) => BigintUtils.parse(e))
-                .toList() ??
-            [];
+    : amounts =
+          (json["amounts"] as List?)
+              ?.map((e) => BigintUtils.parse(e))
+              .toList() ??
+          [];
 }
 
 class WalletRPCTransferMoneroResponse {
@@ -1027,21 +1061,25 @@ class WalletRPCTransferMoneroResponse {
 
   final WalletRPCSpentKeyImagesResponse? spentKeyImages;
   WalletRPCTransferMoneroResponse.fromJson(Map<String, dynamic> json)
-      : amount = BigintUtils.parse(json["amount"]),
-        amountsByDest = json["amounts_by_dest"] == null
-            ? null
-            : WalletRPCAmountsByDestResponse.fromJson(
-                json["amounts_by_dest"] ?? {}),
-        fee = BigintUtils.parse(json["fee"]),
-        multisigTxSet = json["multisig_txset"],
-        txBlob = json["tx_blob"],
-        txHash = json["tx_hash"],
-        txKey = json["tx_key"],
-        txMetadata = json["tx_metadata"],
-        unsignedTxSet = json["unsigned_txset"],
-        weight = BigintUtils.parse(json["weight"]),
-        spentKeyImages = json["spent_key_images"] == null
-            ? null
-            : WalletRPCSpentKeyImagesResponse.fromJson(
-                json["spent_key_images"]);
+    : amount = BigintUtils.parse(json["amount"]),
+      amountsByDest =
+          json["amounts_by_dest"] == null
+              ? null
+              : WalletRPCAmountsByDestResponse.fromJson(
+                json["amounts_by_dest"] ?? {},
+              ),
+      fee = BigintUtils.parse(json["fee"]),
+      multisigTxSet = json["multisig_txset"],
+      txBlob = json["tx_blob"],
+      txHash = json["tx_hash"],
+      txKey = json["tx_key"],
+      txMetadata = json["tx_metadata"],
+      unsignedTxSet = json["unsigned_txset"],
+      weight = BigintUtils.parse(json["weight"]),
+      spentKeyImages =
+          json["spent_key_images"] == null
+              ? null
+              : WalletRPCSpentKeyImagesResponse.fromJson(
+                json["spent_key_images"],
+              );
 }

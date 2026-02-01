@@ -19,6 +19,8 @@ mixin MoneroServiceProvider
   /// }
 
   @override
-  Future<BaseServiceResponse<T>> doRequest<T>(MoneroRequestDetails params,
-      {Duration? timeout});
+  Future<BaseServiceResponse<T>> doRequest<T>(
+    MoneroRequestDetails params, {
+    Duration? timeout,
+  });
 }

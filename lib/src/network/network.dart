@@ -12,41 +12,63 @@ class MoneroNetwork {
 
   /// network address prefixes.
   List<int> get _prefixes => [
-        ...config.params.addrNetVer!,
-        ...config.params.addrIntNetVer!,
-        ...config.params.subaddrNetVer!,
-      ];
-  const MoneroNetwork._(
-      {required this.name, required this.config, required this.index});
+    ...config.params.addrNetVer!,
+    ...config.params.addrIntNetVer!,
+    ...config.params.subaddrNetVer!,
+  ];
+  const MoneroNetwork._({
+    required this.name,
+    required this.config,
+    required this.index,
+  });
 
   /// mainnet
   static const MoneroNetwork mainnet = MoneroNetwork._(
-      index: 0, name: "Mainnet", config: CoinsConf.moneroMainNet);
+    index: 0,
+    name: "Mainnet",
+    config: CoinsConf.moneroMainNet,
+  );
 
   /// testnet
   static const MoneroNetwork testnet = MoneroNetwork._(
-      index: 1, name: "Testnet", config: CoinsConf.moneroTestNet);
+    index: 1,
+    name: "Testnet",
+    config: CoinsConf.moneroTestNet,
+  );
 
   /// stagenet
   static const MoneroNetwork stagenet = MoneroNetwork._(
-      index: 2, name: "Stagenet", config: CoinsConf.moneroStageNet);
+    index: 2,
+    name: "Stagenet",
+    config: CoinsConf.moneroStageNet,
+  );
 
   static const List<MoneroNetwork> values = [mainnet, testnet, stagenet];
 
   /// find monero network from name.
   static MoneroNetwork fromName(String? name) {
-    return values.firstWhere((e) => e.name == name,
-        orElse: () => throw DartMoneroPluginException(
-            "The provided network name does not exist.",
-            details: {"name": name}));
+    return values.firstWhere(
+      (e) => e.name == name,
+      orElse:
+          () =>
+              throw DartMoneroPluginException(
+                "The provided network name does not exist.",
+                details: {"name": name},
+              ),
+    );
   }
 
   /// find monero network from index.
   static MoneroNetwork fromIndex(int? index) {
-    return values.firstWhere((e) => e.index == index,
-        orElse: () => throw DartMoneroPluginException(
-            "The provided network index does not exist.",
-            details: {"index": index}));
+    return values.firstWhere(
+      (e) => e.index == index,
+      orElse:
+          () =>
+              throw DartMoneroPluginException(
+                "The provided network index does not exist.",
+                details: {"index": index},
+              ),
+    );
   }
 
   /// find network from address type prefix bytes.
@@ -57,7 +79,8 @@ class MoneroNetwork {
       }
     }
     throw const DartMoneroPluginException(
-        "Invalid prefix: no related network found for the provided prefix.");
+      "Invalid prefix: no related network found for the provided prefix.",
+    );
   }
 
   /// detect address prefix bytes from type.
@@ -70,8 +93,10 @@ class MoneroNetwork {
       case XmrAddressType.subaddress:
         return config.params.subaddrNetVer!;
       default:
-        throw DartMoneroPluginException("Invalid monero address type.",
-            details: {"type": type.toString()});
+        throw DartMoneroPluginException(
+          "Invalid monero address type.",
+          details: {"type": type.toString()},
+        );
     }
   }
 
@@ -85,8 +110,10 @@ class MoneroNetwork {
       case MoneroNetwork.stagenet:
         return MoneroCoins.moneroStagenet;
       default:
-        throw DartMoneroPluginException("Invalid monero network.",
-            details: {"network": name});
+        throw DartMoneroPluginException(
+          "Invalid monero network.",
+          details: {"network": name},
+        );
     }
   }
 

@@ -2,8 +2,12 @@ import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#pop_blocks
-class DaemonRequestPopBlocks extends MoneroDaemonRequestParam<
-    DaemonPopBlocksResponse, Map<String, dynamic>> {
+class DaemonRequestPopBlocks
+    extends
+        MoneroDaemonRequestParam<
+          DaemonPopBlocksResponse,
+          Map<String, dynamic>
+        > {
   const DaemonRequestPopBlocks(this.nBlocks);
   final BigInt nBlocks;
   @override
