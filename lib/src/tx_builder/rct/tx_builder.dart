@@ -16,14 +16,15 @@ class MoneroRctTxBuilder
     required List<MoneroTxDestination> destinations,
     required List<SpendablePayment<MoneroUnLockedPayment>> sources,
     required BigInt fee,
+    List<TxExtraNonce> extraNonces = const [],
     bool fakeTx = false,
     bool fast = false,
     MoneroTxDestination? change,
   }) {
     sources = List<SpendablePayment<MoneroUnLockedPayment>>.from(sources)..sort(
       (a, b) => BytesUtils.compareBytes(
-        b.payment.output.keyImage,
-        a.payment.output.keyImage,
+        b.payment.output.keyImage.keyImage,
+        a.payment.output.keyImage.keyImage,
       ),
     );
     final seed = MoneroTxBuilder._createTxSecretKeySeed(
@@ -40,6 +41,7 @@ class MoneroRctTxBuilder
       txSeed: seed,
       fee: fee,
       fakeTx: fakeTx,
+      extraNonces: extraNonces,
     );
     final signature = MoneroTxBuilder._buildSignature(
       destinationKeys: destinationKeys,
@@ -68,30 +70,37 @@ class MoneroRctTxBuilder
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MoneroRctTxBuilder.fromStruct(decode);
+    return MoneroRctTxBuilder.deserializeJson(decode);
   }
-  factory MoneroRctTxBuilder.fromStruct(Map<String, dynamic> json) {
+  factory MoneroRctTxBuilder.deserializeJson(Map<String, dynamic> json) {
     return MoneroRctTxBuilder._(
-      sourceKeys: ComputeSourceKeys.fromStruct(json.asMap("sourceKeys")),
-      destinationKeys: ComputeDestinationKeys.fromStruct(
-        json.asMap("destinationKeys"),
+      sourceKeys: ComputeSourceKeys.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("sourceKeys"),
       ),
-      transaction: MoneroTransaction.fromStruct(json.asMap("transaction")),
-      change: json.mybeAs<MoneroTxDestination, Map<String, dynamic>>(
+      destinationKeys: ComputeDestinationKeys.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("destinationKeys"),
+      ),
+      transaction: MoneroTransaction.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("transaction"),
+      ),
+      change: json.valueTo<MoneroTxDestination?, Map<String, dynamic>>(
         key: "change",
-        onValue: (e) {
-          return MoneroTxDestination.fromStruct(e);
+        parse: (e) {
+          return MoneroTxDestination.deserializeJson(e);
         },
       ),
       destinations:
           json
-              .asListOfMap("destinations")!
-              .map((e) => MoneroTxDestination.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("destinations")
+              .map((e) => MoneroTxDestination.deserializeJson(e))
               .toList(),
       sources:
           json
-              .asListOfMap("sources")!
-              .map((e) => SpendablePayment<MoneroUnLockedPayment>.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("sources")
+              .map(
+                (e) =>
+                    SpendablePayment<MoneroUnLockedPayment>.deserializeJson(e),
+              )
               .toList(),
     );
   }

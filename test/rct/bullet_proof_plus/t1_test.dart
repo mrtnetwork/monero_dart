@@ -105,7 +105,5 @@ void _test() {
       BytesUtils.toHexString(prove.r[5]),
       "8b7c3add6611de54ab006c6af98c0b0480e4a8fe3c73d6d9b1575d1e05d155fa",
     );
-    // final verify = BulletproofsPlusGenerator.bulletproofPlusVerify([prove]);
-    // expect(verify, true);
   });
 }

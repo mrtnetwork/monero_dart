@@ -35,47 +35,54 @@ class MoneroMultisigTxBuilder
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MoneroMultisigTxBuilder.fromStruct(decode);
+    return MoneroMultisigTxBuilder.deserializeJson(decode);
   }
-  factory MoneroMultisigTxBuilder.fromStruct(Map<String, dynamic> json) {
-    final sourceKeys = ComputeSourceKeys.fromStruct(json.asMap("sourceKeys"));
-    final destinationKeys = ComputeDestinationKeys.fromStruct(
-      json.asMap("destinationKeys"),
+  factory MoneroMultisigTxBuilder.deserializeJson(Map<String, dynamic> json) {
+    final sourceKeys = ComputeSourceKeys.deserializeJson(
+      json.valueEnsureAsMap<String, dynamic>("sourceKeys"),
     );
-    final tx = MoneroTransaction.fromStruct(json.asMap("transaction"));
-    final change = json.mybeAs<MoneroTxDestination, Map<String, dynamic>>(
+    final destinationKeys = ComputeDestinationKeys.deserializeJson(
+      json.valueEnsureAsMap<String, dynamic>("destinationKeys"),
+    );
+    final tx = MoneroTransaction.deserializeJson(
+      json.valueEnsureAsMap<String, dynamic>("transaction"),
+    );
+    final change = json.valueTo<MoneroTxDestination?, Map<String, dynamic>>(
       key: "change",
-      onValue: (e) {
-        return MoneroTxDestination.fromStruct(e);
+      parse: (e) {
+        return MoneroTxDestination.deserializeJson(e);
       },
     );
     final List<MoneroTxDestination> destinations =
         json
-            .asListOfMap("destinations")!
-            .map((e) => MoneroTxDestination.fromStruct(e))
+            .valueEnsureAsList<Map<String, dynamic>>("destinations")
+            .map((e) => MoneroTxDestination.deserializeJson(e))
             .toList();
     final List<SpendablePayment<MoneroUnlockedMultisigPayment>> sources =
         json
-            .asListOfMap("sources")!
+            .valueEnsureAsList<Map<String, dynamic>>("sources")
             .map(
-              (e) =>
-                  SpendablePayment<MoneroUnlockedMultisigPayment>.fromStruct(e),
+              (e) => SpendablePayment<
+                MoneroUnlockedMultisigPayment
+              >.deserializeJson(e),
             )
             .toList();
     final List<MoneroPublicKey> signers =
         json
-            .asListBytes("signers")!
+            .valueEnsureAsList<List<int>>("signers")
             .map((e) => MoneroPublicKey.fromBytes(e))
             .toList();
     final List<MoneroPublicKey> currentSigners =
         json
-            .asListBytes("currentSigners")!
+            .valueEnsureAsList<List<int>>("currentSigners")
             .map((e) => MoneroPublicKey.fromBytes(e))
             .toList();
     final MoneroMultisigSignedInfo multisigInfo =
-        MoneroMultisigSignedInfo.fromStruct(json.asMap("multisigInfo"));
-    final int threshold = json.as("threshold");
-    final KeyV cachedW = json.asListBytes("cachedW")!;
+        MoneroMultisigSignedInfo.deserializeJson(
+          json.valueEnsureAsMap<String, dynamic>("multisigInfo"),
+        );
+    final int threshold = json.valueAs("threshold");
+    final KeyV cachedW = json.valueEnsureAsList<List<int>>("cachedW");
     final newTx = reConstroctTx(
       destinationKeys: destinationKeys,
       sourceKeys: sourceKeys,
@@ -186,7 +193,7 @@ class MoneroMultisigTxBuilder
     final KeyV cachedW = List.generate(sources.length, (_) => RCT.zero());
     for (int i = 0; i < sources.length; i++) {
       final ringSize = signature.signature.mixRing![i].length;
-      final RctKey I = sources[i].payment.keyImage;
+      final RctKey I = sources[i].payment.keyImage.keyImage;
       final int l = sources[i].realOutIndex;
       final KeyV s = List.generate(ringSize, (i) {
         if (i == l) return RCT.zero();
@@ -247,6 +254,7 @@ class MoneroMultisigTxBuilder
     required List<MoneroTxDestination> destinations,
     required List<SpendablePayment<MoneroUnlockedMultisigPayment>> sources,
     required List<MoneroPublicKey> signers,
+    List<TxExtraNonce> extraNonces = const [],
     required BigInt fee,
     bool fakeTx = false,
     MoneroTxDestination? change,
@@ -254,7 +262,10 @@ class MoneroMultisigTxBuilder
     sources = List<SpendablePayment<MoneroUnlockedMultisigPayment>>.from(
       sources,
     )..sort(
-      (a, b) => BytesUtils.compareBytes(b.payment.keyImage, a.payment.keyImage),
+      (a, b) => BytesUtils.compareBytes(
+        b.payment.keyImage.keyImage,
+        a.payment.keyImage.keyImage,
+      ),
     );
     sources = sources.immutable;
     final multisigAccount = account.multisigAccount;
@@ -299,6 +310,7 @@ class MoneroMultisigTxBuilder
       txSeed: seed,
       fee: fee,
       fakeTx: fakeTx,
+      extraNonces: extraNonces,
     );
     final signature = MoneroMultisigTxBuilder.buildSignature(
       destinationKeys: destinationKeys,
@@ -431,7 +443,7 @@ class MoneroMultisigTxBuilder
     final List<CLSAGContext> clsagContext = [];
     for (int i = 0; i < sources.length; i++) {
       final ringSize = sig.signature.mixRing![i].length;
-      final RctKey I = sources[i].payment.keyImage;
+      final RctKey I = sources[i].payment.keyImage.keyImage;
       final int l = sources[i].realOutIndex;
       final KeyV s = prunable.clsag[i].s;
       final RctKey cOffset = sig.rctSigPrunable!.pseudoOuts[i];
@@ -556,7 +568,7 @@ class MoneroMultisigTxBuilder
       for (int m = 0; m < MoneroMultisigTxBuilder.kAlphaComponents; m++) {
         final kLRki = MoneroMultisigUtils.getMultisigCompositeKLRki(
           outPubKey: sources[j].payment.output.outputPublicKey,
-          keyImage: sources[j].payment.keyImage,
+          keyImage: sources[j].payment.keyImage.keyImage,
           newUsedL: _multisigInfo.l[j],
           usedL: allUsedL,
           threshHold: threshold,

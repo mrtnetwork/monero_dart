@@ -16,4 +16,14 @@ abstract class MoneroBlockheader extends MoneroSerialization {
   }) : timestamp = timestamp.asU64,
        hash = hash.asImmutableBytes,
        nonce = nonce.asU32;
+
+  static Layout<Map<String, dynamic>> layout({String? property}) {
+    return LayoutConst.struct([
+      MoneroLayoutConst.varintInt(property: "majorVersion"),
+      MoneroLayoutConst.varintInt(property: "minorVersion"),
+      MoneroLayoutConst.varintBigInt(property: "timestamp"),
+      LayoutConst.fixedBlob32(property: "hash"),
+      LayoutConst.u32(property: "nonce"),
+    ], property: property);
+  }
 }

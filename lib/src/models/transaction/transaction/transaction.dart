@@ -1,7 +1,6 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/models/transaction/signature/rct_prunable.dart';
 import 'package:monero_dart/src/models/transaction/signature/signature.dart';
 import 'package:monero_dart/src/models/transaction/transaction/input.dart';
@@ -29,33 +28,36 @@ class MoneroTransaction extends MoneroTransactionPrefix {
       bytes: bytes,
       layout: layout(property: property, forcePrunable: forcePrunable),
     );
-    return MoneroTransaction.fromStruct(decode);
+    return MoneroTransaction.deserializeJson(decode);
   }
-  factory MoneroTransaction.fromStruct(Map<String, dynamic> json) {
-    final Map<String, dynamic> signatureJson = json.asMap("signature");
-    final int version = json.as("version");
+  factory MoneroTransaction.deserializeJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> signatureJson = json
+        .valueEnsureAsMap<String, dynamic>("signature");
+    final int version = json.valueAs("version");
 
     final MoneroTxSignatures sig;
     if (version == 1 && signatureJson.isEmpty) {
       sig = const MoneroV1Signature(null);
     } else {
-      sig = MoneroTxSignatures.fromStruct(json.asMap("signature"));
+      sig = MoneroTxSignatures.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("signature"),
+      );
     }
 
     return MoneroTransaction(
       version: version,
-      unlockTime: json.as("unlock_time"),
+      unlockTime: json.valueAs("unlock_time"),
       vin:
           json
-              .asListOfMap("vin")!
-              .map((e) => MoneroTxin.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("vin")
+              .map((e) => MoneroTxin.deserializeJson(e))
               .toList(),
       vout:
           json
-              .asListOfMap("vout")!
-              .map((e) => MoneroTxout.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("vout")
+              .map((e) => MoneroTxout.deserializeJson(e))
               .toList(),
-      extra: json.asBytes("extera"),
+      extra: json.valueAsBytes("extera"),
       signature: sig,
     );
   }
@@ -222,17 +224,18 @@ class MoneroTransaction extends MoneroTransactionPrefix {
     };
   }
 
-  String getTxHash() {
-    List<int> hash;
+  List<int> txHashBytes() {
     if (version == 1) {
-      hash = QuickCrypto.keccack256Hash(serialize());
+      return QuickCrypto.keccack256Hash(serialize());
     } else {
       final prefix = getTranactionPrefixHash();
       final sig = signature.cast<RCTSignature>();
       if (sig.rctSigPrunable == null) {
-        throw const DartMoneroPluginException(
-          "signature prunable required for determinate tx hash.",
-        );
+        if (!isCoinbase()) {
+          throw const DartMoneroPluginException(
+            "signature prunable required for determinate tx hash.",
+          );
+        }
       }
       final bsaeBytes = RCTSignatureBase.layout(
         inputLength: vin.length,
@@ -256,28 +259,31 @@ class MoneroTransaction extends MoneroTransactionPrefix {
         ).serialize(sig.rctSigPrunable!.toLayoutStruct());
         lastPart = QuickCrypto.keccack256Hash(lastPart);
       }
-      hash = QuickCrypto.keccack256Hash([
+      return QuickCrypto.keccack256Hash([
         ...prefix,
         ...baseSigHash,
         ...lastPart,
       ]);
     }
-
-    return BytesUtils.toHexString(hash);
   }
 
-  List<String> getInputsKeyImages() {
+  String getTxHash() {
+    return BytesUtils.toHexString(txHashBytes());
+  }
+
+  List<TxKeyImage> getInputsKeyImages() {
     return vin
         .map((e) => e.getKeyImage())
         .where((e) => e != null)
-        .cast<String>()
+        .cast<TxKeyImage>()
         .toList();
   }
 
-  List<List<int>> getPublicKeys() {
+  List<List<int>>? getPublicKeys() {
+    final additionalPubKeys = this.additionalPubKeys;
     return [
-      txPubkeyBytes(),
-      if (additionalPubKeys != null) ...additionalPubKeys!.pubKeys,
+      txPubkeyBytes()!,
+      if (additionalPubKeys != null) ...additionalPubKeys.pubKeys,
     ];
   }
 }

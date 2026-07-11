@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/account/account.dart';
 import 'package:monero_dart/src/address/address/address.dart';

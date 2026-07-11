@@ -179,7 +179,7 @@ class MoneroStorageSerializer {
     if (byte != 1 && byte != 0) {
       throw MoneroSerializationException(
         "Invalid boolean byte.",
-        details: {"byte": byte},
+        details: {"byte": byte.toString()},
       );
     }
     return DecodeStorageResult(value: byte == 1, length: 1);
@@ -313,11 +313,7 @@ class MoneroStorageSerializer {
     if (type.isInteger) {
       final info = getNumericTypesBitLength(type);
       final asBigInt = MoneroStorageFormatValidator.asA<BigInt>(value);
-      return BigintUtils.toBytes(
-        asBigInt,
-        length: info.$1 ~/ 8,
-        order: Endian.little,
-      );
+      return asBigInt.toLeBytes(length: info.$1 ~/ 8, sign: true);
     }
     switch (type) {
       case MoneroStorageTypes.string:
@@ -377,15 +373,15 @@ class MoneroStorageSerializer {
     } else if (val <= MoneroSerializationConst.varintMaxTwoByte) {
       int v = val << 2;
       v |= MoneroSerializationConst.portableRawSizeMarkWord;
-      return IntUtils.toBytes(v, length: 2, byteOrder: Endian.little);
+      return v.toLeBytes(length: 2);
     } else if (val <= MoneroSerializationConst.varintMaxFourByte) {
       int v = val << 2;
       v |= MoneroSerializationConst.portableRawSizeMarkDword;
-      return IntUtils.toBytes(v, length: 4, byteOrder: Endian.little);
+      return v.toLeBytes(length: 4);
     }
     throw MoneroSerializationException(
       "Varint is too large to be encoded as bytes. use `encodeVarintBigInt` instead `encodeVarintInt`",
-      details: {"varint": val},
+      details: {"varint": val.toString()},
     );
   }
 
@@ -405,15 +401,15 @@ class MoneroStorageSerializer {
     } else if (val <= BigInt.from(MoneroSerializationConst.varintMaxTwoByte)) {
       BigInt v = val << 2;
       v |= BigInt.one;
-      return BigintUtils.toBytes(v, length: 2, order: Endian.little);
+      return v.toLeBytes(length: 2);
     } else if (val <= BigInt.from(MoneroSerializationConst.varintMaxFourByte)) {
       BigInt v = val << 2;
       v |= BigInt.two;
-      return BigintUtils.toBytes(v, length: 4, order: Endian.little);
+      return v.toLeBytes(length: 4);
     } else if (val <= BigInt.parse("4611686018427387903")) {
       BigInt v = val << 2;
       v |= BigInt.from(3);
-      return BigintUtils.toBytes(v, length: 8, order: Endian.little);
+      return v.toLeBytes(length: 8);
     }
     throw MoneroSerializationException(
       "Varint is too large to be encoded as bytes.",

@@ -289,15 +289,11 @@ class RCT {
   }
 
   static List<int> d2hInt(int v) {
-    return BigintUtils.toBytes(
-      BigInt.from(v),
-      length: 32,
-      order: Endian.little,
-    );
+    return BigInt.from(v).toLeBytes(length: 32);
   }
 
   static List<int> d2h(BigInt amount) {
-    return BigintUtils.toBytes(amount.asU64, length: 32, order: Endian.little);
+    return amount.asU64.toLeBytes(length: 32);
   }
 
   static BigInt h2d(List<int> amoutBytes) {

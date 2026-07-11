@@ -32,11 +32,11 @@ void _testProofIn() {
     final gn = MoneroTransactionHelper.generateInProof(
       transaction: tx,
       account: account,
-      index: const MoneroAccountIndex(),
+      index: const MoneroSubIndex.unsafe(),
     );
     final amount2 = MoneroTransactionHelper.checkProofVar(
       transaction: tx,
-      proofStr: gn.toBase58(),
+      proofStr: gn!.toBase58(),
       address: MoneroAddress(
         "59jj2nxPKab3ZMEVyrUNuUMzgQ1WHjkWL5T6Xk7QaTszggbtPbRPEkZQau9yACYEmUCHPNrU2MBdnJf4s4xLK5AyLCXK8pS",
       ),

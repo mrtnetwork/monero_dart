@@ -5,6 +5,7 @@ import 'package:monero_dart/src/crypto/multisig/models/models.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 import 'package:monero_dart/src/exception/exception.dart';
+import 'package:monero_dart/src/models/transaction/transaction/input.dart';
 
 class MoneroMultisigUtils {
   static int combinationsCount(int k, int n) {
@@ -76,12 +77,12 @@ class MoneroMultisigUtils {
     );
   }
 
-  static RctKey generateMultisigCompositeKeyImage({
+  static TxKeyImage generateMultisigCompositeKeyImage({
     required List<MoneroMultisigOutputInfo> infos,
-    required RctKey keyImage,
+    required TxKeyImage keyImage,
     required List<RctKey> exclude,
   }) {
-    RctKey kImage = keyImage.clone();
+    RctKey kImage = keyImage.keyImage.clone();
     for (final i in infos) {
       for (final p in i.partialKeyImages) {
         if (!BytesUtils.isContains(exclude, p)) {
@@ -90,7 +91,7 @@ class MoneroMultisigUtils {
         }
       }
     }
-    return kImage;
+    return TxKeyImage(kImage);
   }
 
   static MultisigKLRKI getMultisigCompositeKLRki({

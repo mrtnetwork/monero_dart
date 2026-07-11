@@ -2,7 +2,6 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/models/transaction/transaction/input.dart';
 import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
@@ -13,16 +12,13 @@ import 'rct_prunable.dart';
 
 abstract class MoneroTxSignatures extends MoneroSerialization {
   const MoneroTxSignatures();
-  factory MoneroTxSignatures.fromStruct(Map<String, dynamic> json) {
+  factory MoneroTxSignatures.deserializeJson(Map<String, dynamic> json) {
     if (json.containsKey("v1")) {
-      return MoneroV1Signature.fromStruct(json);
+      return MoneroV1Signature.deserializeJson(json);
     } else if (json.containsKey("v2")) {
-      return RCTSignature.fromStruct(json);
+      return RCTSignature.deserializeJson(json);
     }
-    throw DartMoneroPluginException(
-      "Invalid MoneroTxSignatures json struct.",
-      details: {"data": json},
-    );
+    throw DartMoneroPluginException("Invalid MoneroTxSignatures json struct.");
   }
 
   static Layout<Map<String, dynamic>> layout({
@@ -75,14 +71,16 @@ class RCTSignature<S extends RCTSignatureBase, P extends RctSigPrunable>
     );
   }
 
-  factory RCTSignature.fromStruct(Map<String, dynamic> json) {
-    final sig = RCTSignatureBase.fromStruct(json.asMap("v2"));
-    final p = json.mybeAs<RctSigPrunable?, Map<String, dynamic>?>(
+  factory RCTSignature.deserializeJson(Map<String, dynamic> json) {
+    final sig = RCTSignatureBase.deserializeJson(
+      json.valueEnsureAsMap<String, dynamic>("v2"),
+    );
+    final p = json.valueTo<RctSigPrunable?, Map<String, dynamic>>(
       key: "rctSigPrunable",
-      onValue: (e) {
-        if (e?.isEmpty ?? true) return null;
+      parse: (e) {
+        if (e.isEmpty) return null;
         final rSigType = sig.type;
-        return RctSigPrunable.fromStruct(e!, rSigType);
+        return RctSigPrunable.deserializeJson(e, rSigType);
       },
     );
     if (sig is! S) {
@@ -185,11 +183,11 @@ class RCTSignature<S extends RCTSignatureBase, P extends RctSigPrunable>
 class MoneroV1Signature extends MoneroTxSignatures {
   final List<List<int>>? signature;
   const MoneroV1Signature(this.signature);
-  factory MoneroV1Signature.fromStruct(Map<String, dynamic> json) {
+  factory MoneroV1Signature.deserializeJson(Map<String, dynamic> json) {
     if (json.isEmpty) return const MoneroV1Signature(null);
     return MoneroV1Signature(
       json
-          .asListOfMap("v1")!
+          .valueEnsureAsList<Map<String, dynamic>>("v1")
           .map((e) => List<int>.from(e["signature"]))
           .toList(),
     );
@@ -281,12 +279,7 @@ class RCTType {
   static RCTType fromName(String? name) {
     return values.firstWhere(
       (e) => e.name == name,
-      orElse:
-          () =>
-              throw DartMoneroPluginException(
-                "Invalid RCTSig type.",
-                details: {"type": name},
-              ),
+      orElse: () => throw ItemNotFoundException(name: "RCTType", value: name),
     );
   }
 
@@ -425,28 +418,28 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
   final CtKeyM? mixRing;
   final KeyV? pseudoOuts;
   final BigInt txnFee;
-  factory RCTSignatureBase.fromStruct(Map<String, dynamic> json) {
+  factory RCTSignatureBase.deserializeJson(Map<String, dynamic> json) {
     final decode = MoneroVariantSerialization.toVariantDecodeResult(json);
     final type = RCTType.fromName(decode.variantName);
     switch (type) {
       case RCTType.rctTypeNull:
-        return RCTNull.fromStruct(decode.value);
+        return RCTNull.deserializeJson(decode.value);
       case RCTType.rctTypeFull:
-        return RCTFull.fromStruct(decode.value);
+        return RCTFull.deserializeJson(decode.value);
       case RCTType.rctTypeSimple:
-        return RCTSimple.fromStruct(decode.value);
+        return RCTSimple.deserializeJson(decode.value);
       case RCTType.rctTypeBulletproof:
-        return RCTBulletproof.fromStruct(decode.value);
+        return RCTBulletproof.deserializeJson(decode.value);
       case RCTType.rctTypeBulletproof2:
-        return RCTBulletproof2.fromStruct(decode.value);
+        return RCTBulletproof2.deserializeJson(decode.value);
       case RCTType.rctTypeCLSAG:
-        return RCTCLSAG.fromStruct(decode.value);
+        return RCTCLSAG.deserializeJson(decode.value);
       case RCTType.rctTypeBulletproofPlus:
-        return RCTBulletproofPlus.fromStruct(decode.value);
+        return RCTBulletproofPlus.deserializeJson(decode.value);
       default:
         throw DartMoneroPluginException(
           "Invalid RCTSignature.",
-          details: {"type": type, "data": decode.value},
+          details: {"type": type.name},
         );
     }
   }
@@ -549,8 +542,8 @@ class EcdhInfoV2 extends EcdhInfo {
     ], property: property);
   }
 
-  factory EcdhInfoV2.fromStruct(Map<String, dynamic> json) {
-    return EcdhInfoV2(json.asBytes("amount"));
+  factory EcdhInfoV2.deserializeJson(Map<String, dynamic> json) {
+    return EcdhInfoV2(json.valueAsBytes("amount"));
   }
   @override
   Layout<Map<String, dynamic>> createLayout({String? property}) {
@@ -581,10 +574,10 @@ class EcdhInfoV1 extends EcdhInfo {
         operation: "EcdhInfoV1",
         reason: "Invalid mask bytes length.",
       );
-  factory EcdhInfoV1.fromStruct(Map<String, dynamic> json) {
+  factory EcdhInfoV1.deserializeJson(Map<String, dynamic> json) {
     return EcdhInfoV1(
-      amount: json.asBytes("amount"),
-      mask: json.asBytes("mask"),
+      amount: json.valueAsBytes("amount"),
+      mask: json.valueAsBytes("mask"),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -623,8 +616,8 @@ class RCTNull extends RCTSignatureBase {
     return LayoutConst.noArgs(property: property);
   }
 
-  factory RCTNull.fromStruct(Map<String, dynamic> json) {
-    json.asEmpty();
+  factory RCTNull.deserializeJson(Map<String, dynamic> json) {
+    assert(json.isEmpty, "Unexpected data in json.");
     return RCTNull();
   }
   @override
@@ -671,17 +664,17 @@ class RCTCLSAG extends RCTSignatureBase {
     super.message,
     super.mixRing,
   }) : super(type: RCTType.rctTypeCLSAG, pseudoOuts: null);
-  factory RCTCLSAG.fromStruct(Map<String, dynamic> json) {
+  factory RCTCLSAG.deserializeJson(Map<String, dynamic> json) {
     return RCTCLSAG(
       ecdhInfo:
           json
-              .asListOfMap("ecdhInfo")!
-              .map((e) => EcdhInfoV2.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("ecdhInfo")
+              .map((e) => EcdhInfoV2.deserializeJson(e))
               .toList(),
-      txnFee: json.as("txnFee"),
+      txnFee: json.valueAs("txnFee"),
       outPk:
           json
-              .asListBytes("outPk")!
+              .valueEnsureAsList<List<int>>("outPk")
               .map((e) => CtKey(dest: RCT.zero(), mask: e))
               .toList(),
     );
@@ -729,18 +722,18 @@ class RCTSimple extends RCTSignatureBase {
     super.message,
     super.mixRing,
   }) : super(type: RCTType.rctTypeSimple);
-  factory RCTSimple.fromStruct(Map<String, dynamic> json) {
+  factory RCTSimple.deserializeJson(Map<String, dynamic> json) {
     return RCTSimple(
       ecdhInfo:
           json
-              .asListOfMap("ecdhInfo")!
-              .map((e) => EcdhInfoV1.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("ecdhInfo")
+              .map((e) => EcdhInfoV1.deserializeJson(e))
               .toList(),
-      txnFee: json.as("txnFee"),
-      pseudoOuts: json.asListBytes("pseudoOuts")!,
+      txnFee: json.valueAs("txnFee"),
+      pseudoOuts: json.valueEnsureAsList<List<int>>("pseudoOuts"),
       outPk:
           json
-              .asListBytes("outPk")!
+              .valueEnsureAsList<List<int>>("outPk")
               .map((e) => CtKey(dest: RCT.zero(), mask: e))
               .toList(),
     );
@@ -798,17 +791,17 @@ class RCTBulletproof2 extends RCTCLSAG {
     super.message,
     super.mixRing,
   }) : super._(type: RCTType.rctTypeBulletproof2);
-  factory RCTBulletproof2.fromStruct(Map<String, dynamic> json) {
+  factory RCTBulletproof2.deserializeJson(Map<String, dynamic> json) {
     return RCTBulletproof2(
       ecdhInfo:
           json
-              .asListOfMap("ecdhInfo")!
-              .map((e) => EcdhInfoV2.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("ecdhInfo")
+              .map((e) => EcdhInfoV2.deserializeJson(e))
               .toList(),
-      txnFee: json.as("txnFee"),
+      txnFee: json.valueAs("txnFee"),
       outPk:
           json
-              .asListBytes("outPk")!
+              .valueEnsureAsList<List<int>>("outPk")
               .map((e) => CtKey(dest: RCT.zero(), mask: e))
               .toList(),
     );
@@ -836,17 +829,17 @@ class RCTBulletproofPlus extends RCTCLSAG {
     return RCTCLSAG.layout(property: property, outputLength: outputLength);
   }
 
-  factory RCTBulletproofPlus.fromStruct(Map<String, dynamic> json) {
+  factory RCTBulletproofPlus.deserializeJson(Map<String, dynamic> json) {
     return RCTBulletproofPlus(
       ecdhInfo:
           json
-              .asListOfMap("ecdhInfo")!
-              .map((e) => EcdhInfoV2.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("ecdhInfo")
+              .map((e) => EcdhInfoV2.deserializeJson(e))
               .toList(),
-      txnFee: json.as("txnFee"),
+      txnFee: json.valueAs("txnFee"),
       outPk:
           json
-              .asListBytes("outPk")!
+              .valueEnsureAsList<List<int>>("outPk")
               .map((e) => CtKey(dest: RCT.zero(), mask: e))
               .toList(),
     );
@@ -861,17 +854,17 @@ class RCTFull extends RCTSignatureBase {
     super.message,
     super.mixRing,
   }) : super(type: RCTType.rctTypeFull, pseudoOuts: null);
-  factory RCTFull.fromStruct(Map<String, dynamic> json) {
+  factory RCTFull.deserializeJson(Map<String, dynamic> json) {
     return RCTFull(
       ecdhInfo:
           json
-              .asListOfMap("ecdhInfo")!
-              .map((e) => EcdhInfoV1.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("ecdhInfo")
+              .map((e) => EcdhInfoV1.deserializeJson(e))
               .toList(),
-      txnFee: json.as("txnFee"),
+      txnFee: json.valueAs("txnFee"),
       outPk:
           json
-              .asListBytes("outPk")!
+              .valueEnsureAsList<List<int>>("outPk")
               .map((e) => CtKey(dest: RCT.zero(), mask: e))
               .toList(),
     );
@@ -918,17 +911,17 @@ class RCTBulletproof extends RCTSignatureBase {
     super.message,
     super.mixRing,
   }) : super(type: RCTType.rctTypeBulletproof, pseudoOuts: null);
-  factory RCTBulletproof.fromStruct(Map<String, dynamic> json) {
+  factory RCTBulletproof.deserializeJson(Map<String, dynamic> json) {
     return RCTBulletproof(
       ecdhInfo:
           json
-              .asListOfMap("ecdhInfo")!
-              .map((e) => EcdhInfoV1.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("ecdhInfo")
+              .map((e) => EcdhInfoV1.deserializeJson(e))
               .toList(),
-      txnFee: json.as("txnFee"),
+      txnFee: json.valueAs("txnFee"),
       outPk:
           json
-              .asListBytes("outPk")!
+              .valueEnsureAsList<List<int>>("outPk")
               .map((e) => CtKey(dest: RCT.zero(), mask: e))
               .toList(),
     );

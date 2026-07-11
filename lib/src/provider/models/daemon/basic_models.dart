@@ -939,13 +939,13 @@ class DaemonConnectionInfoResponse {
 
 class DaemonGetEstimateFeeResponse extends DaemonBaseResponse {
   final BigInt fee;
-  final List<BigInt> fees;
+  final List<BigInt>? fees;
   final BigInt quantizationMask;
   DaemonGetEstimateFeeResponse.fromJson(super.json)
     : fee = BigintUtils.parse(json["fee"]),
       fees =
-          (json["fees"] as List)
-              .map((e) => BigintUtils.parse(e))
+          (json["fees"] as List?)
+              ?.map((e) => BigintUtils.parse(e))
               .toImutableList,
       quantizationMask = BigintUtils.parse(json["quantization_mask"]),
       super.fromJson();

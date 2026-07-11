@@ -52,6 +52,7 @@ class MoneroIntegratedAddress extends MoneroAddress {
       paymentId: paymentId,
       netVarBytes: network.findPrefix(XmrAddressType.integrated),
     );
+
     return MoneroIntegratedAddress._(
       pubSpendKey: psKey,
       pubViewKey: pvKey,
@@ -60,4 +61,24 @@ class MoneroIntegratedAddress extends MoneroAddress {
       paymentId: paymentId,
     );
   }
+
+  @override
+  MoneroIntegratedAddress toNetwork(MoneroNetwork network) {
+    if (network == this.network) return this;
+    return MoneroIntegratedAddress.fromPubKeys(
+      pubSpendKey: pubSpendKey,
+      pubViewKey: pubViewKey,
+      paymentId: paymentId,
+      network: network,
+    );
+  }
+
+  @override
+  List<CborObject?> get serializationItems => [
+    type.value.toCbor(),
+    CborBytesValue(pubSpendKey),
+    CborBytesValue(pubViewKey),
+    CborBytesValue(paymentId),
+    network.value.toCbor(),
+  ];
 }

@@ -3,7 +3,6 @@ import 'package:monero_dart/src/address/address/address.dart';
 import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/crypto/crypto.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/network/config.dart';
 import 'package:monero_dart/src/network/network.dart';
 import 'package:monero_dart/src/serialization/layout/layout.dart';
@@ -27,9 +26,9 @@ class MoneroAccountKeysType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw DartMoneroPluginException(
-                "Invalod account keys type.",
-                details: {"name": name},
+              throw ItemNotFoundException(
+                name: "MoneroAccountKeysType",
+                value: name,
               ),
     );
   }
@@ -47,19 +46,18 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   final MoneroNetwork network;
 
   /// active subaddress indexes
-  final List<MoneroAccountIndex> indexes;
+  final List<MoneroSubIndex> indexes;
 
   /// type of account
   final MoneroAccountKeysType type;
 
   /// monero account
   final MoneroAccount account;
-  final Map<MoneroAccountIndex, MoneroPrivateKey> _cachedIndexSpendSecretKey =
-      {};
-  final Map<MoneroAccountIndex, MoneroPublicKey> _cachedIndexSpendPubKey = {};
+  final Map<MoneroSubIndex, MoneroPrivateKey> _cachedIndexSpendSecretKey = {};
+  final Map<MoneroSubIndex, MoneroPublicKey> _cachedIndexSpendPubKey = {};
   MoneroBaseAccountKeys._({
     required this.network,
-    required List<MoneroAccountIndex> indexes,
+    required List<MoneroSubIndex> indexes,
     required this.type,
     required this.account,
   }) : indexes = indexes.toImutableList;
@@ -72,17 +70,17 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MoneroBaseAccountKeys.fromStruct(decode);
+    return MoneroBaseAccountKeys.deserializeJson(decode);
   }
 
-  factory MoneroBaseAccountKeys.fromStruct(Map<String, dynamic> json) {
+  factory MoneroBaseAccountKeys.deserializeJson(Map<String, dynamic> json) {
     final decode = MoneroVariantSerialization.toVariantDecodeResult(json);
     final type = MoneroAccountKeysType.fromName(decode.variantName);
     switch (type) {
       case MoneroAccountKeysType.multisig:
-        return MoneroMultisigAccountKeys.fromStruct(decode.value);
+        return MoneroMultisigAccountKeys.deserializeJson(decode.value);
       case MoneroAccountKeysType.simple:
-        return MoneroAccountKeys.fromStruct(decode.value);
+        return MoneroAccountKeys.deserializeJson(decode.value);
       default:
         throw const DartMoneroPluginException("Invalod account info type.");
     }
@@ -110,7 +108,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
 
   /// add subadress index
   MoneroBaseAccountKeys addIndex({int minor = 1, int major = 0}) {
-    final index = MoneroAccountIndex(major: major, minor: minor);
+    final index = MoneroSubIndex(major: major, minor: minor);
     if (indexes.contains(index)) {
       throw const DartMoneroPluginException("Cccount index already exist.");
     }
@@ -131,7 +129,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
     return account.privSkey!.key;
   }
 
-  MoneroPrivateKey getSubAddressSpendPrivateKey(MoneroAccountIndex index) {
+  MoneroPrivateKey getSubAddressSpendPrivateKey(MoneroSubIndex index) {
     if (!indexes.contains(index)) {
       throw const DartMoneroPluginException("Index does not exists.");
     }
@@ -141,7 +139,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   }
 
   /// get spend public key
-  MoneroPublicKey getSpendPublicKey(MoneroAccountIndex index) {
+  MoneroPublicKey getSpendPublicKey(MoneroSubIndex index) {
     if (!indexes.contains(index)) {
       throw const DartMoneroPluginException("Index does not exists.");
     }
@@ -176,7 +174,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   }
 
   /// remove index from account keys
-  MoneroBaseAccountKeys removeIndex(MoneroAccountIndex index) {
+  MoneroBaseAccountKeys removeIndex(MoneroSubIndex index) {
     final rIndex = indexes.remove(index);
     if (!rIndex) {
       throw const DartMoneroPluginException("Index does not exists.");
@@ -190,7 +188,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
 
   /// create subAddress with specify index
   /// index must be exists
-  MoneroAddress subAddress(MoneroAccountIndex index) {
+  MoneroAddress subAddress(MoneroSubIndex index) {
     if (!index.isSubaddress) {
       throw const DartMoneroPluginException(
         "Use primary address for Non-subaddress index.",
@@ -205,7 +203,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
     );
   }
 
-  MoneroAddress indexAddress(MoneroAccountIndex index) {
+  MoneroAddress indexAddress(MoneroSubIndex index) {
     if (index.isSubaddress) {
       return subAddress(index);
     }
@@ -243,9 +241,9 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
   }) : super._(type: MoneroAccountKeysType.simple);
   factory MoneroAccountKeys({
     required MoneroAccount account,
-    List<MoneroAccountIndex> indexes = const [
-      MoneroAccountIndex.primary,
-      MoneroAccountIndex.minor1,
+    List<MoneroSubIndex> indexes = const [
+      MoneroSubIndex.primary,
+      MoneroSubIndex.minor1,
     ],
     required MoneroNetwork network,
   }) {
@@ -261,13 +259,13 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
       network: network,
     );
   }
-  factory MoneroAccountKeys.fromStruct(Map<String, dynamic> json) {
-    final List<int>? privSkey = json.asBytes("privSkey");
+  factory MoneroAccountKeys.deserializeJson(Map<String, dynamic> json) {
+    final List<int>? privSkey = json.valueAsBytes("privSkey");
     final MoneroPrivateKey privVkey = MoneroPrivateKey.fromBytes(
-      json.asBytes("privVkey"),
+      json.valueAsBytes("privVkey"),
     );
     final MoneroPublicKey pubSkey = MoneroPublicKey.fromBytes(
-      json.asBytes("pubSkey"),
+      json.valueAsBytes("pubSkey"),
     );
     MoneroAccount account;
     if (privSkey != null) {
@@ -282,10 +280,10 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
       account: account,
       indexes:
           json
-              .asListOfMap("indexes")!
-              .map((e) => MoneroAccountIndex.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("indexes")
+              .map((e) => MoneroSubIndex.deserializeJson(e))
               .toList(),
-      network: MoneroNetwork.fromName(json.as("network")),
+      network: MoneroNetwork.fromName(json.valueAs("network")),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -295,7 +293,7 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
       LayoutConst.fixedBlob32(property: "privVkey"),
       LayoutConst.fixedBlob32(property: "pubSkey"),
       MoneroLayoutConst.variantVec(
-        MoneroAccountIndex.layout(),
+        MoneroSubIndex.layout(),
         property: "indexes",
       ),
     ], property: property);
@@ -330,9 +328,9 @@ class MoneroMultisigAccountKeys extends MoneroBaseAccountKeys {
        );
   factory MoneroMultisigAccountKeys({
     required MoneroMultisigAccount multisigAccount,
-    List<MoneroAccountIndex> indexes = const [
-      MoneroAccountIndex.primary,
-      MoneroAccountIndex.minor1,
+    List<MoneroSubIndex> indexes = const [
+      MoneroSubIndex.primary,
+      MoneroSubIndex.minor1,
     ],
     MoneroNetwork network = MoneroNetwork.mainnet,
   }) {
@@ -348,15 +346,17 @@ class MoneroMultisigAccountKeys extends MoneroBaseAccountKeys {
       network: network,
     );
   }
-  factory MoneroMultisigAccountKeys.fromStruct(Map<String, dynamic> json) {
+  factory MoneroMultisigAccountKeys.deserializeJson(Map<String, dynamic> json) {
     return MoneroMultisigAccountKeys(
-      multisigAccount: MoneroMultisigAccount.fromStruct(json.asMap("account")),
+      multisigAccount: MoneroMultisigAccount.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("account"),
+      ),
       indexes:
           json
-              .asListOfMap("indexes")!
-              .map((e) => MoneroAccountIndex.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("indexes")
+              .map((e) => MoneroSubIndex.deserializeJson(e))
               .toList(),
-      network: MoneroNetwork.fromName(json.as("network")),
+      network: MoneroNetwork.fromName(json.valueAs("network")),
     );
   }
 
@@ -365,7 +365,7 @@ class MoneroMultisigAccountKeys extends MoneroBaseAccountKeys {
       MoneroLayoutConst.variantString(property: "network"),
       MoneroMultisigAccountCore.layout(property: "account"),
       MoneroLayoutConst.variantVec(
-        MoneroAccountIndex.layout(),
+        MoneroSubIndex.layout(),
         property: "indexes",
       ),
     ], property: property);

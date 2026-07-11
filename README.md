@@ -120,7 +120,7 @@ Transfer
 
   /// Retrieve a subaddress. The minor index 1 is specified
   /// to generate the subaddress.
-  final subAddress = myAccount.subAddress(const MoneroAccountIndex(minor: 1));
+  final subAddress = myAccount.subAddress(const MoneroSubIndex(minor: 1));
 
   /// Generate an integrated address, using a specified
   /// payment ID (represented by a 8-byte payment ID).
@@ -142,7 +142,7 @@ class MoneroHTTPProvider implements MoneroServiceProvider {
   Future<MoneroServiceResponse<T>> doRequest<T>(MoneroRequestDetails params,
       {Duration? timeout}) async {
     final url = params.toUri(
-        params.api == MoneroRequestApiType.wallet ? walletUrl! : daemoUrl!);
+        params.api == MoneroProviderApi.wallet ? walletUrl! : daemoUrl!);
     final response = await client
         .post(url, headers: params.headers, body: params.body())
         .timeout(timeout ?? defaultRequestTimeout);

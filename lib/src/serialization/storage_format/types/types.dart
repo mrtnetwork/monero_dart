@@ -86,7 +86,7 @@ class MoneroStorageTypes {
           () =>
               throw MoneroSerializationException(
                 "Invalid storage type: Unable to determine the correct type from the provided flag.",
-                details: {"flag": flag},
+                details: {"flag": flag.toString()},
               ),
     );
   }

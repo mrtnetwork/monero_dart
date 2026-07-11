@@ -205,10 +205,13 @@ class MoneroApi extends MoneroApiInterface {
     for (final tx in transactions) {
       if (!tx.hasIndices) continue;
       for (int i = 0; i < tx.transaction.vout.length; i++) {
+        final indeces = tx.outputIndices;
+        assert(indeces != null, "Mempool tx detected");
+        if (indeces == null) continue;
         final txOutputs = MoneroTransactionHelper.getUnlockedPayment(
           tx: tx.transaction,
           account: account,
-          indices: tx.outputIndices,
+          indices: indeces,
           realIndex: i,
         );
         if (txOutputs != null) {
@@ -241,13 +244,14 @@ class MoneroApi extends MoneroApiInterface {
   }) {
     final List<MoneroLockedPayment> outputs = [];
     for (final tx in transactions) {
-      if (!tx.hasIndices) continue;
+      final outputIndices = tx.outputIndices;
+      if (outputIndices == null) continue;
       for (int i = 0; i < tx.transaction.vout.length; i++) {
         final txOutputs = MoneroTransactionHelper.getLockedPayment(
           tx: tx.transaction,
           account: account,
           realIndex: i,
-          indices: tx.outputIndices,
+          indices: outputIndices,
         );
         if (txOutputs != null) {
           outputs.add(txOutputs);

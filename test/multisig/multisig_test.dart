@@ -161,9 +161,9 @@ List<MoneroMultisigAccountKeys> _createMultisigAccountsM3N5() {
           multisigAccount: e,
           network: MoneroNetwork.stagenet,
           indexes: [
-            MoneroAccountIndex.primary,
-            MoneroAccountIndex.minor1,
-            ...List.generate(15, (i) => MoneroAccountIndex(minor: i + 2)),
+            MoneroSubIndex.primary,
+            MoneroSubIndex.minor1,
+            ...List.generate(15, (i) => MoneroSubIndex(minor: i + 2)),
           ],
         ),
       )

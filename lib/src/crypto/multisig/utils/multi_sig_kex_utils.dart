@@ -24,8 +24,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import 'dart:typed_data';
-
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/multisig/const/const.dart';
@@ -63,11 +61,7 @@ class MoneroMultisigKexUtils {
       hashKey = MoneroMultisigConst.multisigKexMsgV2MagicN.codeUnits;
       keyBytes = msgPubKeys.expand((e) => e.key).toList();
     }
-    final roundBytes = IntUtils.toBytes(
-      round,
-      length: 4,
-      byteOrder: Endian.little,
-    );
+    final roundBytes = round.toU32LeBytes();
 
     return QuickCrypto.keccack256Hash([
       ...hashKey,

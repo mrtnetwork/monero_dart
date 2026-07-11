@@ -2,7 +2,7 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 
 import 'basic_models.dart';
 
-class DistributionResponse {
+class DistributionResponse with Equality {
   static List<BigInt> _decodeRctOffsets(List<int> distribution) {
     int offset = 0;
     final List<BigInt> offsets = [];
@@ -45,9 +45,9 @@ class DistributionResponse {
     if (binary) {
       List<int> data;
       if (compress) {
-        data = BytesUtils.fromHexString(json["compressed_data"]);
+        data = StringUtils.toBytes(json["compressed_data"]);
       } else {
-        data = BytesUtils.fromHexString(json["distribution"]);
+        data = StringUtils.toBytes(json["distribution"]);
       }
       distribution = _decodeRctOffsets(data);
     } else {
@@ -65,9 +65,12 @@ class DistributionResponse {
       startHeight: IntUtils.tryParse(json["start_height"]) ?? 0,
     );
   }
+
+  @override
+  List<dynamic> get variables => [distribution];
 }
 
-class OutputDistributionResponse extends DaemonBaseResponse {
+class OutputDistributionResponse extends DaemonBaseResponse with Equality {
   final List<DistributionResponse> distributions;
   OutputDistributionResponse.fromJson(super.json)
     : distributions =
@@ -75,4 +78,6 @@ class OutputDistributionResponse extends DaemonBaseResponse {
               .map((e) => DistributionResponse.fromJson(e))
               .toList(),
       super.fromJson();
+  @override
+  List<dynamic> get variables => [distributions];
 }

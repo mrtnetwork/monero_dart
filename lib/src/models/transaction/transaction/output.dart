@@ -1,6 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 
@@ -35,10 +34,7 @@ class TxOutTargetType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw DartMoneroPluginException(
-                "Invalid Txout target type.",
-                details: {"type": name},
-              ),
+              throw ItemNotFoundException(name: "TxOutTargetType", value: name),
     );
   }
 }
@@ -46,22 +42,22 @@ class TxOutTargetType {
 abstract class TxoutTarget extends MoneroVariantSerialization {
   final TxOutTargetType type;
   const TxoutTarget(this.type);
-  factory TxoutTarget.fromStruct(Map<String, dynamic> json) {
+  factory TxoutTarget.deserializeJson(Map<String, dynamic> json) {
     final decode = MoneroVariantSerialization.toVariantDecodeResult(json);
     final type = TxOutTargetType.fromName(decode.variantName);
     switch (type) {
       case TxOutTargetType.txoutToKey:
-        return TxoutToKey.fromStruct(decode.value);
+        return TxoutToKey.deserializeJson(decode.value);
       case TxOutTargetType.txoutToScript:
-        return TxoutToScript.fromStruct(decode.value);
+        return TxoutToScript.deserializeJson(decode.value);
       case TxOutTargetType.txoutToScriptHash:
-        return TxoutToScriptHash.fromStruct(decode.value);
+        return TxoutToScriptHash.deserializeJson(decode.value);
       case TxOutTargetType.txoutToTaggedKey:
-        return TxoutToTaggedKey.fromStruct(decode.value);
+        return TxoutToTaggedKey.deserializeJson(decode.value);
       default:
         throw DartMoneroPluginException(
           "Invalid txout target.",
-          details: {"type": type, "data": decode.value},
+          details: {"type": type.name},
         );
     }
   }
@@ -150,10 +146,10 @@ class TxoutToScript extends TxoutTarget {
     : keys = keys.map((e) => e.asImmutableBytes).toList().immutable,
       script = script.asImmutableBytes,
       super(TxOutTargetType.txoutToScript);
-  factory TxoutToScript.fromStruct(Map<String, dynamic> json) {
+  factory TxoutToScript.deserializeJson(Map<String, dynamic> json) {
     return TxoutToScript(
-      keys: json.asListBytes("keys")!,
-      script: json.asBytes("script"),
+      keys: json.valueEnsureAsList<List<int>>("keys"),
+      script: json.valueAsBytes("script"),
     );
   }
 
@@ -188,8 +184,8 @@ class TxoutToScriptHash extends TxoutTarget {
   TxoutToScriptHash(List<int> hash)
     : hash = hash.asImmutableBytes,
       super(TxOutTargetType.txoutToScriptHash);
-  factory TxoutToScriptHash.fromStruct(Map<String, dynamic> json) {
-    return TxoutToScriptHash(json.asBytes("hash"));
+  factory TxoutToScriptHash.deserializeJson(Map<String, dynamic> json) {
+    return TxoutToScriptHash(json.valueAsBytes("hash"));
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -223,8 +219,8 @@ class TxoutToKey extends TxoutTarget {
         reason: "Invalid key bytes length.",
       ),
       super(TxOutTargetType.txoutToKey);
-  factory TxoutToKey.fromStruct(Map<String, dynamic> json) {
-    return TxoutToKey(json.asBytes("key"));
+  factory TxoutToKey.deserializeJson(Map<String, dynamic> json) {
+    return TxoutToKey(json.valueAsBytes("key"));
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -259,10 +255,10 @@ class TxoutToTaggedKey extends TxoutTarget {
         reason: "Invalid key bytes length.",
       ),
       super(TxOutTargetType.txoutToTaggedKey);
-  factory TxoutToTaggedKey.fromStruct(Map<String, dynamic> json) {
+  factory TxoutToTaggedKey.deserializeJson(Map<String, dynamic> json) {
     return TxoutToTaggedKey(
-      key: json.asBytes("key"),
-      viewTag: json.as("view_tag"),
+      key: json.valueAsBytes("key"),
+      viewTag: json.valueAs("view_tag"),
     );
   }
 
@@ -308,10 +304,12 @@ class MoneroTxout extends MoneroSerialization {
     );
   }
 
-  factory MoneroTxout.fromStruct(Map<String, dynamic> json) {
+  factory MoneroTxout.deserializeJson(Map<String, dynamic> json) {
     return MoneroTxout(
-      amount: json.as("amount"),
-      target: TxoutTarget.fromStruct(json.asMap("target")),
+      amount: json.valueAs("amount"),
+      target: TxoutTarget.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("target"),
+      ),
     );
   }
 

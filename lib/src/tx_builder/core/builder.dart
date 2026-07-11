@@ -74,7 +74,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   String get totalOutputAsXMR => MoneroTransactionHelper.toXMR(totalOutput);
   String get txId => transaction.getTxHash();
   MoneroTransaction getFinalTx();
-  MoneroTxProof generateProofVar({
+  MoneroTxProof? generateProofVar({
     required MoneroAddress receiverAddress,
     String? message,
   }) {
@@ -86,7 +86,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     );
   }
 
-  MoneroTxProof generateProof({
+  MoneroTxProof? generateProof({
     required MoneroAddress receiverAddress,
     String? message,
   }) {
@@ -98,9 +98,9 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     );
   }
 
-  MoneroTxProof generateInProof({
+  MoneroTxProof? generateInProof({
     required MoneroAccount account,
-    required MoneroAccountIndex index,
+    required MoneroSubIndex index,
     String? message,
   }) {
     return MoneroTransactionHelper.generateInProof(
@@ -111,9 +111,9 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     );
   }
 
-  MoneroTxProof generateInProofVar({
+  MoneroTxProof? generateInProofVar({
     required MoneroAccount account,
-    required MoneroAccountIndex index,
+    required MoneroSubIndex index,
     String? message,
   }) {
     return MoneroTransactionHelper.generateInProofVar(
@@ -150,7 +150,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final List<int> data = [
       ...domain.codeUnits,
       ...entropy,
-      ...sources.map((e) => e.payment.keyImage).expand((e) => e),
+      ...sources.map((e) => e.payment.keyImage).expand((e) => e.keyImage),
     ];
     return QuickCrypto.keccack256Hash(data).asImmutableBytes;
   }
@@ -196,11 +196,10 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   }) {
     final List<TxinToKey> inputs =
         sources.map((e) {
+          final outs = e.outs.map((i) => i.index).toList();
           return TxinToKey(
             amount: e.payment.output.amount,
-            keyOffsets: absoluteOutputOffsetsToRelative(
-              e.outs.map((i) => i.index).toList(),
-            ),
+            keyOffsets: absoluteOutputOffsetsToRelative(outs),
             keyImage: e.payment.keyImage,
           );
         }).toList();
@@ -215,6 +214,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   static ComputeDestinationKeys _computeDestinationKeys({
     required MoneroBaseAccountKeys account,
     required List<MoneroTxDestination> destinations,
+    required List<TxExtra> extraNonces,
     required ComputeSourceKeys sources,
     required BigInt fee,
     MoneroTxDestination? change,
@@ -248,8 +248,13 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       (p, c) => p + c.amount,
     );
     if (inAmounts != outAmounts + fee) {
-      throw const DartMoneroPluginException(
+      throw DartMoneroPluginException(
         "Transaction validation failed: The sum of input amounts does not match the sum of output amounts plus the transaction fee. Ensure the inputs cover all outputs and the required fee.",
+        details: {
+          "inAmounts": inAmounts.toString(),
+          "output_plus_fee": (outAmounts + fee).toString(),
+          "remind": (inAmounts - (outAmounts + fee)).toString(),
+        },
       );
     }
 
@@ -337,7 +342,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     }
     return ComputeDestinationKeys(
       amountKeys: amountKeys,
-      extras: extras,
+      extras: [...extraNonces, ...extras],
       txPubKey: txPubKey,
       additionalTxPubKey: additionalTxPubKey,
       outs: vouts,

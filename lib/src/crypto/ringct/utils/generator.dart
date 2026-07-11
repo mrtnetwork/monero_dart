@@ -26,6 +26,7 @@
 
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/exception/exception.dart';
+import 'package:monero_dart/src/crypto/monero/crypto.dart';
 import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/bulletproofs_plus.dart';
 import 'package:monero_dart/src/crypto/ringct/clsag/clsag.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
@@ -1026,5 +1027,46 @@ class RCTGeneratorUtils {
     } on MoneroCryptoException {
       return null;
     }
+  }
+
+  static (RctKey, RctKey)? encodeCoinbaseRctVar({
+    required BigInt amount,
+    required RctKey derivation,
+    required int outputIndex,
+  }) {
+    try {
+      return _encodeCoinbaseRctVar(
+        amount: amount,
+        derivation: derivation,
+        outputIndex: outputIndex,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static (RctKey, RctKey) _encodeCoinbaseRctVar({
+    required BigInt amount,
+    required RctKey derivation,
+    required int outputIndex,
+  }) {
+    // 1. derive deterministic mask (same rule wallet uses conceptually)
+    final RctKey mask = MoneroCrypto.derivationToScalarVar(
+      derivation: derivation,
+      outIndex: outputIndex,
+    );
+
+    // 2. convert amount → scalar
+    final RctKey amountSc = RCT.d2h(amount);
+
+    // 3. commitment: C = mask*G + amount*H
+    final RctKey commitment = RCT.addKeys2Var(mask, amountSc, RCTConst.h);
+
+    // 4. sanity check scalar validity
+    if (!Ed25519Utils.scCheckVar(mask) || !Ed25519Utils.scCheckVar(amountSc)) {
+      throw const MoneroCryptoException("Invalid coinbase scalars");
+    }
+
+    return (mask, commitment);
   }
 }

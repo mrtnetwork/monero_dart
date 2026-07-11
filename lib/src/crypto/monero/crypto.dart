@@ -29,11 +29,10 @@ import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/models/ec_signature.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 
-typedef ONRINGSIGNATURERANDOMSCALAR = List<int> Function(int pubIndex);
-typedef ONRANDOMSCALAR = List<int> Function();
+typedef CbSignatureRendScalar = List<int> Function(int pubIndex);
+typedef CbRandScalar = List<int> Function();
 
 class MoneroCrypto {
   // /// Validates a scalar's byte representation and ensures it is valid.
@@ -46,7 +45,6 @@ class MoneroCrypto {
         "Public key was not in prime subgroup.",
       );
     }
-    // !RCT.isInMainSubgroup(publicKey.key)
     return publicKey;
   }
 
@@ -74,7 +72,11 @@ class MoneroCrypto {
     required List<int> derivation,
     required int outIndex,
   }) {
-    derivation.as32Bytes("derivationToScalar");
+    derivation.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "derivationToScalar",
+      reason: "Invalid bytes length.",
+    );
     final outputIndex = MoneroLayoutConst.varint48.serialize(outIndex);
     final bytes = [...derivation.asImmutableBytes, ...outputIndex];
     final hash = RCT.hashToScalar_(bytes);
@@ -86,7 +88,11 @@ class MoneroCrypto {
     required List<int> derivation,
     required int outIndex,
   }) {
-    derivation.as32Bytes("derivationToScalar");
+    derivation.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "derivationToScalarVar",
+      reason: "Invalid bytes length.",
+    );
     final outputIndex = MoneroLayoutConst.varint48.serialize(outIndex);
     final bytes = [...derivation.asImmutableBytes, ...outputIndex];
     return RCT.hashToScalarVar(bytes);
@@ -98,7 +104,11 @@ class MoneroCrypto {
     required int outIndex,
     required MoneroPublicKey basePublicKey,
   }) {
-    derivation.as32Bytes("derivePublicKey");
+    derivation.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "derivePublicKeyVar",
+      reason: "Invalid bytes length.",
+    );
     final RctKey scalar = derivationToScalarVar(
       derivation: derivation,
       outIndex: outIndex,
@@ -114,7 +124,11 @@ class MoneroCrypto {
     required int outIndex,
     required MoneroPublicKey basePublicKey,
   }) {
-    derivation.as32Bytes("derivePublicKey");
+    derivation.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "derivePublicKeyBytesVar",
+      reason: "Invalid bytes length.",
+    );
     final RctKey scalar = derivationToScalarVar(
       derivation: derivation,
       outIndex: outIndex,
@@ -131,7 +145,11 @@ class MoneroCrypto {
     required int outIndex,
     required MoneroPublicKey basePublicKey,
   }) {
-    derivation.as32Bytes("derivePublicKey");
+    derivation.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "derivePublicKey",
+      reason: "Invalid bytes length.",
+    );
     final GroupElementP3 point1 = GroupElementP3();
     final GroupElementP3 point2 = GroupElementP3();
     final GroupElementCached point3 = GroupElementCached();
@@ -169,7 +187,11 @@ class MoneroCrypto {
     required List<int> derivation,
     required int outIndex,
   }) {
-    derivation.as32Bytes("deriveViewTag");
+    derivation.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "deriveViewTag",
+      reason: "Invalid bytes length.",
+    );
     final outputIndex = MoneroLayoutConst.varint48.serialize(outIndex);
     final hash = QuickCrypto.keccack256Hash([
       ..._viewTagDomain,
@@ -190,7 +212,11 @@ class MoneroCrypto {
     RCT.hashToP3(point, pubkey);
     CryptoOps.geScalarMult(point2, secretKey, point);
     resultKey ??= RCT.zero();
-    resultKey.as32Bytes("generateKeyImage");
+    resultKey.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateKeyImageBytes",
+      reason: "Invalid bytes length.",
+    );
     CryptoOps.geToBytes(resultKey, point2);
     return resultKey;
   }
@@ -206,7 +232,11 @@ class MoneroCrypto {
     RCT.hashToP3(point, pubkey.key);
     CryptoOps.geScalarMult(point2, secretKey.key, point);
     resultKey ??= RCT.zero();
-    resultKey.as32Bytes("generateKeyImage");
+    resultKey.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateKeyImage",
+      reason: "Invalid bytes length.",
+    );
     CryptoOps.geToBytes(resultKey, point2);
     return resultKey;
   }
@@ -291,9 +321,21 @@ class MoneroCrypto {
     required RctKey secretKey,
     RctKey? k,
   }) {
-    hash.as32Bytes("generateSignature");
-    publicKey.as32Bytes("generateSignature");
-    secretKey.as32Bytes("generateSignature");
+    hash.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateSignature",
+      reason: "Invalid bytes length.",
+    );
+    publicKey.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateSignature",
+      reason: "Invalid bytes length.",
+    );
+    secretKey.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateSignature",
+      reason: "Invalid bytes length.",
+    );
     while (true) {
       final GroupElementP3 tmp3 = GroupElementP3();
       k ??= RCT.skGen_();
@@ -318,8 +360,16 @@ class MoneroCrypto {
     required List<int> publicKey,
     required MECSignature signature,
   }) {
-    hash.as32Bytes("checkSignature");
-    publicKey.as32Bytes("checkSignature");
+    hash.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "checkSignature",
+      reason: "Invalid bytes length.",
+    );
+    publicKey.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "checkSignature",
+      reason: "Invalid bytes length.",
+    );
     final p = RCT.asPoint(publicKey);
 
     final sR = Ed25519Utils.scCheckVar(signature.r);
@@ -352,12 +402,36 @@ class MoneroCrypto {
     required List<int> d,
     required List<int> r,
   }) {
-    hash.as32Bytes("generateTxProof");
-    R.as32Bytes("generateTxProof");
-    A.as32Bytes("generateTxProof");
-    B?.as32Bytes("generateTxProof");
-    d.as32Bytes("generateTxProof");
-    r.as32Bytes("generateTxProof");
+    hash.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    R.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    A.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    B?.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    d.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    r.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProofVar",
+      reason: "Invalid bytes length.",
+    );
     // sanity check
     final rP3 = Ed25519Utils.mybeAsPoint(R);
     final aP3 = Ed25519Utils.mybeAsPoint(A);
@@ -408,12 +482,36 @@ class MoneroCrypto {
     required List<int> d,
     required List<int> r,
   }) {
-    hash.as32Bytes("generateTxProof");
-    R.as32Bytes("generateTxProof");
-    A.as32Bytes("generateTxProof");
-    B?.as32Bytes("generateTxProof");
-    d.as32Bytes("generateTxProof");
-    r.as32Bytes("generateTxProof");
+    hash.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProof",
+      reason: "Invalid bytes length.",
+    );
+    R.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProof",
+      reason: "Invalid bytes length.",
+    );
+    A.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProof",
+      reason: "Invalid bytes length.",
+    );
+    B?.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProof",
+      reason: "Invalid bytes length.",
+    );
+    d.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProof",
+      reason: "Invalid bytes length.",
+    );
+    r.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "generateTxProof",
+      reason: "Invalid bytes length.",
+    );
     // sanity check
     final GroupElementP3 rP3 = GroupElementP3();
     final GroupElementP3 aP3 = GroupElementP3();
@@ -480,11 +578,31 @@ class MoneroCrypto {
     required MECSignature signature,
     required int version,
   }) {
-    hash.as32Bytes("verifyTxProof");
-    R.as32Bytes("verifyTxProof");
-    A.as32Bytes("verifyTxProof");
-    B?.as32Bytes("verifyTxProof");
-    d.as32Bytes("verifyTxProof");
+    hash.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProof",
+      reason: "Invalid bytes length.",
+    );
+    R.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProof",
+      reason: "Invalid bytes length.",
+    );
+    A.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProof",
+      reason: "Invalid bytes length.",
+    );
+    B?.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProof",
+      reason: "Invalid bytes length.",
+    );
+    d.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProof",
+      reason: "Invalid bytes length.",
+    );
     final GroupElementP3 rP3 = GroupElementP3();
     final GroupElementP3 aP3 = GroupElementP3();
     final GroupElementP3 bP3 = GroupElementP3();
@@ -560,7 +678,7 @@ class MoneroCrypto {
     } else {
       throw MoneroCryptoException(
         "Invalid tx proof version",
-        details: {"version": version},
+        details: {"version": version.toString()},
       );
     }
     CryptoOps.scSub(c2, c2, signature.c);
@@ -577,11 +695,31 @@ class MoneroCrypto {
     required MECSignature signature,
     required int version,
   }) {
-    hash.as32Bytes("verifyTxProof");
-    R.as32Bytes("verifyTxProof");
-    A.as32Bytes("verifyTxProof");
-    B?.as32Bytes("verifyTxProof");
-    d.as32Bytes("verifyTxProof");
+    hash.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    R.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    A.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    B?.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProofVar",
+      reason: "Invalid bytes length.",
+    );
+    d.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "verifyTxProofVar",
+      reason: "Invalid bytes length.",
+    );
     final rP3 = Ed25519Utils.mybeAsPoint(R);
     final aP3 = Ed25519Utils.mybeAsPoint(A);
     final bP3 = B == null ? null : Ed25519Utils.asPoint(B);
@@ -627,7 +765,7 @@ class MoneroCrypto {
     } else {
       throw MoneroCryptoException(
         "Invalid tx proof version",
-        details: {"version": version},
+        details: {"version": version.toString()},
       );
     }
     final c = Ed25519Utils.scSubVar(c2, signature.c);
@@ -644,8 +782,16 @@ class MoneroCrypto {
     /// store key here
     RctKey? resultKey,
   }) {
-    derivation.as32Bytes("deriveSecretKey");
-    privateSpendKey.as32Bytes("deriveSecretKey");
+    derivation.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "deriveSecretKey",
+      reason: "Invalid bytes length.",
+    );
+    privateSpendKey.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "deriveSecretKey",
+      reason: "Invalid bytes length.",
+    );
     if (CryptoOps.scCheck(privateSpendKey) != 0) {
       throw const MoneroCryptoException("Invalid secret key.");
     }
@@ -664,7 +810,11 @@ class MoneroCrypto {
     required MoneroPrivateKey b,
     RctKey? resultKey,
   }) {
-    resultKey?.as32Bytes("secretKeyToPubKey");
+    resultKey?.exc(
+      length: Ed25519KeysConst.privKeyByteLen,
+      operation: "scSecretAdd",
+      reason: "Invalid bytes length.",
+    );
     resultKey ??= RCT.zero();
     CryptoOps.scAdd(resultKey, a.key, b.key);
     return MoneroPrivateKey.fromBytes(resultKey);

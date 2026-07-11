@@ -154,7 +154,7 @@ class MoneroStorageFormatValidator {
     }
     throw MoneroSerializationException(
       "Unknown storage format: Unable to determine the correct type for the provided value.",
-      details: {"value": value},
+      details: {"value": value?.toString()},
     );
   }
 
@@ -166,14 +166,14 @@ class MoneroStorageFormatValidator {
       if (currentValue is! T) {
         throw MoneroSerializationException(
           "Incorrect primitive $T value.",
-          details: {"value": value},
+          details: {"value": value?.toString()},
         );
       }
       return (currentValue as T, type);
     }
     throw MoneroSerializationException(
       "Invalid primitive value.",
-      details: {"value": value},
+      details: {"value": value?.toString()},
     );
   }
 

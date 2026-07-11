@@ -10,3 +10,4 @@ export 'provider/provider.dart';
 export 'serialization/serialization.dart';
 export 'tx_builder/tx_builder.dart';
 export 'network/config.dart';
+export 'block_processor/block_processor.dart';

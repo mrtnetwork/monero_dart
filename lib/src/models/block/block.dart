@@ -1,7 +1,4 @@
-import 'package:blockchain_utils/helper/helper.dart';
-import 'package:blockchain_utils/layout/layout.dart';
-import 'package:blockchain_utils/utils/binary/utils.dart';
-import 'package:monero_dart/src/helper/extension.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/models/block/header.dart';
 import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
@@ -35,25 +32,31 @@ class MoneroBlock extends MoneroBlockheader {
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MoneroBlock.fromStruct(decode);
+    return MoneroBlock.deserializeJson(decode);
   }
+
   static List<String> getTxHashes(List<int> bytes, {String? property}) {
     final json = MoneroSerialization.deserialize(
       bytes: bytes,
       layout: layout(property: property),
     );
-    return json.asListBytes("txHashes")!.map(BytesUtils.toHexString).toList();
+    return json
+        .valueEnsureAsList<List<int>>("txHashes")
+        .map(BytesUtils.toHexString)
+        .toList();
   }
 
-  factory MoneroBlock.fromStruct(Map<String, dynamic> json) {
+  factory MoneroBlock.deserializeJson(Map<String, dynamic> json) {
     return MoneroBlock(
-      majorVersion: json.as("majorVersion"),
-      minorVersion: json.as("minorVersion"),
-      timestamp: json.as("timestamp"),
-      hash: json.asBytes("hash"),
-      nonce: json.as("nonce"),
-      minerTx: MoneroTransaction.fromStruct(json.asMap("minerTx")),
-      txHashes: json.asListBytes("txHashes")!,
+      majorVersion: json.valueAs("majorVersion"),
+      minorVersion: json.valueAs("minorVersion"),
+      timestamp: json.valueAs("timestamp"),
+      hash: json.valueAsBytes("hash"),
+      nonce: json.valueAs("nonce"),
+      minerTx: MoneroTransaction.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("minerTx"),
+      ),
+      txHashes: json.valueEnsureAsList<List<int>>("txHashes"),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -95,5 +98,64 @@ class MoneroBlock extends MoneroBlockheader {
 
   String previousBlockHash() {
     return BytesUtils.toHexString(hash);
+  }
+
+  List<int> getBlockHashBytes() {
+    final header = MoneroBlockheader.layout().serialize(toLayoutStruct());
+    final txTree = getTxTreeHash();
+    final extra = MoneroLayoutConst.varintInt().serialize(txHashes.length + 1);
+    return QuickCrypto.keccack256Hash(
+      MoneroLayoutConst.variantBytes().serialize([
+        ...header,
+        ...txTree,
+        ...extra,
+      ]),
+    );
+  }
+
+  String getBlockHash() {
+    return BytesUtils.toHexString(getBlockHashBytes());
+  }
+
+  List<int> getTxTreeHash() {
+    final hashes = [minerTx.txHashBytes(), ...txHashes];
+    const int hashSize = 32;
+    if (hashes.length == 1) {
+      return hashes[0];
+    }
+    if (hashes.length == 2) {
+      return QuickCrypto.keccack256Hash([...hashes[0], ...hashes[1]]);
+    }
+    int count = hashes.length;
+    int cnt = () {
+      int pow = 2;
+      while (pow < count) {
+        pow <<= 1;
+      }
+      return pow >> 1;
+    }();
+
+    List<List<int>> ints = List.filled(cnt, List.filled(hashSize, 0));
+
+    final int offset = 2 * cnt - count;
+
+    for (int i = 0; i < offset; i++) {
+      ints[i] = hashes[i];
+    }
+
+    for (int i = offset; i < cnt; i++) {
+      ints[i] = hashes[i - offset];
+    }
+    for (int i = offset, j = offset; j < cnt; i += 2, j++) {
+      ints[j] = QuickCrypto.keccack256Hash([...hashes[i], ...hashes[i + 1]]);
+    }
+    while (cnt > 2) {
+      cnt >>= 1;
+
+      for (int i = 0, j = 0; j < cnt; i += 2, j++) {
+        ints[j] = QuickCrypto.keccack256Hash([...ints[i], ...ints[i + 1]]);
+      }
+    }
+    return QuickCrypto.keccack256Hash([...ints[0], ...ints[1]]);
   }
 }

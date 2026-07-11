@@ -31,9 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.2
-  blockchain_utils: ^6.0.0
-  # blockchain_utils:
-  #   path: ../../blockchain_utils
+  # blockchain_utils: ^6.0.0
+  blockchain_utils:
+    path: ../../blockchain_utils
   monero_dart:
     path: ../
 
@@ -42,8 +42,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
+  test: ^1.26.3
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

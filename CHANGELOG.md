@@ -1,3 +1,12 @@
+## 1.7.0
+- Updated dependencies.
+- Updated MoneroAddress to inherit from IAddress provided by blockchain_utils.
+- Fixed Monero coinbase UTXO decoding and spending.
+- Added MoneroBlockProcessor helper class for tracking account UTXOs.
+- Renamed MoneroAccountIndex to MoneroSubIndex.
+
+
+
 ## 1.6.0
 - Minimum required Dart SDK version updated to 3.7.
 - Update dependencies.

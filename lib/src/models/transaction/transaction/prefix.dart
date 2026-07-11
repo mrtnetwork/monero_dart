@@ -1,7 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
-import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/helper/transaction.dart';
 import 'package:monero_dart/src/models/transaction/transaction/input.dart';
 import 'package:monero_dart/src/models/transaction/transaction/output.dart';
@@ -16,6 +14,7 @@ class MoneroTransactionPrefix extends MoneroSerialization {
   final List<MoneroTxin> vin;
   final List<MoneroTxout> vout;
   final List<int> extra;
+
   MoneroTransactionPrefix({
     int version = MoneroNetworkConst.currentVersion,
     BigInt? unlockTime,
@@ -36,33 +35,24 @@ class MoneroTransactionPrefix extends MoneroSerialization {
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MoneroTransactionPrefix.fromStruct(decode);
+    return MoneroTransactionPrefix.deserializeJson(decode);
   }
-  factory MoneroTransactionPrefix.fromStruct(Map<String, dynamic> json) {
-    // final Map<String, dynamic> signatureJson = json.asMap("signature");
-    final int version = json.as("version");
-
-    // final MoneroTxSignatures sig;
-    // if (version == 1 && signatureJson.isEmpty) {
-    //   sig = const MoneroV1Signature(null);
-    // } else {
-    //   sig = MoneroTxSignatures.fromStruct(json.asMap("signature"));
-    // }
-
+  factory MoneroTransactionPrefix.deserializeJson(Map<String, dynamic> json) {
+    final int version = json.valueAs("version");
     return MoneroTransactionPrefix(
       version: version,
-      unlockTime: json.as("unlock_time"),
+      unlockTime: json.valueAs("unlock_time"),
       vin:
           json
-              .asListOfMap("vin")!
-              .map((e) => MoneroTxin.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("vin")
+              .map((e) => MoneroTxin.deserializeJson(e))
               .toList(),
       vout:
           json
-              .asListOfMap("vout")!
-              .map((e) => MoneroTxout.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("vout")
+              .map((e) => MoneroTxout.deserializeJson(e))
               .toList(),
-      extra: json.asBytes("extera"),
+      extra: json.valueAsBytes("extera"),
     );
   }
 
@@ -109,37 +99,15 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     return MoneroTransactionHelper.extraParsing(extra);
   }
 
-  late final List<TxExtra> txExtras = _toTxExtra();
-  MoneroPublicKey _getTxExtraPubKey() {
+  MoneroPublicKey? _getTxExtraPubKey() {
     final pubKeyExtra =
         txExtras
-            .firstWhere(
-              (e) => e.type == TxExtraTypes.publicKey,
-              orElse:
-                  () =>
-                      throw const DartMoneroPluginException(
-                        "Cannot find tx public key extra.",
-                      ),
-            )
-            .cast<TxExtraPublicKey>();
+            .firstWhereNullable((e) => e.type == TxExtraTypes.publicKey)
+            ?.cast<TxExtraPublicKey>();
+    if (pubKeyExtra == null) {
+      return null;
+    }
     return MoneroPublicKey.fromBytes(pubKeyExtra.publicKey);
-  }
-
-  late final MoneroPublicKey txPublicKey = _getTxExtraPubKey();
-
-  List<int> txPubkeyBytes() {
-    final pubKeyExtra =
-        txExtras
-            .firstWhere(
-              (e) => e.type == TxExtraTypes.publicKey,
-              orElse:
-                  () =>
-                      throw const DartMoneroPluginException(
-                        "Cannot find tx public key extra.",
-                      ),
-            )
-            .cast<TxExtraPublicKey>();
-    return pubKeyExtra.publicKey;
   }
 
   TxExtraAdditionalPubKeys? _getTxAdditionalPubKeys() {
@@ -152,36 +120,53 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     }
   }
 
-  late TxExtraAdditionalPubKeys? additionalPubKeys = _getTxAdditionalPubKeys();
-
-  List<TxExtraNonce> getTxExtraNonces() {
-    return txExtras.whereType<TxExtraNonce>().toList();
-  }
-
   RctKey? _getTxEncryptedPaymentId() {
     final nonces = getTxExtraNonces();
     for (final i in nonces) {
-      if (i.hasEncryptedPaymentId != null) {
-        return i.hasEncryptedPaymentId;
+      final encPaymentId = i.tryExtractEncryptedPaymetId();
+      if (encPaymentId != null) {
+        return encPaymentId;
       }
     }
     return null;
   }
 
-  late final RctKey? txEncryptedPaymentId =
-      _getTxEncryptedPaymentId()?.asImmutableBytes;
-
   RctKey? _getTxPaymentId() {
     final nonces = getTxExtraNonces();
     for (final i in nonces) {
-      if (i.hasPaymentId != null) {
-        return i.hasPaymentId;
+      final paymentId = i.tryExtractPaymentId();
+      if (paymentId != null) {
+        return paymentId;
       }
     }
     return null;
   }
 
   late final RctKey? txPaymentId = _getTxPaymentId()?.asImmutableBytes;
+  late final List<TxExtra> txExtras = _toTxExtra();
+  late final MoneroPublicKey? txPublicKey = _getTxExtraPubKey();
+  late final TxExtraAdditionalPubKeys? additionalPubKeys =
+      _getTxAdditionalPubKeys();
+  late final RctKey? txEncryptedPaymentId =
+      _getTxEncryptedPaymentId()?.asImmutableBytes;
+  bool isCoinbase() {
+    return vin.length == 1 && vin[0].type.isCoinBase;
+  }
+
+  List<int>? txPubkeyBytes() {
+    final pubKeyExtra =
+        txExtras
+            .firstWhereNullable((e) => e.type == TxExtraTypes.publicKey)
+            ?.cast<TxExtraPublicKey>();
+    assert(pubKeyExtra != null || isCoinbase());
+    if (pubKeyExtra == null) return null;
+
+    return pubKeyExtra.publicKey;
+  }
+
+  List<TxExtraNonce> getTxExtraNonces() {
+    return txExtras.whereType<TxExtraNonce>().toList();
+  }
 
   List<int> getTranactionPrefixHash() {
     final serialize = layout().serialize(toLayoutStruct());

@@ -17,17 +17,9 @@ class MoneroTxVersion {
     version: 2,
   );
   static const List<MoneroTxVersion> values = [v1In, v1Out, v2In, v2Out];
-  static MoneroTxVersion fromBase58(String proof) {
-    return values.firstWhere(
-      (e) => proof.startsWith(e.name),
-      orElse:
-          () =>
-              throw DartMoneroPluginException(
-                "Invalid proof version.",
-                details: {"proof": proof},
-              ),
-    );
-  }
+  // static MoneroTxVersion? fromBase58(String proof) {
+  //   return
+  // }
 
   bool get isOut =>
       this == MoneroTxVersion.v1Out || this == MoneroTxVersion.v2Out;
@@ -38,6 +30,24 @@ class MoneroTxProof {
   static const int lenght = 96;
   final List<MoneroPublicKey> sharedSecret;
   final List<MECSignature> signatures;
+  static bool isValidProof(String base58) {
+    final version = MoneroTxVersion.values.firstWhereNullable(
+      (e) => base58.startsWith(e.name),
+    );
+    if (version == null) return false;
+    final b58 = base58.substring(version.name.length);
+    if (b58.length < lenght) return false;
+    try {
+      final decoded = Base58XmrDecoder.decode(
+        base58.substring(version.name.length),
+      );
+
+      return _decodeProof(decoded, version) != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   factory MoneroTxProof({
     required List<MoneroPublicKey> sharedSecret,
     required List<MECSignature> signatures,
@@ -58,23 +68,21 @@ class MoneroTxProof {
     required this.version,
   }) : sharedSecret = sharedSecret.toImutableList,
        signatures = signatures.toImutableList;
-  factory MoneroTxProof.fromBase58(String proof) {
+
+  static MoneroTxProof? _decodeProof(
+    List<int> proofBytes,
+    MoneroTxVersion version,
+  ) {
     try {
-      final version = MoneroTxVersion.fromBase58(proof);
-      final b58 = proof.substring(version.name.length);
-      final decode = Base58XmrDecoder.decode(b58);
-      if (decode.length < lenght || decode.length % lenght != 0) {
-        throw DartMoneroPluginException(
-          "Invalid proof data.",
-          details: {"proof": proof},
-        );
+      if (proofBytes.length < lenght || proofBytes.length % lenght != 0) {
+        return null;
       }
       final List<MoneroPublicKey> sharedSecret = [];
       final List<MECSignature> signatures = [];
-      final sigLen = decode.length ~/ lenght;
+      final sigLen = proofBytes.length ~/ lenght;
       for (int i = 0; i < sigLen; i++) {
         final int start = lenght * i;
-        final part = decode.sublist(start, start + lenght);
+        final part = proofBytes.sublist(start, start + lenght);
         sharedSecret.add(MoneroPublicKey.fromBytes(part.sublist(0, 32)));
         signatures.add(MECSignature.fromBytes(part.sublist(32)));
       }
@@ -83,7 +91,35 @@ class MoneroTxProof {
         signatures: signatures,
         version: version,
       );
-    } on DartMoneroPluginException {
+    } catch (e) {
+      return null;
+    }
+  }
+
+  factory MoneroTxProof.fromBase58(String proof) {
+    try {
+      final version = MoneroTxVersion.values.firstWhereNullable(
+        (e) => proof.startsWith(e.name),
+      );
+      if (version == null) {
+        throw DartMoneroPluginException(
+          "Invalid proof data.",
+          details: {"proof": proof},
+        );
+      }
+
+      final b58 = proof.substring(version.name.length);
+      final proofBytes = Base58XmrDecoder.decode(b58);
+
+      final decodeProof = _decodeProof(proofBytes, version);
+      if (decodeProof == null) {
+        throw DartMoneroPluginException(
+          "Invalid proof data.",
+          details: {"proof": proof},
+        );
+      }
+      return decodeProof;
+    } on BaseDartMoneroPluginException {
       rethrow;
     } catch (e) {
       throw DartMoneroPluginException(

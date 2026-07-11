@@ -9,7 +9,6 @@ import 'package:monero_dart/src/crypto/multisig/models/models.dart';
 import 'package:monero_dart/src/crypto/multisig/utils/multi_sig_kex_utils.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/network/network.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
@@ -134,39 +133,41 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
       bytes: bytes,
       layout: MoneroMultisigAccountCore.layout(property: propery),
     );
-    return MoneroMultisigAccount.fromStruct(decode);
+    return MoneroMultisigAccount.deserializeJson(decode);
   }
-  factory MoneroMultisigAccount.fromStruct(Map<String, dynamic> json) {
+  factory MoneroMultisigAccount.deserializeJson(Map<String, dynamic> json) {
     return MoneroMultisigAccount(
-      threshold: json.as("threshold"),
+      threshold: json.valueAs("threshold"),
       signers:
           json
-              .asListBytes("signers")!
+              .valueEnsureAsList<List<int>>("signers")
               .map((e) => MoneroPublicKey.fromBytes(e))
               .toList(),
       basePrivateKey: MoneroPrivateKey.fromBytes(
-        json.asBytes("base_private_key"),
+        json.valueAsBytes("base_private_key"),
       ),
       baseCommonPrivateKey: MoneroPrivateKey.fromBytes(
-        json.asBytes("base_common_private_key"),
+        json.valueAsBytes("base_common_private_key"),
       ),
       multisigPrivateKeys:
           json
-              .asListBytes("multisig_private_keys")!
+              .valueEnsureAsList<List<int>>("multisig_private_keys")
               .map((e) => MoneroPrivateKey.fromBytes(e))
               .toList(),
       commonPrivateKey: MoneroPrivateKey.fromBytes(
-        json.asBytes("common_private_key"),
+        json.valueAsBytes("common_private_key"),
       ),
       multisigPubKey: MoneroPublicKey.fromBytes(
-        json.asBytes("multisig_pub_key"),
+        json.valueAsBytes("multisig_pub_key"),
       ),
-      commonPubKey: MoneroPublicKey.fromBytes(json.asBytes("common_pub_key")),
-      kexRoundsComplete: json.as("kex_rounds_complete"),
+      commonPubKey: MoneroPublicKey.fromBytes(
+        json.valueAsBytes("common_pub_key"),
+      ),
+      kexRoundsComplete: json.valueAs("kex_rounds_complete"),
       nextRoundKexMessage: MultisigKexMessageSerializable.fromBase58(
-        json.as("kex_round_message"),
+        json.valueAs("kex_round_message"),
       ),
-      kexKeysToOriginsMap: json.as<Map>("kex_keys").map((k, v) {
+      kexKeysToOriginsMap: json.valueAs<Map>("kex_keys").map((k, v) {
         return MapEntry(
           MoneroPublicKey.fromBytes(List<int>.from(k)),
           (v as List)
@@ -230,7 +231,7 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
       final r = MoneroMultisigUtils.getMultisigKLRki(
         outPybKey: out.outputPublicKey,
         secretKey: sK.key,
-        keyImage: out.keyImage,
+        keyImage: out.keyImage.keyImage,
       );
       lr.add(MultisigLR(l: r.L, r: r.R));
     }

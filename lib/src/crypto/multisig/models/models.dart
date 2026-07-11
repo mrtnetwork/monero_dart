@@ -1,18 +1,17 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 
-class MultisigLR extends MoneroSerialization {
+class MultisigLR extends MoneroSerialization with Equality {
   final RctKey l;
   final RctKey r;
   MultisigLR({required RctKey l, required RctKey r})
     : l = l.asImmutableBytes,
       r = r.asImmutableBytes;
 
-  factory MultisigLR.fromStruct(Map<String, dynamic> json) {
-    return MultisigLR(l: json.asBytes("l"), r: json.asBytes("r"));
+  factory MultisigLR.deserializeJson(Map<String, dynamic> json) {
+    return MultisigLR(l: json.valueAsBytes("l"), r: json.valueAsBytes("r"));
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -31,6 +30,9 @@ class MultisigLR extends MoneroSerialization {
   Layout<Map<String, dynamic>> createLayout({String? property}) {
     return layout(property: property);
   }
+
+  @override
+  List<dynamic> get variables => [l, r];
 }
 
 class MultisigKLRKI extends MoneroSerialization {
@@ -38,12 +40,12 @@ class MultisigKLRKI extends MoneroSerialization {
   final RctKey L;
   final RctKey R;
   final RctKey ki;
-  factory MultisigKLRKI.fromStruct(Map<String, dynamic> json) {
+  factory MultisigKLRKI.deserializeJson(Map<String, dynamic> json) {
     return MultisigKLRKI(
-      k: json.asBytes("k"),
-      L: json.asBytes("L"),
-      R: json.asBytes("R"),
-      ki: json.asBytes("ki"),
+      k: json.valueAsBytes("k"),
+      L: json.valueAsBytes("L"),
+      R: json.valueAsBytes("R"),
+      ki: json.valueAsBytes("ki"),
     );
   }
 
@@ -77,7 +79,7 @@ class MultisigKLRKI extends MoneroSerialization {
        ki = ki.asImmutableBytes;
 }
 
-class MoneroMultisigOutputInfo extends MoneroSerialization {
+class MoneroMultisigOutputInfo extends MoneroSerialization with Equality {
   final MoneroPublicKey signer;
   final List<MultisigLR> lr;
   final List<RctKey> partialKeyImages;
@@ -97,11 +99,15 @@ class MoneroMultisigOutputInfo extends MoneroSerialization {
                  ),
                )
                .toImutableList;
-  factory MoneroMultisigOutputInfo.fromStruct(Map<String, dynamic> json) {
+  factory MoneroMultisigOutputInfo.deserializeJson(Map<String, dynamic> json) {
     return MoneroMultisigOutputInfo(
-      signer: MoneroPublicKey.fromBytes(json.asBytes("signer")),
-      lr: json.asListOfMap("lr")!.map((e) => MultisigLR.fromStruct(e)).toList(),
-      partialKeyImages: json.asListBytes("partialKeyImages")!,
+      signer: MoneroPublicKey.fromBytes(json.valueAsBytes("signer")),
+      lr:
+          json
+              .valueEnsureAsList<Map<String, dynamic>>("lr")
+              .map((e) => MultisigLR.deserializeJson(e))
+              .toList(),
+      partialKeyImages: json.valueEnsureAsList<List<int>>("partialKeyImages"),
     );
   }
 
@@ -129,6 +135,9 @@ class MoneroMultisigOutputInfo extends MoneroSerialization {
   Layout<Map<String, dynamic>> createLayout({String? property}) {
     return layout(property: property);
   }
+
+  @override
+  List<dynamic> get variables => [signer, lr, partialKeyImages];
 }
 
 class MoneroMultisigInfo extends MoneroSerialization {
@@ -143,15 +152,17 @@ class MoneroMultisigInfo extends MoneroSerialization {
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MoneroMultisigInfo.fromStruct(decode);
+    return MoneroMultisigInfo.deserializeJson(decode);
   }
 
-  factory MoneroMultisigInfo.fromStruct(Map<String, dynamic> json) {
+  factory MoneroMultisigInfo.deserializeJson(Map<String, dynamic> json) {
     return MoneroMultisigInfo(
-      info: MoneroMultisigOutputInfo.fromStruct(json.asMap("info")),
+      info: MoneroMultisigOutputInfo.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("info"),
+      ),
       nonces:
           json
-              .asListBytes("nonces")!
+              .valueEnsureAsList<List<int>>("nonces")
               .map((e) => MoneroPrivateKey.fromBytes(e))
               .toList(),
     );

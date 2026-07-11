@@ -28,9 +28,9 @@ class MoneroTransactionHelper {
       try {
         final json = TxExtra.layout().deserialize(extera.sublist(consumed));
         consumed += json.consumed;
-        final r = TxExtra.fromStruct(json.value);
+        final r = TxExtra.deserializeJson(json.value);
         exteras.add(r);
-      } catch (_) {
+      } catch (e) {
         if (errorOnFailedParsingExtras) {
           throw const DartMoneroPluginException(
             "Some transaction extras parsing failed.",
@@ -194,9 +194,11 @@ class MoneroTransactionHelper {
       );
     }
     final out = tx.vout[realIndex];
+    final txPubKey = tx.txPubkeyBytes();
     final outPublicKey = out.target.getPublicKeyBytes();
     final additionalPubKeys = tx.additionalPubKeys?.pubKeys;
-    if (outPublicKey == null ||
+    if (txPubKey == null ||
+        outPublicKey == null ||
         (additionalPubKeys != null &&
             additionalPubKeys.length != tx.vout.length)) {
       return null;
@@ -204,7 +206,7 @@ class MoneroTransactionHelper {
     final viewTag = out.target.getViewTag();
 
     final List<List<int>> publicKeys = [
-      tx.txPubkeyBytes(),
+      txPubKey,
       if (additionalPubKeys != null) additionalPubKeys[realIndex],
     ];
     for (final p in publicKeys) {
@@ -226,15 +228,27 @@ class MoneroTransactionHelper {
             derivation: derivation,
             outIndex: realIndex,
           );
-          final amount = RCTGeneratorUtils.decodeRctVar(
-            sig: tx.signature.cast(),
-            secretKey: sharedSec,
-            outputIndex: realIndex,
-          );
-          if (amount == null) continue;
+          BigInt? amount;
+          RctKey? mask;
+          final bool coinbase = tx.isCoinbase();
+          if (coinbase) {
+            amount = out.amount;
+            mask = RCT.identity();
+          } else {
+            final decode = RCTGeneratorUtils.decodeRctVar(
+              sig: tx.signature.cast(),
+              secretKey: sharedSec,
+              outputIndex: realIndex,
+            );
+            amount = decode?.$1;
+            mask = decode?.$2;
+          }
+
+          if (amount == null || mask == null) continue;
           return MoneroLockedOutput(
-            amount: amount.$1,
-            mask: amount.$2,
+            amount: amount,
+            mask: mask,
+            coinbase: coinbase,
             derivation: derivation,
             outputPublicKey: outPublicKey,
             accountIndex: index,
@@ -354,6 +368,7 @@ class MoneroTransactionHelper {
       accountIndex: unlockedOut.accountIndex,
       unlockTime: unlockedOut.unlockTime,
       realIndex: unlockedOut.realIndex,
+      coinbase: unlockedOut.coinbase,
     );
     return MoneroUnlockedMultisigPayment(
       output: multisigOut,
@@ -419,10 +434,11 @@ class MoneroTransactionHelper {
     );
     return MoneroUnlockedOutput(
       amount: out.amount,
+      coinbase: out.coinbase,
       derivation: out.derivation,
       ephemeralPublicKey: ephemeralPublicKey.key,
       ephemeralSecretKey: ephemeralSecretKey.key,
-      keyImage: keyImage,
+      keyImage: TxKeyImage(keyImage),
       mask: out.mask,
       outputPublicKey: out.outputPublicKey,
       accountIndex: out.accountIndex,
@@ -456,6 +472,11 @@ class MoneroTransactionHelper {
     List<MoneroMultisigOutputInfo>? multisigInfos,
   }) {
     final txPubKey = transaction.txPublicKey;
+    if (txPubKey == null) {
+      throw const DartMoneroPluginException(
+        "Missing transaction tx public key.",
+      );
+    }
     final paymentId = transaction.txPaymentId;
     List<int>? encryptedPaymentId = transaction.txEncryptedPaymentId;
     if (encryptedPaymentId != null) {
@@ -499,8 +520,10 @@ class MoneroTransactionHelper {
     final List<List<OutsEntery>> outs =
         payments.map((e) {
           return List.generate(fakeOutsLength, (i) {
+            final bigIndex = BigInt.from(i);
+            final index = e.globalIndex - bigIndex;
             return OutsEntery(
-              index: e.globalIndex - BigInt.from(i),
+              index: index.isNegative ? e.globalIndex + bigIndex : index,
               key: CtKey(
                 dest:
                     i == 0
@@ -640,10 +663,10 @@ class MoneroTransactionHelper {
 
   static BigInt? _findProofAmountVar({
     required RCTSignature signature,
-    required RctKey sharedSecret,
+    required MoneroPublicKey sharedSecret,
   }) {
     final derivation = MoneroCrypto.generateKeyDerivationBytesVar(
-      pubkey: sharedSecret,
+      pubkey: sharedSecret.compressed,
       secretKey: RCT.identity(clone: false),
     );
     for (int i = 0; i < signature.signature.outPk.length; i++) {
@@ -663,10 +686,10 @@ class MoneroTransactionHelper {
 
   static BigInt? _findProofAmount({
     required RCTSignature signature,
-    required RctKey sharedSecret,
+    required MoneroPublicKey sharedSecret,
   }) {
     final derivation = MoneroCrypto.generateKeyDerivationBytes(
-      pubkey: sharedSecret,
+      pubkey: sharedSecret.compressed,
       secretKey: RCT.identity(clone: false),
     );
     for (int i = 0; i < signature.signature.outPk.length; i++) {
@@ -684,11 +707,11 @@ class MoneroTransactionHelper {
     return null;
   }
 
-  static MoneroTxProof generateInProof({
+  static MoneroTxProof? generateInProof({
     required MoneroTransaction transaction,
     required MoneroAccount account,
     String? message,
-    required MoneroAccountIndex index,
+    required MoneroSubIndex index,
   }) {
     final List<int> prefixHash = _hashProofMessage(
       message: message ?? '',
@@ -698,6 +721,7 @@ class MoneroTransactionHelper {
       account.subaddress(index.minor, majorIndex: index.major),
     );
     final txPubKey = transaction.txPublicKey;
+    if (txPubKey == null) return null;
     final additional = transaction.additionalPubKeys;
     final secretKey = account.privateViewKey;
     final List<RctKey> sharedSecrets = [];
@@ -737,21 +761,21 @@ class MoneroTransactionHelper {
     );
 
     final RCTSignature rctSignature = transaction.signature.cast();
-    for (final ss in sharedSecrets) {
+    for (final ss in proof.sharedSecret) {
       final amount = _findProofAmount(
         signature: rctSignature,
         sharedSecret: ss,
       );
       if (amount != null) return proof;
     }
-    throw const DartMoneroPluginException("No funds received in this tx.");
+    return null;
   }
 
-  static MoneroTxProof generateInProofVar({
+  static MoneroTxProof? generateInProofVar({
     required MoneroTransaction transaction,
     required MoneroAccount account,
     String? message,
-    required MoneroAccountIndex index,
+    required MoneroSubIndex index,
   }) {
     final List<int> prefixHash = _hashProofMessage(
       message: message ?? '',
@@ -761,6 +785,7 @@ class MoneroTransactionHelper {
       account.subaddress(index.minor, majorIndex: index.major),
     );
     final txPubKey = transaction.txPublicKey;
+    if (txPubKey == null) return null;
     final additional = transaction.additionalPubKeys;
     final secretKey = account.privateViewKey;
     final List<RctKey> sharedSecrets = [];
@@ -800,14 +825,14 @@ class MoneroTransactionHelper {
     );
 
     final RCTSignature rctSignature = transaction.signature.cast();
-    for (final ss in sharedSecrets) {
+    for (final ss in proof.sharedSecret) {
       final amount = _findProofAmountVar(
         signature: rctSignature,
         sharedSecret: ss,
       );
       if (amount != null) return proof;
     }
-    throw const DartMoneroPluginException("No funds received in this tx.");
+    return null;
   }
 
   static RctKey _hashProofMessage({
@@ -821,7 +846,7 @@ class MoneroTransactionHelper {
     ]).asImmutableBytes;
   }
 
-  static MoneroTxProof generateOutProof({
+  static MoneroTxProof? generateOutProof({
     required MoneroTransaction transaction,
     required List<MoneroPrivateKey> allTxKeys,
     required MoneroAddress receiverAddress,
@@ -864,7 +889,7 @@ class MoneroTransactionHelper {
       version: MoneroTxVersion.v2Out,
     );
     final RCTSignature rctSignature = transaction.signature.cast();
-    for (final ss in sharedSecret) {
+    for (final ss in proof.sharedSecret) {
       final amount = _findProofAmount(
         signature: rctSignature,
         sharedSecret: ss,
@@ -872,10 +897,10 @@ class MoneroTransactionHelper {
       if (amount != null) return proof;
     }
 
-    throw const DartMoneroPluginException("No funds received in this tx.");
+    return null;
   }
 
-  static MoneroTxProof generateOutProofVar({
+  static MoneroTxProof? generateOutProofVar({
     required MoneroTransaction transaction,
     required List<MoneroPrivateKey> allTxKeys,
     required MoneroAddress receiverAddress,
@@ -918,15 +943,14 @@ class MoneroTransactionHelper {
       version: MoneroTxVersion.v2Out,
     );
     final RCTSignature rctSignature = transaction.signature.cast();
-    for (final ss in sharedSecret) {
+    for (final ss in proof.sharedSecret) {
       final amount = _findProofAmountVar(
         signature: rctSignature,
         sharedSecret: ss,
       );
       if (amount != null) return proof;
     }
-
-    throw const DartMoneroPluginException("No funds received in this tx.");
+    return null;
   }
 
   static BigInt? checkProof({
@@ -936,6 +960,7 @@ class MoneroTransactionHelper {
     required MoneroAddress address,
   }) {
     final txPubKey = transaction.txPublicKey;
+    if (txPubKey == null) return null;
     final additional = transaction.additionalPubKeys?.asPublicKeys();
     final proof = MoneroTxProof.fromBase58(proofStr);
     if ((additional?.length ?? 0) + 1 != proof.signatures.length) {
@@ -965,7 +990,7 @@ class MoneroTransactionHelper {
     for (final ss in proof.sharedSecret) {
       final amount = _findProofAmount(
         signature: rctSignature,
-        sharedSecret: ss.key,
+        sharedSecret: ss,
       );
       if (amount != null) return amount;
     }
@@ -979,6 +1004,7 @@ class MoneroTransactionHelper {
     required MoneroAddress address,
   }) {
     final txPubKey = transaction.txPublicKey;
+    if (txPubKey == null) return null;
     final additional = transaction.additionalPubKeys?.asPublicKeys();
     final proof = MoneroTxProof.fromBase58(proofStr);
     if ((additional?.length ?? 0) + 1 != proof.signatures.length) {
@@ -1008,7 +1034,7 @@ class MoneroTransactionHelper {
     for (final ss in proof.sharedSecret) {
       final amount = _findProofAmountVar(
         signature: rctSignature,
-        sharedSecret: ss.key,
+        sharedSecret: ss,
       );
       if (amount != null) return amount;
     }

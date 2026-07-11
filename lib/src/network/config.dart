@@ -5,6 +5,7 @@ class MoneroNetworkConst {
 
   /// current monero tx version.
   static const int currentVersion = 2;
+  static const int cryptonoteMaxBlockNumber = 500000000;
 
   /// chain parameters.
   static const int cryptonoteMinedMoneyUnlockWindow = 60;
@@ -19,7 +20,7 @@ class MoneroNetworkConst {
   static const int paymentIdLength = 8;
   static const double recentOutputRatio = 0.5;
   static const double recentOutputDays = 1.8;
-  static final int recentOutputZone = (recentOutputDays * 86400).toInt();
+  static const int recentOutputZone = 155520;
   static const int defaultUnlockTime =
       cryptonoteDefaultTxSpendableAge * difficultyTargetV2;
   static const int recentSpendWindow = 15 * difficultyTargetV2;

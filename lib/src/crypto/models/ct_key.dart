@@ -1,8 +1,7 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 
-class CtKey extends MoneroSerialization {
+class CtKey extends MoneroSerialization with Equality {
   /// The destination key
   final List<int> dest;
 
@@ -23,8 +22,11 @@ class CtKey extends MoneroSerialization {
     return CtKey(dest: dest ?? this.dest, mask: mask ?? this.mask);
   }
 
-  factory CtKey.fromStruct(Map<String, dynamic> json) {
-    return CtKey(dest: json.asBytes("dest"), mask: json.asBytes("mask"));
+  factory CtKey.deserializeJson(Map<String, dynamic> json) {
+    return CtKey(
+      dest: json.valueAsBytes("dest"),
+      mask: json.valueAsBytes("mask"),
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -52,13 +54,5 @@ class CtKey extends MoneroSerialization {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CtKey &&
-          runtimeType == other.runtimeType &&
-          BytesUtils.bytesEqual(dest, other.dest) &&
-          BytesUtils.bytesEqual(mask, other.mask);
-  @override
-  int get hashCode =>
-      HashCodeGenerator.generateBytesHashCode([...dest, ...mask]);
+  List<dynamic> get variables => [dest, mask];
 }

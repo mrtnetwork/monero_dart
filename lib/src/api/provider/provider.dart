@@ -94,14 +94,21 @@ class QuickMoneroProvider {
         .toList();
   }
 
-  Future<List<BigInt>> getAbsoluteDistribution() async {
-    final distributions = await provider.request(
-      DaemonRequestGetOutputDistributionBin(
+  Future<List<BigInt>> getAbsoluteDistribution({
+    Duration? timeout,
+    bool binary = true,
+  }) async {
+    final distributions = await provider.request(switch (binary) {
+      true => DaemonRequestGetOutputDistributionBin(
         amounts: [BigInt.zero],
         compress: true,
         cumulative: false,
       ),
-    );
+      false => DaemonRequestGetOutputDistribution(
+        amounts: [BigInt.zero],
+        cumulative: false,
+      ),
+    }, timeout: timeout ?? const Duration(minutes: 2));
     if (distributions.distributions.length != 1) {
       throw const DartMoneroPluginException(
         "invalid output Distribution response.",
@@ -149,9 +156,14 @@ class QuickMoneroProvider {
   >({required List<T> payments, int fakeOutsLength = 16}) {
     final List<List<OutsEntery>> outs =
         payments.map((e) {
+          bool lowIndex = e.globalIndex < BigInt.from(fakeOutsLength);
           return List.generate(fakeOutsLength, (i) {
+            final indexBig = BigInt.from(i);
             return OutsEntery(
-              index: e.globalIndex - BigInt.from(i),
+              index: switch (lowIndex) {
+                true => e.globalIndex + indexBig,
+                false => e.globalIndex - indexBig,
+              },
               key: CtKey(
                 dest:
                     i == 0
@@ -292,7 +304,6 @@ class QuickMoneroProvider {
       final outs = await getOuts(outKeysRequests);
       outKeysResponse.addAll(outs.outs);
     }
-
     int base = 0;
     for (final payment in payments) {
       const defaultOutCount =

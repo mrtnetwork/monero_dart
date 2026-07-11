@@ -1,45 +1,24 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/models/transaction/transaction/output.dart';
-import 'package:monero_dart/src/serialization/layout/constant/const.dart';
-import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
+import 'package:monero_dart/src/serialization/serialization.dart';
 
-class MoneroTxinType {
+enum MoneroTxinType {
+  txinGen(name: "TxinGen", variantId: 0xff),
+  txinToScript(name: "TxinToScript", variantId: 0x0),
+  txinToScriptHash(name: "TxinToScriptHash", variantId: 0x1),
+  txinToKey(name: "TxinToKey", variantId: 0x2);
+
   final String name;
   final int variantId;
-  const MoneroTxinType._({required this.name, required this.variantId});
-  static const MoneroTxinType txinGen = MoneroTxinType._(
-    name: "TxinGen",
-    variantId: 0xff,
-  );
-  static const MoneroTxinType txinToScript = MoneroTxinType._(
-    name: "TxinToScript",
-    variantId: 0x0,
-  );
-  static const MoneroTxinType txinToScriptHash = MoneroTxinType._(
-    name: "TxinToScriptHash",
-    variantId: 0x1,
-  );
-  static const MoneroTxinType txinToKey = MoneroTxinType._(
-    name: "TxinToKey",
-    variantId: 0x2,
-  );
-  static const List<MoneroTxinType> values = [
-    txinGen,
-    txinToScript,
-    txinToScriptHash,
-    txinToKey,
-  ];
+  bool get isCoinBase => this == txinGen;
+  const MoneroTxinType({required this.name, required this.variantId});
   static MoneroTxinType fromName(String? name) {
     return values.firstWhere(
       (e) => e.name == name,
       orElse:
           () =>
-              throw DartMoneroPluginException(
-                "Invalid Txin type.",
-                details: {"type": name},
-              ),
+              throw ItemNotFoundException(name: "MoneroTxinType", value: name),
     );
   }
 }
@@ -48,23 +27,18 @@ class MoneroTxinType {
 abstract class MoneroTxin extends MoneroVariantSerialization {
   final MoneroTxinType type;
   const MoneroTxin(this.type);
-  factory MoneroTxin.fromStruct(Map<String, dynamic> json) {
+  factory MoneroTxin.deserializeJson(Map<String, dynamic> json) {
     final decode = MoneroVariantSerialization.toVariantDecodeResult(json);
     final type = MoneroTxinType.fromName(decode.variantName);
     switch (type) {
       case MoneroTxinType.txinGen:
-        return TxinGen.fromStruct(decode.value);
+        return TxinGen.deserializeJson(decode.value);
       case MoneroTxinType.txinToScript:
-        return TxinToScript.fromStruct(decode.value);
+        return TxinToScript.deserializeJson(decode.value);
       case MoneroTxinType.txinToScriptHash:
-        return TxinToScriptHash.fromStruct(decode.value);
+        return TxinToScriptHash.deserializeJson(decode.value);
       case MoneroTxinType.txinToKey:
-        return TxinToKey.fromStruct(decode.value);
-      default:
-        throw DartMoneroPluginException(
-          "Invalid Txin.",
-          details: {"type": type, "data": decode.value},
-        );
+        return TxinToKey.deserializeJson(decode.value);
     }
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -111,30 +85,30 @@ abstract class MoneroTxin extends MoneroVariantSerialization {
 
   Map<String, dynamic> toJson();
 
-  String? getKeyImage() {
+  TxKeyImage? getKeyImage() {
     if (type != MoneroTxinType.txinToKey) return null;
-    return BytesUtils.toHexString(cast<TxinToKey>().keyImage);
+    return cast<TxinToKey>().keyImage;
   }
 }
 
 class TxinToKey extends MoneroTxin {
   final BigInt amount;
   final List<BigInt> keyOffsets;
-  final List<int> keyImage;
+  final TxKeyImage keyImage;
 
   TxinToKey({
     required BigInt amount,
     required List<BigInt> keyOffsets,
-    required List<int> keyImage,
+    required this.keyImage,
   }) : amount = amount.asU64,
        keyOffsets = keyOffsets.map((e) => e.asU64).toList().immutable,
-       keyImage = keyImage.asImmutableBytes,
+
        super(MoneroTxinType.txinToKey);
-  factory TxinToKey.fromStruct(Map<String, dynamic> json) {
+  factory TxinToKey.deserializeJson(Map<String, dynamic> json) {
     return TxinToKey(
-      amount: json.as("amount"),
-      keyImage: json.asBytes("k_image"),
-      keyOffsets: json.asListBig("key_offsets")!,
+      amount: json.valueAs("amount"),
+      keyImage: TxKeyImage.deserializeJson(json.valueEnsureAsMap("k_image")),
+      keyOffsets: json.valueEnsureAsList<BigInt>("key_offsets"),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -144,14 +118,14 @@ class TxinToKey extends MoneroTxin {
         MoneroLayoutConst.varintBigInt(),
         property: "key_offsets",
       ),
-      LayoutConst.fixedBlob32(property: "k_image"),
+      TxKeyImage.layout(property: "k_image"),
     ], property: property);
   }
 
   TxinToKey copyWith({
     BigInt? amount,
     List<BigInt>? keyOffsets,
-    List<int>? keyImage,
+    TxKeyImage? keyImage,
   }) {
     return TxinToKey(
       amount: amount ?? this.amount,
@@ -167,7 +141,11 @@ class TxinToKey extends MoneroTxin {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    return {"amount": amount, "key_offsets": keyOffsets, "k_image": keyImage};
+    return {
+      "amount": amount,
+      "key_offsets": keyOffsets,
+      "k_image": keyImage.toLayoutStruct(),
+    };
   }
 
   @override
@@ -175,7 +153,7 @@ class TxinToKey extends MoneroTxin {
     return {
       "amount": amount.toString(),
       "keyOffsets": keyOffsets.map((e) => e.toString()).toList(),
-      "keyImage": BytesUtils.toHexString(keyImage),
+      "keyImage": keyImage.toHex(),
     };
   }
 }
@@ -195,12 +173,14 @@ class TxinToScriptHash extends MoneroTxin {
        prevout = prevout.asU64,
        sigset = sigset.asImmutableBytes,
        super(MoneroTxinType.txinToScriptHash);
-  factory TxinToScriptHash.fromStruct(Map<String, dynamic> json) {
+  factory TxinToScriptHash.deserializeJson(Map<String, dynamic> json) {
     return TxinToScriptHash(
-      prev: json.asBytes("prev"),
-      prevout: json.as("prevout"),
-      script: TxoutToScript.fromStruct(json.asMap("script")),
-      sigset: json.asBytes("sigset"),
+      prev: json.valueAsBytes("prev"),
+      prevout: json.valueAs("prevout"),
+      script: TxoutToScript.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("script"),
+      ),
+      sigset: json.valueAsBytes("sigset"),
     );
   }
 
@@ -252,11 +232,11 @@ class TxinToScript extends MoneroTxin {
        prevout = prevout.asU64,
        sigset = sigset.asImmutableBytes,
        super(MoneroTxinType.txinToScript);
-  factory TxinToScript.fromStruct(Map<String, dynamic> json) {
+  factory TxinToScript.deserializeJson(Map<String, dynamic> json) {
     return TxinToScript(
-      prev: json.asBytes("prev"),
-      prevout: json.as("prevout"),
-      sigset: json.asBytes("sigset"),
+      prev: json.valueAsBytes("prev"),
+      prevout: json.valueAs("prevout"),
+      sigset: json.valueAsBytes("sigset"),
     );
   }
 
@@ -291,8 +271,8 @@ class TxinToScript extends MoneroTxin {
 class TxinGen extends MoneroTxin {
   final BigInt height;
   TxinGen(BigInt height) : height = height.asU64, super(MoneroTxinType.txinGen);
-  factory TxinGen.fromStruct(Map<String, dynamic> json) {
-    return TxinGen(json.as("height"));
+  factory TxinGen.deserializeJson(Map<String, dynamic> json) {
+    return TxinGen(json.valueAs("height"));
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -314,4 +294,57 @@ class TxinGen extends MoneroTxin {
   Map<String, dynamic> toJson() {
     return {"height": height.toString()};
   }
+}
+
+class TxKeyImage extends MoneroSerialization
+    with Equality, CborTagSerializable {
+  final List<int> keyImage;
+  TxKeyImage(List<int> keyImage)
+    : keyImage = keyImage.asImmutableBytes.exc(
+        length: Ed25519KeysConst.privKeyByteLen,
+        operation: "TxKeyImage",
+        reason: "Invalid key image bytes length.",
+      );
+  factory TxKeyImage.deserializeJson(Map<String, dynamic> json) {
+    return TxKeyImage(json.valueAsBytes("key_image"));
+  }
+  factory TxKeyImage.deserialize({List<int>? bytes, CborObject? obj}) {
+    final values = CborTagSerializable.decodeTaggedValue(
+      identifier: MoneroSerializationIdentifiers.keyImage,
+      cborBytes: bytes,
+      cborObject: obj,
+    );
+    return TxKeyImage(values.rawValueAt(0));
+  }
+
+  static Layout<Map<String, dynamic>> layout({String? property}) {
+    return LayoutConst.struct([
+      LayoutConst.fixedBlobN(
+        Ed25519KeysConst.privKeyByteLen,
+        property: "key_image",
+      ),
+    ], property: property);
+  }
+
+  @override
+  Layout<Map<String, dynamic>> createLayout({String? property}) {
+    return layout(property: property);
+  }
+
+  @override
+  Map<String, dynamic> toLayoutStruct() {
+    return {"key_image": keyImage};
+  }
+
+  String toHex() => BytesUtils.toHexString(keyImage);
+
+  @override
+  List<dynamic> get variables => [keyImage];
+
+  @override
+  SerializationIdentifier get serializationIdentifier =>
+      MoneroSerializationIdentifiers.keyImage;
+
+  @override
+  List<CborObject?> get serializationItems => [CborBytesValue(keyImage)];
 }

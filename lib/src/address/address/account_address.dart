@@ -69,5 +69,25 @@ class MoneroAccountAddress extends MoneroAddress {
       type: type,
     );
   }
+
+  @override
+  MoneroAccountAddress toNetwork(MoneroNetwork network) {
+    if (network == this.network) return this;
+    return MoneroAccountAddress.fromPubKeys(
+      pubSpendKey: pubSpendKey,
+      pubViewKey: pubViewKey,
+      type: type,
+      network: network,
+    );
+  }
+
   bool get isSubAddress => type == XmrAddressType.subaddress;
+
+  @override
+  List<CborObject?> get serializationItems => [
+    type.value.toCbor(),
+    CborBytesValue(pubSpendKey),
+    CborBytesValue(pubViewKey),
+    network.value.toCbor(),
+  ];
 }

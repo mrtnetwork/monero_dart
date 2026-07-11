@@ -1,6 +1,5 @@
 // ignore_for_file: unused_local_variable
 
-import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/monero_dart.dart';
 
 class MoneroChainAccountTracker {
@@ -66,11 +65,10 @@ class AccountTxOutputs {
   final MoneroTransaction transaction;
   final String txHash;
   final MoneroOutput output;
-  final String? keyImage;
+  final TxKeyImage? keyImage;
   AccountTxOutputs(
       {required this.transaction, required this.txHash, required this.output})
       : keyImage = output.type == MoneroOutputType.locked
             ? null
-            : BytesUtils.toHexString(
-                output.cast<MoneroUnlockedOutput>().keyImage);
+            : output.cast<MoneroUnlockedOutput>().keyImage;
 }

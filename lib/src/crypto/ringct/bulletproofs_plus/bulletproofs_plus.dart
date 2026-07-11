@@ -33,8 +33,6 @@ import 'package:monero_dart/src/monero_base.dart';
 class BulletproofsPlusGenerator {
   static const int maxN = 64;
   static const int maxM = 16;
-  static final _hPoint = RCT.asPoint(RCTConst.h);
-  static final _gPoint = RCT.asPoint(RCTConst.g);
 
   static EDPoint _getExponentBytes({required RctKey base, required int idx}) {
     final cached = cachedExponet[idx.toString()];
@@ -113,6 +111,8 @@ class BulletproofsPlusGenerator {
     int b0,
     RctKey c,
     RctKey d,
+    EDPoint hPoint,
+    EDPoint gPoint,
   ) {
     if (size + g0 > G.length) {
       throw const MoneroCryptoException("Incompatible size for G");
@@ -145,9 +145,9 @@ class BulletproofsPlusGenerator {
       multiexpData[i * 2 + 1] = MultiexpData(scalar: scalar2, point: H[h0 + i]);
     }
     RctKey scBytes = Ed25519Utils.scMulVarBigInt(c, RCTConst.invEightBig);
-    multiexpData[2 * size] = MultiexpData(scalar: scBytes, point: _hPoint);
+    multiexpData[2 * size] = MultiexpData(scalar: scBytes, point: hPoint);
     scBytes = Ed25519Utils.scMulVarBigInt(d, RCTConst.invEightBig);
-    multiexpData[2 * size + 1] = MultiexpData(scalar: scBytes, point: _gPoint);
+    multiexpData[2 * size + 1] = MultiexpData(scalar: scBytes, point: gPoint);
     return _multiexp(data: multiexpData.cast(), higiSize: 0);
   }
 
@@ -418,6 +418,8 @@ class BulletproofsPlusGenerator {
         throw const MoneroCryptoException("Invalid gamma input");
       }
     }
+    final hPoint = RCT.asPoint(RCTConst.h);
+    final gPoint = RCT.asPoint(RCTConst.g);
     const int logN = 6;
     const int N = 1 << logN;
     int M = 0, logM = 0;
@@ -560,6 +562,8 @@ class BulletproofsPlusGenerator {
           nprime,
           cL,
           dL,
+          hPoint,
+          gPoint,
         );
         R[round] = _computeLRVar(
           nprime,
@@ -574,6 +578,8 @@ class BulletproofsPlusGenerator {
           0,
           cR,
           dR,
+          hPoint,
+          gPoint,
         );
 
         final RctKey challenge = _transcriptUpdateThree(
@@ -615,14 +621,14 @@ class BulletproofsPlusGenerator {
       sc1 = Ed25519Utils.scMulVarBigInt(s, RCTConst.invEightBig);
       data.add(MultiexpData(scalar: sc1, point: hPrime[0]));
       sc1 = Ed25519Utils.scMulVarBigInt(d_, RCTConst.invEightBig);
-      data.add(MultiexpData(scalar: sc1, point: _gPoint));
+      data.add(MultiexpData(scalar: sc1, point: gPoint));
       temp = Ed25519Utils.scMulVar(r, y);
       temp = Ed25519Utils.scMulVar(temp, bprime[0]);
       temp2 = Ed25519Utils.scMulVar(s, y);
       temp2 = Ed25519Utils.scMulVar(temp2, aprime[0]);
       temp = Ed25519Utils.scAddVar(temp, temp2);
       sc1 = Ed25519Utils.scMulVarBigInt(temp, RCTConst.invEightBig);
-      data.add(MultiexpData(scalar: sc1, point: _hPoint));
+      data.add(MultiexpData(scalar: sc1, point: hPoint));
 
       final RctKey a1 = _multiexp(data: data, higiSize: 0);
       temp = Ed25519Utils.scMulVar(r, y);
@@ -704,6 +710,8 @@ class BulletproofsPlusGenerator {
     int maxLogM = 0;
     final List<BpPlusProofData> proofData = [];
     List<RctKey> toInvert = [];
+    final hPoint = RCT.asPoint(RCTConst.h);
+    final gPoint = RCT.asPoint(RCTConst.g);
     for (final proof in proofs) {
       if (!_isReduced(proof.r1)) {
         throw const MoneroCryptoException("Input scalar r1 not in range");
@@ -952,8 +960,8 @@ class BulletproofsPlusGenerator {
       }
     }
 
-    data.add(MultiexpData(scalar: gScalar, point: _gPoint));
-    data.add(MultiexpData(scalar: hScalar, point: _hPoint));
+    data.add(MultiexpData(scalar: gScalar, point: gPoint));
+    data.add(MultiexpData(scalar: hScalar, point: hPoint));
 
     final List<MultiexpData?> nd = List.filled(2 * maxMN, null);
     for (int i = 0; i < maxMN; ++i) {

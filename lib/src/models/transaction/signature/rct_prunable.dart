@@ -1,6 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
@@ -10,19 +9,22 @@ import 'signature.dart';
 abstract class RctSigPrunable extends MoneroSerialization {
   const RctSigPrunable();
   abstract final List<RctKey> pseudoOuts;
-  factory RctSigPrunable.fromStruct(Map<String, dynamic> json, RCTType type) {
+  factory RctSigPrunable.deserializeJson(
+    Map<String, dynamic> json,
+    RCTType type,
+  ) {
     switch (type) {
       case RCTType.rctTypeBulletproofPlus:
-        return RctSigPrunableBulletproofPlus.fromStruct(json);
+        return RctSigPrunableBulletproofPlus.deserializeJson(json);
       case RCTType.rctTypeBulletproof:
-        return RctSigPrunableBulletproof.fromStruct(json);
+        return RctSigPrunableBulletproof.deserializeJson(json);
       case RCTType.rctTypeBulletproof2:
-        return RctSigPrunableBulletproof2.fromStruct(json);
+        return RctSigPrunableBulletproof2.deserializeJson(json);
       case RCTType.rctTypeCLSAG:
-        return RctSigPrunableCLSAG.fromStruct(json);
+        return RctSigPrunableCLSAG.deserializeJson(json);
       case RCTType.rctTypeSimple:
       case RCTType.rctTypeFull:
-        return RctSigPrunableRangeSigs.fromStruct(json);
+        return RctSigPrunableRangeSigs.deserializeJson(json);
       default:
         throw DartMoneroPluginException(
           "Invalid RCT type.",
@@ -147,15 +149,27 @@ class BulletproofPlus extends MoneroSerialization {
 
   factory BulletproofPlus.fromJson(Map<String, dynamic> json) {
     return BulletproofPlus(
-      a: BytesUtils.fromHexString(json.as<String>("a")),
-      a1: BytesUtils.fromHexString(json.as<String>("a1")),
-      b: BytesUtils.fromHexString(json.as<String>("b")),
-      r1: BytesUtils.fromHexString(json.as<String>("r1")),
-      s1: BytesUtils.fromHexString(json.as<String>("s1")),
-      d1: BytesUtils.fromHexString(json.as<String>("d1")),
-      l: json.as<List>("l").map((e) => BytesUtils.fromHexString(e)).toList(),
-      r: json.as<List>("r").map((e) => BytesUtils.fromHexString(e)).toList(),
-      v: json.as<List>("v").map((e) => BytesUtils.fromHexString(e)).toList(),
+      a: BytesUtils.fromHexString(json.valueAs<String>("a")),
+      a1: BytesUtils.fromHexString(json.valueAs<String>("a1")),
+      b: BytesUtils.fromHexString(json.valueAs<String>("b")),
+      r1: BytesUtils.fromHexString(json.valueAs<String>("r1")),
+      s1: BytesUtils.fromHexString(json.valueAs<String>("s1")),
+      d1: BytesUtils.fromHexString(json.valueAs<String>("d1")),
+      l:
+          json
+              .valueAs<List>("l")
+              .map((e) => BytesUtils.fromHexString(e))
+              .toList(),
+      r:
+          json
+              .valueAs<List>("r")
+              .map((e) => BytesUtils.fromHexString(e))
+              .toList(),
+      v:
+          json
+              .valueAs<List>("v")
+              .map((e) => BytesUtils.fromHexString(e))
+              .toList(),
     );
   }
 
@@ -251,18 +265,18 @@ class BulletproofPlus extends MoneroSerialization {
       bytes: bytes,
       layout: layout(property: property),
     );
-    return BulletproofPlus.fromStruct(decode);
+    return BulletproofPlus.deserializeJson(decode);
   }
-  factory BulletproofPlus.fromStruct(Map<String, dynamic> json) {
+  factory BulletproofPlus.deserializeJson(Map<String, dynamic> json) {
     return BulletproofPlus(
-      a: json.asBytes("a"),
-      a1: json.asBytes("a1"),
-      b: json.asBytes("b"),
-      r1: json.asBytes("r1"),
-      s1: json.asBytes("s1"),
-      d1: json.asBytes("d1"),
-      l: json.asListBytes("l")!,
-      r: json.asListBytes("r")!,
+      a: json.valueAsBytes("a"),
+      a1: json.valueAsBytes("a1"),
+      b: json.valueAsBytes("b"),
+      r1: json.valueAsBytes("r1"),
+      s1: json.valueAsBytes("s1"),
+      d1: json.valueAsBytes("d1"),
+      l: json.valueEnsureAsList<List<int>>("l"),
+      r: json.valueEnsureAsList<List<int>>("r"),
     );
   }
 
@@ -439,21 +453,21 @@ class Bulletproof extends MoneroSerialization {
       bytes: bytes,
       layout: layout(property: property),
     );
-    return Bulletproof.fromStruct(decode);
+    return Bulletproof.deserializeJson(decode);
   }
-  factory Bulletproof.fromStruct(Map<String, dynamic> json) {
+  factory Bulletproof.deserializeJson(Map<String, dynamic> json) {
     return Bulletproof(
-      a: json.asBytes("a"),
-      s: json.asBytes("s"),
-      t1: json.asBytes("t1"),
-      t2: json.asBytes("t2"),
-      taux: json.asBytes("taux"),
-      mu: json.asBytes("mu"),
-      l: json.asListBytes("l")!,
-      r: json.asListBytes("r")!,
-      a_: json.asBytes("a_"),
-      b: json.asBytes("b"),
-      t: json.asBytes("t"),
+      a: json.valueAsBytes("a"),
+      s: json.valueAsBytes("s"),
+      t1: json.valueAsBytes("t1"),
+      t2: json.valueAsBytes("t2"),
+      taux: json.valueAsBytes("taux"),
+      mu: json.valueAsBytes("mu"),
+      l: json.valueEnsureAsList<List<int>>("l"),
+      r: json.valueEnsureAsList<List<int>>("r"),
+      a_: json.valueAsBytes("a_"),
+      b: json.valueAsBytes("b"),
+      t: json.valueAsBytes("t"),
     );
   }
 
@@ -520,11 +534,11 @@ class Clsag extends MoneroSerialization {
        c1 = c1.asImmutableBytes,
        d = d.asImmutableBytes,
        i = i?.asImmutableBytes;
-  factory Clsag.fromStruct(Map<String, dynamic> json) {
+  factory Clsag.deserializeJson(Map<String, dynamic> json) {
     return Clsag(
-      s: json.asListBytes("s")!,
-      c1: json.asBytes("c1"),
-      d: json.asBytes("d"),
+      s: json.valueEnsureAsList<List<int>>("s"),
+      c1: json.valueAsBytes("c1"),
+      d: json.valueAsBytes("d"),
     );
   }
   static Layout<Map<String, dynamic>> layout({
@@ -572,16 +586,21 @@ class RctSigPrunableBulletproofPlus extends ClsagPrunable {
            pseudoOuts.map((e) => e.asImmutableBytes).toList().immutable,
        clsag = clsag.immutable;
 
-  factory RctSigPrunableBulletproofPlus.fromStruct(Map<String, dynamic> json) {
+  factory RctSigPrunableBulletproofPlus.deserializeJson(
+    Map<String, dynamic> json,
+  ) {
     return RctSigPrunableBulletproofPlus(
       clsag:
-          json.asListOfMap("clsag")!.map((e) => Clsag.fromStruct(e)).toList(),
+          json
+              .valueEnsureAsList<Map<String, dynamic>>("clsag")
+              .map((e) => Clsag.deserializeJson(e))
+              .toList(),
       bulletproofPlus:
           json
-              .asListOfMap("bulletproofPlus")!
-              .map((e) => BulletproofPlus.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("bulletproofPlus")
+              .map((e) => BulletproofPlus.deserializeJson(e))
               .toList(),
-      pseudoOuts: json.asListBytes("pseudoOuts")!,
+      pseudoOuts: json.valueEnsureAsList<List<int>>("pseudoOuts"),
     );
   }
   static Layout<Map<String, dynamic>> layout({
@@ -667,8 +686,11 @@ class MgSig extends MoneroSerialization {
                .immutable,
        ii = ii.map((e) => e.asImmutableBytes).toList().immutable,
        cc = cc.asImmutableBytes;
-  factory MgSig.fromStruct(Map<String, dynamic> json) {
-    return MgSig(ss: json.asListOfListBytes("ss")!, cc: json.as("cc"));
+  factory MgSig.deserializeJson(Map<String, dynamic> json) {
+    return MgSig(
+      ss: json.valueEnsureAsList<List<List<int>>>("ss"),
+      cc: json.valueAs("cc"),
+    );
   }
   static Layout<Map<String, dynamic>> layout({
     String? property,
@@ -747,16 +769,19 @@ class RctSigPrunableCLSAG extends BulletproofPrunable implements ClsagPrunable {
            pseudoOuts.map((e) => e.asImmutableBytes).toList().immutable,
        clsag = clsag.immutable;
 
-  factory RctSigPrunableCLSAG.fromStruct(Map<String, dynamic> json) {
+  factory RctSigPrunableCLSAG.deserializeJson(Map<String, dynamic> json) {
     return RctSigPrunableCLSAG(
       clsag:
-          json.asListOfMap("clsag")!.map((e) => Clsag.fromStruct(e)).toList(),
+          json
+              .valueEnsureAsList<Map<String, dynamic>>("clsag")
+              .map((e) => Clsag.deserializeJson(e))
+              .toList(),
       bulletproof:
           json
-              .asListOfMap("bulletproof")!
-              .map((e) => Bulletproof.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("bulletproof")
+              .map((e) => Bulletproof.deserializeJson(e))
               .toList(),
-      pseudoOuts: json.asListBytes("pseudoOuts")!,
+      pseudoOuts: json.valueEnsureAsList<List<int>>("pseudoOuts"),
     );
   }
   static Layout<Map<String, dynamic>> layout({
@@ -823,15 +848,21 @@ class RctSigPrunableBulletproof2 extends BulletproofPrunable
        pseudoOuts =
            pseudoOuts.map((e) => e.asImmutableBytes).toList().immutable;
 
-  factory RctSigPrunableBulletproof2.fromStruct(Map<String, dynamic> json) {
+  factory RctSigPrunableBulletproof2.deserializeJson(
+    Map<String, dynamic> json,
+  ) {
     return RctSigPrunableBulletproof2(
       bulletproof:
           json
-              .asListOfMap("bulletproof")!
-              .map((e) => Bulletproof.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("bulletproof")
+              .map((e) => Bulletproof.deserializeJson(e))
               .toList(),
-      pseudoOuts: json.asListBytes("pseudoOuts")!,
-      mgs: json.asListOfMap("mgs")!.map((e) => MgSig.fromStruct(e)).toList(),
+      pseudoOuts: json.valueEnsureAsList<List<int>>("pseudoOuts"),
+      mgs:
+          json
+              .valueEnsureAsList<Map<String, dynamic>>("mgs")
+              .map((e) => MgSig.deserializeJson(e))
+              .toList(),
     );
   }
   static Layout<Map<String, dynamic>> layout({
@@ -902,15 +933,19 @@ class RctSigPrunableBulletproof extends BulletproofPrunable
        pseudoOuts =
            pseudoOuts.map((e) => e.asImmutableBytes).toList().immutable;
 
-  factory RctSigPrunableBulletproof.fromStruct(Map<String, dynamic> json) {
+  factory RctSigPrunableBulletproof.deserializeJson(Map<String, dynamic> json) {
     return RctSigPrunableBulletproof(
       bulletproof:
           json
-              .asListOfMap("bulletproof")!
-              .map((e) => Bulletproof.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("bulletproof")
+              .map((e) => Bulletproof.deserializeJson(e))
               .toList(),
-      pseudoOuts: json.asListBytes("pseudoOuts")!,
-      mgs: json.asListOfMap("mgs")!.map((e) => MgSig.fromStruct(e)).toList(),
+      pseudoOuts: json.valueEnsureAsList<List<int>>("pseudoOuts"),
+      mgs:
+          json
+              .valueEnsureAsList<Map<String, dynamic>>("mgs")
+              .map((e) => MgSig.deserializeJson(e))
+              .toList(),
     );
   }
   static Layout<Map<String, dynamic>> layout({
@@ -996,11 +1031,11 @@ class BoroSig extends MoneroSerialization {
          operation: "BoroSig",
          reason: "Invalid ee bytes length.",
        );
-  factory BoroSig.fromStruct(Map<String, dynamic> json) {
+  factory BoroSig.deserializeJson(Map<String, dynamic> json) {
     return BoroSig(
-      s0: json.asListBytes("s0")!,
-      s1: json.asListBytes("s1")!,
-      ee: json.asBytes("ee"),
+      s0: json.valueEnsureAsList<List<int>>("s0"),
+      s1: json.valueEnsureAsList<List<int>>("s1"),
+      ee: json.valueAsBytes("ee"),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -1044,10 +1079,12 @@ class RangeSig extends MoneroSerialization {
           )
           .toList()
           .exc(length: 64, operation: "RangeSig", reason: "Invalid ci length.");
-  factory RangeSig.fromStruct(Map<String, dynamic> json) {
+  factory RangeSig.deserializeJson(Map<String, dynamic> json) {
     return RangeSig(
-      asig: BoroSig.fromStruct(json.asMap("asig")),
-      ci: json.asListBytes("ci")!,
+      asig: BoroSig.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("asig"),
+      ),
+      ci: json.valueEnsureAsList<List<int>>("ci"),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -1079,14 +1116,18 @@ class RctSigPrunableRangeSigs extends MgSigPrunable {
   RctSigPrunableRangeSigs({required List<RangeSig> rangeSig, required this.mgs})
     : rangeSig = rangeSig.immutable;
 
-  factory RctSigPrunableRangeSigs.fromStruct(Map<String, dynamic> json) {
+  factory RctSigPrunableRangeSigs.deserializeJson(Map<String, dynamic> json) {
     return RctSigPrunableRangeSigs(
       rangeSig:
           json
-              .asListOfMap("rangeSig")!
-              .map((e) => RangeSig.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("rangeSig")
+              .map((e) => RangeSig.deserializeJson(e))
               .toList(),
-      mgs: json.asListOfMap("mgs")!.map((e) => MgSig.fromStruct(e)).toList(),
+      mgs:
+          json
+              .valueEnsureAsList<Map<String, dynamic>>("mgs")
+              .map((e) => MgSig.deserializeJson(e))
+              .toList(),
     );
   }
   static Layout<Map<String, dynamic>> layout({

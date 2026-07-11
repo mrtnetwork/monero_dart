@@ -31,7 +31,7 @@ export 'methods/get_balance.dart';
 export 'methods/get_block_template.dart';
 export 'methods/get_bulk_payments.dart';
 export 'methods/get_height.dart';
-export 'methods/get_info.dart';
+
 export 'methods/get_languages.dart';
 export 'methods/get_out_response.dart';
 export 'methods/get_payments.dart';

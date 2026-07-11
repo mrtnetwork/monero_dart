@@ -30,7 +30,6 @@ import 'package:monero_dart/src/crypto/monero/crypto.dart';
 import 'package:monero_dart/src/crypto/multisig/const/const.dart';
 import 'package:monero_dart/src/crypto/multisig/exception/exception.dart';
 import 'package:monero_dart/src/crypto/multisig/utils/multi_sig_kex_utils.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 
@@ -58,7 +57,7 @@ class MultisigKexMessage {
       default:
         throw MoneroMultisigAccountException(
           "Invalid monero multisig type.",
-          details: {"type": msg.type},
+          details: {"type": msg.type.toString()},
         );
     }
 
@@ -256,15 +255,21 @@ class MultisigKexMessageSerializableRound1
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MultisigKexMessageSerializableRound1.fromStruct(decode);
+    return MultisigKexMessageSerializableRound1.deserializeJson(decode);
   }
-  factory MultisigKexMessageSerializableRound1.fromStruct(
+  factory MultisigKexMessageSerializableRound1.deserializeJson(
     Map<String, dynamic> json,
   ) {
     return MultisigKexMessageSerializableRound1(
-      msgPrivateKey: MoneroPrivateKey.fromBytes(json.asBytes("private_key")),
-      signingPubKey: MoneroPublicKey.fromBytes(json.asBytes("signing_pubkey")),
-      signature: MECSignature.fromStruct(json.asMap("signature")),
+      msgPrivateKey: MoneroPrivateKey.fromBytes(
+        json.valueAsBytes("private_key"),
+      ),
+      signingPubKey: MoneroPublicKey.fromBytes(
+        json.valueAsBytes("signing_pubkey"),
+      ),
+      signature: MECSignature.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("signature"),
+      ),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
@@ -317,20 +322,24 @@ class MultisigKexMessageSerializableRoundN
       bytes: bytes,
       layout: layout(property: property),
     );
-    return MultisigKexMessageSerializableRoundN.fromStruct(decode);
+    return MultisigKexMessageSerializableRoundN.deserializeJson(decode);
   }
-  factory MultisigKexMessageSerializableRoundN.fromStruct(
+  factory MultisigKexMessageSerializableRoundN.deserializeJson(
     Map<String, dynamic> json,
   ) {
     return MultisigKexMessageSerializableRoundN(
-      round: json.as("round"),
+      round: json.valueAs("round"),
       msgPubKeys:
           json
-              .asListBytes("msg_pubkeys")!
+              .valueEnsureAsList<List<int>>("msg_pubkeys")
               .map((e) => MoneroPublicKey.fromBytes(e))
               .toList(),
-      signingPubKey: MoneroPublicKey.fromBytes(json.asBytes("signing_pubkey")),
-      signature: MECSignature.fromStruct(json.asMap("signature")),
+      signingPubKey: MoneroPublicKey.fromBytes(
+        json.valueAsBytes("signing_pubkey"),
+      ),
+      signature: MECSignature.deserializeJson(
+        json.valueEnsureAsMap<String, dynamic>("signature"),
+      ),
     );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {

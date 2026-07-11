@@ -28,30 +28,30 @@ class ComputeDestinationKeys extends MoneroSerialization {
        additionalTxPubKey = additionalTxPubKey.immutable,
        allTxKeys = allTxKeys.toImutableList,
        outs = outs.immutable;
-  factory ComputeDestinationKeys.fromStruct(Map<String, dynamic> json) {
+  factory ComputeDestinationKeys.deserializeJson(Map<String, dynamic> json) {
     return ComputeDestinationKeys(
       additionalTxPubKey:
           json
-              .asListBytes("additionalTxPubKey")!
+              .valueEnsureAsList<List<int>>("additionalTxPubKey")
               .map((e) => MoneroPublicKey.fromBytes(e))
               .toList(),
       allTxKeys:
           json
-              .asListBytes("allTxKeys")!
+              .valueEnsureAsList<List<int>>("allTxKeys")
               .map((e) => MoneroPrivateKey.fromBytes(e))
               .toList(),
-      amountKeys: json.asListBytes("amountKeys")!,
+      amountKeys: json.valueEnsureAsList<List<int>>("amountKeys"),
       extras:
           json
-              .asListOfMap("extras")!
-              .map((e) => TxExtra.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("extras")
+              .map((e) => TxExtra.deserializeJson(e))
               .toList(),
       outs:
           json
-              .asListOfMap("outs")!
-              .map((e) => MoneroTxout.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("outs")
+              .map((e) => MoneroTxout.deserializeJson(e))
               .toList(),
-      txPubKey: MoneroPublicKey.fromBytes(json.asBytes("txPubKey")),
+      txPubKey: MoneroPublicKey.fromBytes(json.valueAsBytes("txPubKey")),
     );
   }
 
@@ -121,13 +121,13 @@ class ComputeSourceKeys extends MoneroSerialization {
                )
                .toImutableList,
        inputs = inputs.immutable;
-  factory ComputeSourceKeys.fromStruct(Map<String, dynamic> json) {
+  factory ComputeSourceKeys.deserializeJson(Map<String, dynamic> json) {
     return ComputeSourceKeys._(
-      inputSecretKeys: json.asListBytes("inputSecretKeys")!,
+      inputSecretKeys: json.valueEnsureAsList<List<int>>("inputSecretKeys"),
       inputs:
           json
-              .asListOfMap("inputs")!
-              .map((e) => TxinToKey.fromStruct(e))
+              .valueEnsureAsList<Map<String, dynamic>>("inputs")
+              .map((e) => TxinToKey.deserializeJson(e))
               .toList(),
     );
   }
@@ -205,18 +205,18 @@ class MoneroMultisigSignedInfo extends MoneroSerialization {
        totalAlphaH = totalAlphaH.toImutableList,
        c0 = c0.toImutableList,
        s = s.toImutableList;
-  factory MoneroMultisigSignedInfo.fromStruct(Map<String, dynamic> json) {
+  factory MoneroMultisigSignedInfo.deserializeJson(Map<String, dynamic> json) {
     return MoneroMultisigSignedInfo(
-      l: json.asListOfListBytes("l")!,
+      l: json.valueEnsureAsList<List<List<int>>>("l"),
       signingKeys:
           json
-              .asListBytes("signingKeys")!
+              .valueEnsureAsList<List<int>>("signingKeys")
               .map((e) => MoneroPublicKey.fromBytes(e))
               .toList(),
-      totalAlphaG: json.asListOfListBytes("totalAlphaG")!,
-      totalAlphaH: json.asListOfListBytes("totalAlphaH")!,
-      c0: json.asListBytes("c0")!,
-      s: json.asListBytes("s")!,
+      totalAlphaG: json.valueEnsureAsList<List<List<int>>>("totalAlphaG"),
+      totalAlphaH: json.valueEnsureAsList<List<List<int>>>("totalAlphaH"),
+      c0: json.valueEnsureAsList<List<int>>("c0"),
+      s: json.valueEnsureAsList<List<int>>("s"),
     );
   }
 

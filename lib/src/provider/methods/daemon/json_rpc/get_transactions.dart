@@ -5,7 +5,8 @@ import 'package:monero_dart/src/provider/models/daemon/tx_response.dart';
 /// Look up one or more transactions by hash
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_transactions
 class DaemonRequestGetTransactions
-    extends MoneroDaemonRequestParam<List<TxResponse>, Map<String, dynamic>> {
+    extends
+        MoneroDaemonRequestParam<List<MoneroTxResponse>, Map<String, dynamic>> {
   DaemonRequestGetTransactions(
     List<String> txHashes, {
     this.decodeAsJson,
@@ -37,9 +38,9 @@ class DaemonRequestGetTransactions
   DemonRequestType get encodingType => DemonRequestType.json;
 
   @override
-  List<TxResponse> onResonse(Map<String, dynamic> result) {
+  List<MoneroTxResponse> onResonse(Map<String, dynamic> result) {
     final List? txs = result["txs"];
     if (txs?.isEmpty ?? true) return [];
-    return txs!.map((e) => TxResponse.fromJson(e)).toList();
+    return txs!.map((e) => MoneroTxResponse.fromJson(e)).toList();
   }
 }

@@ -2,14 +2,14 @@ import 'package:blockchain_utils/service/models/params.dart';
 import 'package:http/http.dart' as http;
 import 'package:monero_dart/monero_dart.dart';
 
-MoneroProvider createProvider({String? url}) {
+MoneroProvider createProvider({String? url, String? walletUrl}) {
   final provider = MoneroProvider(MoneroHTTPProvider(
-      daemoUrl: "https://xmr.surveillance.monster",
-      walletUrl: "http://127.0.0.1:1880"));
+      daemoUrl: url ?? "https://xmr.surveillance.monster",
+      walletUrl: walletUrl ?? "http://127.0.0.1:1880"));
   return provider;
 }
 
-class MoneroHTTPProvider implements MoneroServiceProvider {
+class MoneroHTTPProvider with MoneroServiceProvider {
   MoneroHTTPProvider(
       {http.Client? client,
       this.daemoUrl,
@@ -23,26 +23,16 @@ class MoneroHTTPProvider implements MoneroServiceProvider {
   final String? walletUrl;
   final http.Client client;
   final Duration defaultRequestTimeout;
-  // @override
-  // Future<dynamic> doRequest<T>(MoneroRequestDetails params,
-  //     {Duration? timeout}) async {
-  // final url = params.toUri(
-  //     params.api == MoneroRequestApiType.wallet ? walletUrl! : daemoUrl!);
-  // final response = await client
-  //     .post(url, headers: params.headers, body: params.body())
-  //     .timeout(timeout ?? defaultRequestTimeout);
-  //   return params.
-  //   // return MoneroServiceResponse(
-  //   //     status: response.statusCode, responseBytes: response.bodyBytes);
-  // }
+
   @override
-  Future<BaseServiceResponse<T>> doRequest<T>(MoneroRequestDetails params,
+  Future<BaseServiceResponse> doRequest(MoneroRequestDetails params,
       {Duration? timeout}) async {
-    final url = params.toUri(
-        params.api == MoneroRequestApiType.wallet ? walletUrl! : daemoUrl!);
+    final url = params.encodeUrl(
+        params.api == MoneroProviderApi.wallet ? walletUrl! : daemoUrl!);
     final response = await client
-        .post(url, headers: params.headers, body: params.body())
+        .post(url, headers: params.headers, body: params.encodeBody())
         .timeout(timeout ?? defaultRequestTimeout);
-    return params.parseResponse(response.bodyBytes, response.statusCode);
+    return params.toResponse(response.bodyBytes,
+        statusCode: response.statusCode);
   }
 }

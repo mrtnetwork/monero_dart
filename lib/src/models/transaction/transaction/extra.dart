@@ -1,58 +1,34 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/exception/exception.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
+import 'package:monero_dart/src/serialization/layout/layouts/tx_extra_pading.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 
-class _TxExtraConst {
+class TxExtraConst {
   static const int nonceMaxCount = 255;
+  static const int txPaddingMaxCount = 255;
   static const int txExtraNoncePaymentId = 0x00;
   static const int txExtraNonceEncryptedPaymentId = 0x01;
   static const int paymentIdWithPrefixLength = 9;
 }
 
-class TxExtraTypes {
+enum TxExtraTypes {
+  padding(name: "padding", value: 0x00),
+
+  publicKey(name: "publickey", value: 0x01),
+  nonce(name: "nonce", value: 0x02),
+  mergeMiningTag(name: "mergeMiningTag", value: 0x03),
+  additionalPubKeys(name: "additionalPublicKeys", value: 0x04),
+  mysteriousMinergate(name: "mysteriousMinergate", value: 0xDE);
+
   final String name;
   final int value;
-  const TxExtraTypes._({required this.name, required this.value});
-  static const TxExtraTypes padding = TxExtraTypes._(
-    name: "padding",
-    value: 0x00,
-  );
-  static const TxExtraTypes publicKey = TxExtraTypes._(
-    name: "publickey",
-    value: 0x01,
-  );
-  static const TxExtraTypes nonce = TxExtraTypes._(name: "nonce", value: 0x02);
-  static const TxExtraTypes mergeMiningTag = TxExtraTypes._(
-    name: "mergeMiningTag",
-    value: 0x03,
-  );
-  static const TxExtraTypes additionalPubKeys = TxExtraTypes._(
-    name: "additionalPublicKeys",
-    value: 0x04,
-  );
-  static const TxExtraTypes mysteriousMinergate = TxExtraTypes._(
-    name: "mysteriousMinergate",
-    value: 0xDE,
-  );
-  static const List<TxExtraTypes> values = [
-    publicKey,
-    additionalPubKeys,
-    nonce,
-    padding,
-    mergeMiningTag,
-    mysteriousMinergate,
-  ];
+  const TxExtraTypes({required this.name, required this.value});
   static TxExtraTypes fromName(String? name) {
     return values.firstWhere(
       (e) => e.name == name,
       orElse:
-          () =>
-              throw DartMoneroPluginException(
-                "Invalid tx extra type.",
-                details: {"type": name},
-              ),
+          () => throw ItemNotFoundException(name: "TxExtraTypes", value: name),
     );
   }
 }
@@ -60,18 +36,23 @@ class TxExtraTypes {
 abstract class TxExtra extends MoneroVariantSerialization {
   final TxExtraTypes type;
   const TxExtra(this.type);
-  factory TxExtra.fromStruct(Map<String, dynamic> json) {
+  factory TxExtra.deserializeJson(Map<String, dynamic> json) {
     final decode = MoneroVariantSerialization.toVariantDecodeResult(json);
     final type = TxExtraTypes.fromName(decode.variantName);
     switch (type) {
       case TxExtraTypes.publicKey:
-        return TxExtraPublicKey.fromStruct(decode.value);
+        return TxExtraPublicKey.deserializeJson(decode.value);
       case TxExtraTypes.nonce:
-        return TxExtraNonce.fromStruct(decode.value);
+        return TxExtraNonce.deserializeJson(decode.value);
       case TxExtraTypes.additionalPubKeys:
-        return TxExtraAdditionalPubKeys.fromStruct(decode.value);
-      default:
-        throw UnimplementedError("does not implemented");
+        return TxExtraAdditionalPubKeys.deserializeJson(decode.value);
+      case TxExtraTypes.padding:
+        return TxExtraPadding.deserializeJson(decode.value);
+
+      case TxExtraTypes.mergeMiningTag:
+        return TxExtraMergeMiningTag.deserializeJson(decode.value);
+      case TxExtraTypes.mysteriousMinergate:
+        return TxExtraMysteriousMinergate.deserializeJson(decode.value);
     }
   }
   factory TxExtra.deserialize(List<int> bytes, {String? property}) {
@@ -79,7 +60,7 @@ abstract class TxExtra extends MoneroVariantSerialization {
       bytes: bytes,
       layout: layout(property: property),
     );
-    return TxExtra.fromStruct(decode);
+    return TxExtra.deserializeJson(decode);
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.lazyEnum([
@@ -98,6 +79,21 @@ abstract class TxExtra extends MoneroVariantSerialization {
         property: TxExtraTypes.additionalPubKeys.name,
         index: TxExtraTypes.additionalPubKeys.value,
       ),
+      LazyVariantModel(
+        layout: TxExtraPadding.layout,
+        property: TxExtraTypes.padding.name,
+        index: TxExtraTypes.padding.value,
+      ),
+      LazyVariantModel(
+        layout: TxExtraMergeMiningTag.layout,
+        property: TxExtraTypes.mergeMiningTag.name,
+        index: TxExtraTypes.mergeMiningTag.value,
+      ),
+      LazyVariantModel(
+        layout: TxExtraMysteriousMinergate.layout,
+        property: TxExtraTypes.mysteriousMinergate.name,
+        index: TxExtraTypes.mysteriousMinergate.value,
+      ),
     ], property: property);
   }
 
@@ -108,12 +104,12 @@ abstract class TxExtra extends MoneroVariantSerialization {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    throw UnimplementedError();
+    throw DartMoneroPluginException("Unsupported feature.");
   }
 
   @override
   Layout<Map<String, dynamic>> createLayout({String? property}) {
-    throw UnimplementedError();
+    throw DartMoneroPluginException("Unsupported feature.");
   }
 
   @override
@@ -130,8 +126,31 @@ abstract class TxExtra extends MoneroVariantSerialization {
 }
 
 class TxExtraPadding extends TxExtra {
-  final int size;
-  TxExtraPadding({required this.size}) : super(TxExtraTypes.padding);
+  final List<int> data;
+  TxExtraPadding(List<int> data)
+    : data = data.asImmutableBytes.max(
+        length: TxExtraConst.txPaddingMaxCount,
+        operation: "Invalid txExtra padding bytes length.",
+      ),
+      super(TxExtraTypes.padding);
+  factory TxExtraPadding.deserializeJson(Map<String, dynamic> json) {
+    return TxExtraPadding(json.valueAsBytes("data"));
+  }
+  static Layout<Map<String, dynamic>> layout({String? property}) {
+    return LayoutConst.struct([
+      TxExtraPaddingLayout(property: "data"),
+    ], property: property);
+  }
+
+  @override
+  Layout<Map<String, dynamic>> createLayout({String? property}) {
+    return layout(property: property);
+  }
+
+  @override
+  Map<String, dynamic> toLayoutStruct() {
+    return {"data": data};
+  }
 }
 
 class TxExtraPublicKey extends TxExtra {
@@ -146,8 +165,8 @@ class TxExtraPublicKey extends TxExtra {
               )
               .asImmutableBytes,
       super(TxExtraTypes.publicKey);
-  factory TxExtraPublicKey.fromStruct(Map<String, dynamic> json) {
-    return TxExtraPublicKey(json.asBytes("publicKey"));
+  factory TxExtraPublicKey.deserializeJson(Map<String, dynamic> json) {
+    return TxExtraPublicKey(json.valueAsBytes("publicKey"));
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -176,18 +195,18 @@ class TxExtraNonce extends TxExtra {
     : nonce =
           nonce
               .max(
-                length: _TxExtraConst.nonceMaxCount,
+                length: TxExtraConst.nonceMaxCount,
                 operation: "TxExtraNonce",
                 reason: "Invalid nonce bytes length.",
               )
               .asImmutableBytes,
       super(TxExtraTypes.nonce);
-  factory TxExtraNonce.fromStruct(Map<String, dynamic> json) {
-    return TxExtraNonce(json.asBytes("nonce"));
+  factory TxExtraNonce.deserializeJson(Map<String, dynamic> json) {
+    return TxExtraNonce(json.valueAsBytes("nonce"));
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
-      LayoutConst.vecU8(property: "nonce", lengthSizeLayout: LayoutConst.u8()),
+      MoneroLayoutConst.variantBytes(property: "nonce"),
     ], property: property);
   }
 
@@ -202,7 +221,10 @@ class TxExtraNonce extends TxExtra {
       operation: "TxExtraNonce",
       reason: "Invalid encryptedPaymentId bytes length.",
     );
-    return TxExtraNonce([_TxExtraConst.txExtraNonceEncryptedPaymentId, ...pId]);
+    return TxExtraNonce([TxExtraConst.txExtraNonceEncryptedPaymentId, ...pId]);
+  }
+  factory TxExtraNonce.memo(List<int> data, {int? tag = 0x7F}) {
+    return TxExtraNonce([if (tag != null) tag, ...data]);
   }
   factory TxExtraNonce.paymentId(List<int> paymentId) {
     final pId = paymentId.asBytes.exc(
@@ -210,18 +232,36 @@ class TxExtraNonce extends TxExtra {
       operation: "TxExtraNonce",
       reason: "Invalid paymentId bytes length.",
     );
-    return TxExtraNonce([_TxExtraConst.txExtraNoncePaymentId, ...pId]);
+    return TxExtraNonce([TxExtraConst.txExtraNoncePaymentId, ...pId]);
   }
-  List<int>? get hasEncryptedPaymentId {
-    if (nonce.length != _TxExtraConst.paymentIdWithPrefixLength) return null;
-    if (nonce[0] != _TxExtraConst.txExtraNonceEncryptedPaymentId) return null;
+  List<int>? tryExtractEncryptedPaymetId() {
+    if (nonce.length != TxExtraConst.paymentIdWithPrefixLength) return null;
+    if (nonce[0] != TxExtraConst.txExtraNonceEncryptedPaymentId) return null;
     return nonce.sublist(1);
   }
 
-  List<int>? get hasPaymentId {
-    if (nonce.length != _TxExtraConst.paymentIdWithPrefixLength) return null;
-    if (nonce[0] != _TxExtraConst.txExtraNoncePaymentId) return null;
+  List<int>? tryExtractPaymentId() {
+    if (nonce.length != TxExtraConst.paymentIdWithPrefixLength) return null;
+    if (nonce[0] != TxExtraConst.txExtraNoncePaymentId) return null;
     return nonce.sublist(1);
+  }
+
+  bool isUnknownTxExtra() {
+    if (nonce.length != TxExtraConst.paymentIdWithPrefixLength) {
+      return true;
+    }
+    final tag = nonce[0];
+    return tag != TxExtraConst.txExtraNoncePaymentId &&
+        tag != TxExtraConst.txExtraNonceEncryptedPaymentId;
+  }
+
+  String? tryExtractString() {
+    if (nonce.isEmpty) return null;
+    final decode = StringUtils.tryDecode(nonce);
+    if (decode == null && nonce.length > 1) {
+      return StringUtils.tryDecode(nonce.sublist(1));
+    }
+    return decode;
   }
 
   @override
@@ -241,6 +281,28 @@ class TxExtraMergeMiningTag extends TxExtra {
         reason: "Invalid merkleRoot bytes length.",
       ),
       super(TxExtraTypes.mergeMiningTag);
+  factory TxExtraMergeMiningTag.deserializeJson(Map<String, dynamic> json) {
+    return TxExtraMergeMiningTag(
+      depth: json.valueAsBigInt("depth"),
+      merkleRoot: json.valueAsBytes("merkle_root"),
+    );
+  }
+  static Layout<Map<String, dynamic>> layout({String? property}) {
+    return LayoutConst.struct([
+      MoneroLayoutConst.varintBigInt(property: "depth"),
+      LayoutConst.fixedBlob32(property: "merkle_root"),
+    ], property: property);
+  }
+
+  @override
+  Layout<Map<String, dynamic>> createLayout({String? property}) {
+    return layout(property: property);
+  }
+
+  @override
+  Map<String, dynamic> toLayoutStruct() {
+    return {"depth": depth, "merkle_root": merkleRoot};
+  }
 }
 
 class TxExtraAdditionalPubKeys extends TxExtra {
@@ -260,8 +322,10 @@ class TxExtraAdditionalPubKeys extends TxExtra {
               )
               .toImutableList,
       super(TxExtraTypes.additionalPubKeys);
-  factory TxExtraAdditionalPubKeys.fromStruct(Map<String, dynamic> json) {
-    return TxExtraAdditionalPubKeys(json.asListBytes("pubKeys")!);
+  factory TxExtraAdditionalPubKeys.deserializeJson(Map<String, dynamic> json) {
+    return TxExtraAdditionalPubKeys(
+      json.valueEnsureAsList<List<int>>("pubKeys"),
+    );
   }
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -289,6 +353,29 @@ class TxExtraAdditionalPubKeys extends TxExtra {
 
 /// mysterious_minergate
 class TxExtraMysteriousMinergate extends TxExtra {
-  final String data;
-  TxExtraMysteriousMinergate(this.data) : super(TxExtraTypes.nonce);
+  final List<int> data;
+  TxExtraMysteriousMinergate(List<int> data)
+    : data = data.asImmutableBytes,
+      super(TxExtraTypes.mysteriousMinergate);
+
+  factory TxExtraMysteriousMinergate.deserializeJson(
+    Map<String, dynamic> json,
+  ) {
+    return TxExtraMysteriousMinergate(json.valueAsBytes("data"));
+  }
+  static Layout<Map<String, dynamic>> layout({String? property}) {
+    return LayoutConst.struct([
+      MoneroLayoutConst.variantBytes(property: "data"),
+    ]);
+  }
+
+  @override
+  Layout<Map<String, dynamic>> createLayout({String? property}) {
+    return layout(property: property);
+  }
+
+  @override
+  Map<String, dynamic> toLayoutStruct() {
+    return {"data": data};
+  }
 }

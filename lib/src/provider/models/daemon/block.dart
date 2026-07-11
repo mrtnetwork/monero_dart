@@ -48,7 +48,7 @@ class DaemonTxBlobEntryResponse {
 class DaemonBlockCompleteEntryResponse {
   final bool pruned;
   final String block;
-  final BigInt blockWeight;
+  final BigInt? blockWeight;
   final List<DaemonTxBlobEntryResponse> txs;
 
   DaemonBlockCompleteEntryResponse({
@@ -59,9 +59,9 @@ class DaemonBlockCompleteEntryResponse {
   }) : txs = txs.immutable;
   factory DaemonBlockCompleteEntryResponse.fromJson(Map<String, dynamic> json) {
     return DaemonBlockCompleteEntryResponse(
-      pruned: json["pruned"] ?? false,
-      block: json["block"],
-      blockWeight: BigintUtils.tryParse(json["block_weight"]) ?? BigInt.zero,
+      pruned: json.valueAs<bool?>("pruned") ?? false,
+      block: json.valueAs("block"),
+      blockWeight: json.valueAs("block_weight"),
       txs:
           (json["txs"] as List?)?.map((e) {
             if (e is String) {
@@ -104,10 +104,16 @@ class DaemonTxOutputIndicesResponse {
     : indices = indices.immutable;
   factory DaemonTxOutputIndicesResponse.fromJson(Map<String, dynamic> json) {
     return DaemonTxOutputIndicesResponse(
-      (json["indices"] as List)
-          .map<BigInt>((e) => BigintUtils.parse(e))
-          .toList(),
+      (json["indices"] as List?)
+              ?.map<BigInt>((e) => BigintUtils.parse(e))
+              .toList() ??
+          [],
     );
+  }
+
+  @override
+  String toString() {
+    return "DaemonTxOutputIndicesResponse {indices:$indices}";
   }
 }
 
@@ -142,6 +148,10 @@ class DaemonBlockOutputIndicesResponse {
           .toList(),
     );
   }
+  @override
+  String toString() {
+    return "DaemonBlockOutputIndicesResponse {indices:${indices.join()}}";
+  }
 }
 
 enum PoolInfoExtent { none, incremental, full }
@@ -151,8 +161,8 @@ enum DaemonRequestBlocksInfo { blocksOnly, blocksAndPool, poolOnly }
 class DaemonGetBlockBinResponse extends DaemonBaseResponse {
   final PoolInfoExtent poolInfoExtent;
   final List<DaemonBlockCompleteEntryResponse> blocks;
-  final BigInt startHeight;
-  final BigInt currentHeight;
+  final int startHeight;
+  final int currentHeight;
   final String? topBlockHash;
   final List<DaemonBlockOutputIndicesResponse> outputIndices;
   final BigInt daemonTime;
@@ -168,8 +178,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
           (json["blocks"] as List)
               .map((e) => DaemonBlockCompleteEntryResponse.fromJson(e))
               .toImutableList,
-      startHeight = BigintUtils.parse(json["start_height"]),
-      currentHeight = BigintUtils.parse(json["current_height"]),
+      startHeight = json.valueAs("start_height"),
+      currentHeight = json.valueAs("current_height"),
       topBlockHash = json["top_block_hash"],
       outputIndices =
           (json["output_indices"] as List)

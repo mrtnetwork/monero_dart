@@ -1,29 +1,27 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/helper/extension.dart';
 import 'package:monero_dart/src/network/network.dart';
 import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/serialization/serialization.dart';
 part 'integrated_address.dart';
 part 'account_address.dart';
 
-abstract class MoneroAddress extends MoneroSerialization {
-  final List<int> _pubViewKey;
-  final List<int> _pubSpendKey;
-  List<int> get pubSpendKey => _pubSpendKey;
-  List<int> get pubViewKey => _pubViewKey;
+abstract class MoneroAddress extends MoneroSerialization
+    with Equality, CborTagSerializable
+    implements IAddress {
+  final List<int> pubViewKey;
+  final List<int> pubSpendKey;
 
   /// view public key
   late final MoneroPublicKey publicViewKey = MoneroPublicKey.fromBytes(
-    _pubViewKey,
+    pubViewKey,
   );
 
   late final MoneroPublicKey publicSpendKey = MoneroPublicKey.fromBytes(
-    _pubSpendKey,
+    pubSpendKey,
   );
-  // /// spend public key
-  // final MoneroPublicKey pubSpendKey;
 
   /// address
+  @override
   final String address;
 
   /// network of address
@@ -43,12 +41,39 @@ abstract class MoneroAddress extends MoneroSerialization {
     required this.address,
     required this.network,
     required this.type,
-  }) : _pubViewKey = pubViewKey.asImmutableBytes,
-       _pubSpendKey = pubSpendKey.asImmutableBytes;
+  }) : pubViewKey = pubViewKey.asImmutableBytes,
+       pubSpendKey = pubSpendKey.asImmutableBytes;
 
-  factory MoneroAddress.fromStruct(Map<String, dynamic> json) {
-    return MoneroAddress(json.as("address"));
+  factory MoneroAddress.deserializeJson(Map<String, dynamic> json) {
+    return MoneroAddress(json.valueAs("address"));
   }
+  factory MoneroAddress.deserializeIAddress({
+    List<int>? bytes,
+    CborObject? object,
+  }) {
+    final values = CborTagSerializable.decodeTaggedValue(
+      identifier: BlockchainNetwork.monero.identifier,
+      cborBytes: bytes,
+      cborObject: object,
+    );
+    final type = XmrAddressType.fromValue(values.rawValueAt(0));
+    return switch (type) {
+      XmrAddressType.primaryAddress ||
+      XmrAddressType.subaddress => MoneroAccountAddress.fromPubKeys(
+        pubSpendKey: values.rawValueAt(1),
+        pubViewKey: values.rawValueAt(2),
+        network: MoneroNetwork.fromValue(values.rawValueAt(3)),
+        type: type,
+      ),
+      XmrAddressType.integrated => MoneroIntegratedAddress.fromPubKeys(
+        pubSpendKey: values.rawValueAt(1),
+        pubViewKey: values.rawValueAt(2),
+        paymentId: values.rawValueAt(3),
+        network: MoneroNetwork.fromValue(values.rawValueAt(4)),
+      ),
+    };
+  }
+
   factory MoneroAddress(
     String address, {
     MoneroNetwork? network,
@@ -91,13 +116,10 @@ abstract class MoneroAddress extends MoneroSerialization {
           network: addrNetwork,
           type: decode.type,
         );
-      default:
-        throw DartMoneroPluginException(
-          "Invalid monero address type.",
-          details: {"type": decode.type.toString()},
-        );
     }
   }
+
+  MoneroAddress toNetwork(MoneroNetwork network);
 
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
@@ -126,16 +148,25 @@ abstract class MoneroAddress extends MoneroSerialization {
   }
 
   @override
-  operator ==(other) {
-    if (other is! MoneroAddress) return false;
-    return address == other.address;
+  List<dynamic> get variables => [address];
+
+  @override
+  List<int> encodeAsIAddress() {
+    return toCbor().encode();
   }
 
   @override
-  int get hashCode => address.hashCode;
+  BlockchainNetwork get blockchainNetwork => BlockchainNetwork.monero;
+
+  @override
+  SerializationIdentifier get serializationIdentifier =>
+      blockchainNetwork.identifier;
 
   @override
   String toString() {
     return address;
   }
+
+  @override
+  String get viewType => type.name;
 }

@@ -1,5 +1,5 @@
 import 'package:monero_dart/src/provider/core/core.dart';
-import 'package:monero_dart/src/provider/methods/wallet/methods/get_info.dart';
+import 'package:monero_dart/src/provider/models/daemon/get_info.dart';
 
 /// Retrieve general information about the state of your node and the network.
 /// https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#get_info

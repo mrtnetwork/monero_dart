@@ -39,7 +39,7 @@ void main() async {
         return MoneroTxDestination(
             amount: MoneroTransactionHelper.toPiconero("0.001"),
             address: i.isEven
-                ? account.subAddress(MoneroAccountIndex.minor1)
+                ? account.subAddress(MoneroSubIndex.minor1)
                 : account.primaryAddress());
       }),
       changeAddress: myAccount.primaryAddress());
