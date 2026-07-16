@@ -1,4 +1,5 @@
-import '../../utils.dart';
+import 'package:blockchain_utils/crypto/quick_crypto.dart';
+
 import 'test6.dart';
 import 'test5.dart';
 import 'test4.dart';
@@ -15,7 +16,8 @@ void main() {
     bulletproofsPlus5,
     bulletproofsPlus6,
   ];
-  for (final i in testCases.takeShuffle(2)) {
+  for (final i in testCases) {
     i();
+    QuickCrypto.setupRandom(null);
   }
 }

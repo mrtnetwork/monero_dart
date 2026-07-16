@@ -67,7 +67,6 @@ void bulletproofsPlus6() {
     QuickCrypto.setupRandom((length) {
       if (index >= rands.length) {
         index = 0;
-        // assert(false, "should not be here!");
       }
 
       return BytesUtils.fromHexString(rands[index++]);
@@ -193,18 +192,15 @@ void bulletproofsPlus6() {
 
     expect(
       BytesUtils.toHexString(ecdhInfos[0].amount),
-      "33ad6ebab7c67708000000000000000000000000000000000000000000000000"
-          .substring(0, 16),
+      "33ad6ebab7c67708000000000000000000000000000000000000000000000000".substring(0, 16),
     );
     expect(
       BytesUtils.toHexString(ecdhInfos[1].amount),
-      "7b986ebab7c67708000000000000000000000000000000000000000000000000"
-          .substring(0, 16),
+      "7b986ebab7c67708000000000000000000000000000000000000000000000000".substring(0, 16),
     );
     expect(
       BytesUtils.toHexString(ecdhInfos[2].amount),
-      "2faf6ebab7c67708000000000000000000000000000000000000000000000000"
-          .substring(0, 16),
+      "2faf6ebab7c67708000000000000000000000000000000000000000000000000".substring(0, 16),
     );
     expect(sig.rctSigPrunable!.bulletproofPlus.length, 1);
     expect(sig.rctSigPrunable!.bulletproofPlus[0].v.length, 3);
