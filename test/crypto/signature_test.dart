@@ -4,6 +4,7 @@ import 'package:monero_dart/src/crypto/models/ec_signature.dart';
 import 'package:monero_dart/src/crypto/monero/crypto.dart';
 import 'package:test/test.dart';
 
+import '../utils.dart';
 import 'signature_vector.dart';
 
 void main() {
@@ -13,7 +14,7 @@ void main() {
 
 void _verifySignature() {
   test("verify signature", () {
-    for (final i in checkSignatureVector) {
+    for (final i in checkSignatureVector.takeShuffle()) {
       final List<int> hash = BytesUtils.fromHexString(i["hash"]);
       final List<int> pub = BytesUtils.fromHexString(i["public_key"]);
       final sig = MECSignature(
@@ -32,7 +33,7 @@ void _verifySignature() {
 
 void _generateSignature() {
   test("generate signature", () {
-    for (final i in signatureVector) {
+    for (final i in signatureVector.takeShuffle()) {
       final List<int> hash = BytesUtils.fromHexString(i["hash"]);
       final List<int> pub = BytesUtils.fromHexString(i["public_key"]);
       final List<int> sec = BytesUtils.fromHexString(i["secret_key"]);

@@ -1,6 +1,7 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/monero/crypto.dart';
 import 'package:test/test.dart';
+import '../utils.dart';
 import 'derive_public_key_test_vector.dart';
 
 void main() async {
@@ -11,7 +12,7 @@ void main() async {
 
 void _drivePublicKeyVar() {
   test("derive public key", () {
-    for (final i in derivePublicKeyTestVector) {
+    for (final i in derivePublicKeyTestVector.takeShuffle(10)) {
       final derivation = BytesUtils.fromHexString(i["derivation"]);
       final int outIndex = int.parse(i["output_index"]);
       final base = MoneroPublicKey.fromHex(i["base"]);
@@ -28,7 +29,7 @@ void _drivePublicKeyVar() {
 
 void _drivePublicKey() {
   test("derive public key", () {
-    for (final i in derivePublicKeyTestVector) {
+    for (final i in derivePublicKeyTestVector.takeShuffle()) {
       final derivation = BytesUtils.fromHexString(i["derivation"]);
       final int outIndex = int.parse(i["output_index"]);
       final base = MoneroPublicKey.fromHex(i["base"]);

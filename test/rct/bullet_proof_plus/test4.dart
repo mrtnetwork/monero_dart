@@ -13,11 +13,7 @@ import 'package:test/test.dart';
 
 import 'tools.dart';
 
-void main() {
-  _testOne();
-}
-
-void _testOne() {
+void bulletproofsPlus4() {
   test("range proof padded bulletproof", () {
     const rands = [
       "6d11a86d45f515d1083986429301e40b42210acb7790857f15e7affef1cfdc0d",

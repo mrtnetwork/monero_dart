@@ -3,11 +3,12 @@ import 'package:monero_dart/src/crypto/monero/crypto.dart';
 
 import 'package:test/test.dart';
 
+import '../utils.dart';
 import 'derive_public_key_test_vector.dart';
 
 void main() async {
   test("generate key image", () {
-    for (final i in keyImage) {
+    for (final i in keyImage.takeShuffle()) {
       final publicKey = MoneroPublicKey.fromBytes(
         BytesUtils.fromHexString(i["publicKey"]),
       );

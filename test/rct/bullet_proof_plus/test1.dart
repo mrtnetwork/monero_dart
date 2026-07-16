@@ -3,13 +3,7 @@ import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/bulletproofs_plu
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:test/test.dart';
 
-void main() {
-  group("BulletproofsPlus", () {
-    _test();
-  });
-}
-
-void _test() {
+void bulletproofsPlus1() {
   const List<String> debugRandomKeys = [
     "cdb4e246cba2e1ff9546b8fddfd1fba71788c7c56d3f44005c839556eb20900e",
     "b9d29ec8d428c708cc0fb12d1390849ecdf395b521f10589427e39d60f7b9209",

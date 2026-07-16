@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:test/test.dart';
 
+import '../utils.dart';
+
 void main() {
   _multAdd();
   _scalar();
@@ -17,7 +19,7 @@ List<int> scReduce(List<int> key) {
 
 void _scalar() {
   test("scalar reduce", () {
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < MoneroTestConst.iteration; i++) {
       final rand = QuickCrypto.generateRandom();
       final sc = scReduce(rand);
       final scOld = Ed25519Utils.scalarReduceVar(rand);
@@ -28,7 +30,7 @@ void _scalar() {
 
 void _multBase() {
   test("mult base", () {
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < MoneroTestConst.iteration; i++) {
       final rand = QuickCrypto.generateRandom();
       final sc = scReduce(rand);
       final scBig = BigintUtils.fromBytes(sc, byteOrder: Endian.little);
@@ -51,7 +53,7 @@ void _multAdd() {
     ),
   );
   test("mult base + p", () {
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < MoneroTestConst.iteration; i++) {
       final rand = QuickCrypto.generateRandom();
       final sc = scReduce(rand);
       final scBig = BigintUtils.fromBytes(sc, byteOrder: Endian.little);
