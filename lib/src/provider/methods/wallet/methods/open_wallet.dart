@@ -16,8 +16,8 @@ class WalletRequestOpenWallet
   @override
   Map<String, dynamic> get params => {
     "filename": fileName,
-    "password ": password,
+    "password": password,
   };
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

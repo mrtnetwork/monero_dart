@@ -13,10 +13,10 @@ class DaemonRequestGetInfo
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonGetInfoResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetInfoResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetInfoResponse.fromJson(result);
   }
 }

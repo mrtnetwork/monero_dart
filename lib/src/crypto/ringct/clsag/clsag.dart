@@ -25,7 +25,7 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
+import 'package:monero_dart/src/error/monero_error.dart';
 import 'package:monero_dart/src/models/transaction/signature/rct_prunable.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
@@ -56,11 +56,10 @@ class CLSAGUtils {
     RctKey muC,
     RctKey s,
   ) {
-    final RctKey s0PmuP = RCT.zero();
-    CryptoOps.scMul(s0PmuP, muP, p);
-    final RctKey s0AddZMuC = RCT.zero();
-    CryptoOps.scMulAdd(s0AddZMuC, muC, z, s0PmuP);
-    CryptoOps.scMulSub(s, c, s0AddZMuC, a);
+    final ed25519 = blockchainUtils.api.ed25519;
+    final RctKey s0PmuP = ed25519.scMul(muP, p);
+    final RctKey s0AddZMuC = ed25519.scMulAdd(muC, z, s0PmuP);
+    s.setAll(0, ed25519.scMulSub(c, s0AddZMuC, a));
   }
 
   static Clsag generate(
@@ -75,17 +74,17 @@ class CLSAGUtils {
   ) {
     final int n = P.length;
     if (n != C.length) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Signing and commitment key vector sizes must match!",
       );
     }
     if (n != cNonZero.length) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Signing and commitment key vector sizes must match!",
       );
     }
     if (l >= n) {
-      throw const MoneroCryptoException("Signing index out of range!");
+      throw BuError(DefaultErrorType.invalidArgument, "Signing index out of range!");
     }
     final RctKey H = RCT.hashToP3Bytes(P[l]);
 
@@ -99,10 +98,8 @@ class CLSAGUtils {
     final RctKey aH = r.$1;
     final RctKey sigI = r.$2;
     final RctKey D = r.$3;
-    final List<EDPoint> iPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(sigI));
-    final List<EDPoint> dPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(D));
 
-    final RctKey sigD = RCT.scalarmultKeyVar(D, RCTConst.invEight);
+    final RctKey sigD = RCT.scalarmultKey(D, RCTConst.invEight);
 
     final KeyV muPtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
     final KeyV muCtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
@@ -123,8 +120,8 @@ class CLSAGUtils {
     muCtoHash[2 * n + 2] = sigD;
     muCtoHash[2 * n + 3] = cOffset;
     RctKey muP = RCT.zero(), muC = RCT.zero();
-    muP = RCT.hashToScalarKeysVar(muPtoHash);
-    muC = RCT.hashToScalarKeysVar(muCtoHash);
+    muP = RCT.hashToScalarKeys(muPtoHash);
+    muC = RCT.hashToScalarKeys(muCtoHash);
     final KeyV cToHash = List.generate(2 * n + 5, (_) => RCT.zero());
     cToHash[0] = RCT.strToKey(RCTConst.cslagHashKeyRound);
     for (int i = 1; i < n + 1; ++i) {
@@ -136,7 +133,7 @@ class CLSAGUtils {
 
     cToHash[2 * n + 3] = aG;
     cToHash[2 * n + 4] = aH;
-    RctKey c = RCT.hashToScalarKeysVar(cToHash);
+    RctKey c = RCT.hashToScalarKeys(cToHash);
     int i;
     i = (l + 1) % n;
     if (i == 0) {
@@ -146,27 +143,24 @@ class CLSAGUtils {
     RctKey cNew = RCT.zero();
 
     while (i != l) {
-      sigS[i] = RCT.skGenVar();
+      sigS[i] = RCT.skGen();
       cNew = RCT.zero();
-      final cP = Ed25519Utils.scMulVar(muP, c);
-      final cC = Ed25519Utils.scMulVar(muC, c);
-      final pPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(P[i]));
-      final cPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(C[i]));
-      final L = RCT.addKeysAGbBcCVar(sigS[i], cP, pPrecomp, cC, cPrecomp);
-      final hiP3 = RCT.hashToPoint(P[i]);
-      final hPrecomp = CryptoOps.geDsmPrecompVar(hiP3);
-      final R = RCT.addKeysAAbBcCVar(
-        sigS[i],
-        hPrecomp,
-        cP,
-        iPrecomp,
-        cC,
-        dPrecomp,
+      final ed25519 = blockchainUtils.api.ed25519;
+      final cP = ed25519.scMul(muP, c);
+      final cC = ed25519.scMul(muC, c);
+      final L = ed25519.add(
+        ed25519.mulAdd(sigS[i], ed25519.generator(), cP, P[i]),
+        ed25519.mult(cC, C[i]),
+      );
+      final hBytes = RCT.hashToP3Bytes(P[i]);
+      final R = ed25519.add(
+        ed25519.mulAdd(sigS[i], hBytes, cP, sigI),
+        ed25519.mult(cC, D),
       );
 
       cToHash[2 * n + 3] = L;
       cToHash[2 * n + 4] = R;
-      cNew = RCT.hashToScalarKeysVar(cToHash);
+      cNew = RCT.hashToScalarKeys(cToHash);
       c = cNew.clone();
       i = (i + 1) % n;
       if (i == 0) sigC1 = c.clone();
@@ -177,52 +171,50 @@ class CLSAGUtils {
 
   static bool verify(RctKey message, Clsag sig, CtKeyV pubs, RctKey cOffset) {
     try {
+      final ed25519 = blockchainUtils.api.ed25519;
       final int n = pubs.length;
       if (n < 1) {
-        throw const MoneroCryptoException("Empty pubs");
+        throw BuError(MoneroErrorType.crypto, "Empty pubs");
       }
       if (n != sig.s.length) {
-        throw const MoneroCryptoException(
+        throw BuError(MoneroErrorType.crypto, 
           "Signature scalar vector is the wrong size!",
         );
       }
 
       for (int i = 0; i < n; i++) {
-        if (!Ed25519Utils.scCheckVar(sig.s[i])) {
-          throw const MoneroCryptoException("Bad signature scalar!");
+        if (!ed25519.scCheck(sig.s[i])) {
+          throw BuError(DefaultErrorType.invalidArgument, "Bad signature scalar!");
         }
       }
 
-      if (!Ed25519Utils.scCheckVar(sig.c1)) {
-        throw const MoneroCryptoException("Bad signature commitment!");
+      if (!ed25519.scCheck(sig.c1)) {
+        throw BuError(DefaultErrorType.invalidArgument, "Bad signature commitment!");
       }
 
       if (sig.i == null ||
           BytesUtils.bytesEqual(sig.i, RCT.identity(clone: false))) {
-        throw const MoneroCryptoException("Bad key image!");
+        throw BuError(DefaultErrorType.invalidArgument, "Bad key image!");
       }
-      final EDPoint cOffsetCached = RCT.asPoint(cOffset);
       RctKey c = sig.c1.clone();
-      final d8 = RCT.scalarmult8PointVar(sig.d);
-      if (d8.isZero()) {
-        throw const MoneroCryptoException("Bad auxiliary key image!");
+      final d8 = ed25519.mul8(sig.d);
+      if (BytesUtils.bytesEqual(d8, ed25519.identity())) {
+        throw BuError(DefaultErrorType.invalidArgument, "Bad auxiliary key image!");
       }
       if (sig.i == null) {
-        throw const MoneroCryptoException("I is required for verification.");
+        throw BuError(DefaultErrorType.invalidArgument, "I is required for verification.");
       }
-      final iPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(sig.i!));
-      final dPrecomp = CryptoOps.geDsmPrecompVar(d8);
       final KeyV muPtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
       final KeyV muCtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
       muPtoHash[0] = RCT.strToKey(RCTConst.cslagHashKeyAgg0);
       muCtoHash[0] = RCT.strToKey(RCTConst.cslagHashKeyAgg1);
       for (int i = 1; i < n + 1; ++i) {
-        muPtoHash[i] = pubs[i - 1].dest;
-        muCtoHash[i] = pubs[i - 1].dest;
+        muPtoHash[i] = pubs[i - 1].dest.toBytes;
+        muCtoHash[i] = pubs[i - 1].dest.toBytes;
       }
       for (int i = n + 1; i < 2 * n + 1; ++i) {
-        muPtoHash[i] = pubs[i - n - 1].mask;
-        muCtoHash[i] = pubs[i - n - 1].mask;
+        muPtoHash[i] = pubs[i - n - 1].mask.toBytes;
+        muCtoHash[i] = pubs[i - n - 1].mask.toBytes;
       }
       muPtoHash[2 * n + 1] = sig.i!;
       muPtoHash[2 * n + 2] = sig.d;
@@ -236,46 +228,46 @@ class CLSAGUtils {
       final KeyV cToHash = List.generate(2 * n + 5, (_) => RCT.zero());
       cToHash[0] = RCT.strToKey(RCTConst.cslagHashKeyRound);
       for (int i = 1; i < n + 1; ++i) {
-        cToHash[i] = pubs[i - 1].dest;
-        cToHash[i + n] = pubs[i - 1].mask;
+        cToHash[i] = pubs[i - 1].dest.toBytes;
+        cToHash[i + n] = pubs[i - 1].mask.toBytes;
       }
       cToHash[2 * n + 1] = cOffset;
       cToHash[2 * n + 2] = message;
       RctKey cNew = RCT.zero();
       int i = 0;
       while (i < n) {
-        final cP = Ed25519Utils.scMulVar(muP, c);
-        final cC = Ed25519Utils.scMulVar(muC, c);
-        final pPrecomp = CryptoOps.geDsmPrecompVar(RCT.asPoint(pubs[i].dest));
-        EDPoint tempP3 = RCT.asPoint(pubs[i].mask);
-        tempP3 = tempP3 + (-cOffsetCached);
-        final cPrecomp = CryptoOps.geDsmPrecompVar(tempP3);
+        final cP = ed25519.scMul(muP, c);
+        final cC = ed25519.scMul(muC, c);
+        final cAdj = ed25519.sub(pubs[i].mask.toBytes, cOffset);
 
-        final L = RCT.addKeysAGbBcCVar(sig.s[i], cP, pPrecomp, cC, cPrecomp);
+        final L = ed25519.add(
+          ed25519.mulAdd(
+            sig.s[i],
+            ed25519.generator(),
+            cP,
+            pubs[i].dest.toBytes,
+          ),
+          ed25519.mult(cC, cAdj),
+        );
 
-        final hash8P3 = RCT.hashToPoint(pubs[i].dest);
-        final hashPrecomp = CryptoOps.geDsmPrecompVar(hash8P3);
-        final R = RCT.addKeysAAbBcCVar(
-          sig.s[i],
-          hashPrecomp,
-          cP,
-          iPrecomp,
-          cC,
-          dPrecomp,
+        final hashBytes = RCT.hashToP3Bytes(pubs[i].dest);
+        final R = ed25519.add(
+          ed25519.mulAdd(sig.s[i], hashBytes, cP, sig.i!),
+          ed25519.mult(cC, d8),
         );
 
         cToHash[2 * n + 3] = L;
         cToHash[2 * n + 4] = R;
         cNew = RCT.hashToScalarKeys(cToHash);
         if (BytesUtils.bytesEqual(cNew, RCT.zero(clone: false))) {
-          throw const MoneroCryptoException("Bad signature hash");
+          throw BuError(DefaultErrorType.invalidArgument, "Bad signature hash");
         }
         c = cNew.clone();
 
         i = i + 1;
       }
-      cNew = Ed25519Utils.scSubVar(c, sig.c1);
-      return CryptoOps.scIsNonZero(cNew) == 0;
+      cNew = ed25519.scSub(c, sig.c1);
+      return !ed25519.scIsNonZero(cNew);
     } catch (e) {
       return false;
     }
@@ -299,7 +291,7 @@ class CLSAGUtils {
     int index,
   ) {
     if (pubs.isEmpty) {
-      throw const MoneroCryptoException("Empty pubs");
+      throw BuError(MoneroErrorType.crypto, "Empty pubs");
     }
     final KeyV sk = List.generate(2, (_) => RCT.zero());
     final KeyV P = [];
@@ -308,13 +300,13 @@ class CLSAGUtils {
 
     for (int i = 0; i < pubs.length; i++) {
       final k = pubs[i];
-      P.add(k.dest.clone());
-      cNonZero.add(k.mask.clone());
-      final RctKey tmp = RCT.subKeysVar(k.mask, cout);
+      P.add(k.dest.toBytes);
+      cNonZero.add(k.mask.toBytes);
+      final RctKey tmp = RCT.subKeys(k.mask.toBytes, cout);
       C.add(tmp);
     }
-    sk[0] = inSk.dest.clone();
-    CryptoOps.scSub(sk[1], inSk.mask, a);
+    sk[0] = inSk.dest.toBytes;
+    sk[1] = blockchainUtils.api.ed25519.scSub(inSk.mask, a);
     final Clsag result = generate(
       message,
       P,

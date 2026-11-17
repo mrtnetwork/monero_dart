@@ -17,7 +17,7 @@ class WalletRequestUntagAccounts
   Map<String, dynamic> get params => {"accounts": accounts};
 
   @override
-  WalletRPCSweepResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCSweepResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCSweepResponse.fromJson(result);
   }
 }

@@ -19,7 +19,7 @@ class WalletRequestParseUri
   @override
   Map<String, dynamic> get params => {"uri": uri};
   @override
-  WalletRPCParseUriResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCParseUriResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCParseUriResponse.fromJson(result["uri"]);
   }
 }

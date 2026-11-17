@@ -25,7 +25,6 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
@@ -42,10 +41,9 @@ class CLSAGContext {
 
   final RctKey _muP;
   final RctKey _muC;
-  final GroupElementDsmp _wHlprecomp;
-  final List<GroupElementDsmp> _wPrecomp;
-  final List<GroupElementDsmp> _hPrecomp;
-  final GroupElementDsmp _gPrecomp;
+  final RctKey _wHL;
+  final KeyV _wPoints;
+  final KeyV _hPoints;
 
   final int l;
   final KeyV _s;
@@ -61,10 +59,9 @@ class CLSAGContext {
     required this.bParamsROffset,
     required RctKey muP,
     required RctKey muC,
-    required GroupElementDsmp wHlprecomp,
-    required List<GroupElementDsmp> wPrecomp,
-    required List<GroupElementDsmp> hPrecomp,
-    required GroupElementDsmp gPrecomp,
+    required RctKey wHL,
+    required KeyV wPoints,
+    required KeyV hPoints,
     required this.l,
     required KeyV s,
     required this.numAlphaComponents,
@@ -72,10 +69,9 @@ class CLSAGContext {
        _bParams = bParams,
        _muP = muP,
        _muC = muC,
-       _wHlprecomp = wHlprecomp,
-       _wPrecomp = wPrecomp,
-       _hPrecomp = hPrecomp,
-       _gPrecomp = gPrecomp,
+       _wHL = wHL,
+       _wPoints = wPoints,
+       _hPoints = hPoints,
        _s = s;
 
   factory CLSAGContext.init(
@@ -91,17 +87,19 @@ class CLSAGContext {
   ) {
     // initialized = false;
     if (P.isEmpty) {
-      throw const MoneroCryptoException("Invalid P length.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid P length.");
     }
     final int n = P.length;
     if (cNonzero.length != n) {
-      throw const MoneroCryptoException("Invalid cNonzero length.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid cNonzero length.");
     }
     if (s.length != n) {
-      throw const MoneroCryptoException("Invalid s length.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid s length.");
     }
-    if (l >= n) {
-      throw const MoneroCryptoException("Invalid l length.");
+    if (l < 0 || l >= n) {
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid signing index l: expected 0 <= l < $n, received $l.",
+      );
     }
     final KeyV cParams = [];
     final KeyV bParams = [];
@@ -175,39 +173,19 @@ class CLSAGContext {
     final RctKey muP = RCT.hashToScalarKeys(muPParams);
     final RctKey muC = RCT.hashToScalarKeys(muCParams);
 
-    final GroupElementDsmp iPrecomp = GroupElementCached.dsmp;
-    final GroupElementDsmp dPrecomp = GroupElementCached.dsmp;
-    final GroupElementDsmp wHLprecomp = GroupElementCached.dsmp;
-    RCT.precomp(iPrecomp, I);
-    RCT.precomp(dPrecomp, D);
-    final RctKey wHL = RCT.zero();
-    RCT.addKeys3_(wHL, muP, iPrecomp, muC, dPrecomp);
-    RCT.precomp(wHLprecomp, wHL);
-    final List<GroupElementDsmp> wPrecomp = List.generate(
-      n,
-      (i) => GroupElementCached.dsmp,
-    );
-    final List<GroupElementDsmp> hPrecomp = List.generate(
-      n,
-      (i) => GroupElementCached.dsmp,
-    );
+    // wHL = muP*I + muC*D; W[i] = muP*P[i] + muC*C[i]; H[i] = Hs(P[i]).
+    final ed25519 = blockchainUtils.api.ed25519;
+    final RctKey wHL = ed25519.mulAdd(muP, I, muC, D);
+    final KeyV wPoints = [];
+    final KeyV hPoints = [];
 
     for (int i = 0; i < n; ++i) {
-      final GroupElementDsmp pPrecomp = GroupElementCached.dsmp;
-      final GroupElementDsmp cPrecomp = GroupElementCached.dsmp;
       // final RctKey C = RCT.zero();
-      final RctKey C = RCT.subKeysVar(cNonzero[i], cOffset);
-      RCT.precomp(pPrecomp, P[i]);
-      RCT.precomp(cPrecomp, C);
-      final RctKey W = RCT.zero();
-      RCT.addKeys3_(W, muP, pPrecomp, muC, cPrecomp);
-      RCT.precomp(wPrecomp[i], W);
-      final GroupElementP3 hiP3 = GroupElementP3();
-      RCT.hashToP3(hiP3, P[i]);
-      CryptoOps.geDsmPrecomp(hPrecomp[i], hiP3);
+      final RctKey C = RCT.subKeys(cNonzero[i], cOffset);
+      final RctKey W = ed25519.mulAdd(muP, P[i], muC, C);
+      wPoints.add(W);
+      hPoints.add(RCT.hashToP3Bytes(P[i]));
     }
-    final GroupElementDsmp gPrecomp = GroupElementCached.dsmp;
-    RCT.precomp(gPrecomp, RCTConst.g);
 
     return CLSAGContext(
       n: n,
@@ -219,10 +197,9 @@ class CLSAGContext {
       bParamsROffset: bParamsROffset,
       muP: muP,
       muC: muC,
-      wHlprecomp: wHLprecomp,
-      wPrecomp: wPrecomp,
-      hPrecomp: hPrecomp,
-      gPrecomp: gPrecomp,
+      wHL: wHL,
+      wPoints: wPoints,
+      hPoints: hPoints,
       l: l,
       s: s,
       numAlphaComponents: numAlphaComponents,
@@ -240,13 +217,13 @@ class CLSAGContext {
     RctKey c = RCT.zero();
     RctKey c0 = RCT.zero();
     if (numAlphaComponents != totalAlphaG.length) {
-      throw const MoneroCryptoException("Invalid alpha G length.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid alpha G length.");
     }
     if (numAlphaComponents != totalAlphaH.length) {
-      throw const MoneroCryptoException("Invalid alpha H length.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid alpha H length.");
     }
     if (numAlphaComponents != alpha.length) {
-      throw const MoneroCryptoException("Invalid alpha length.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid alpha length.");
     }
     // insert aggregate public nonces for L and R components
     for (int i = 0; i < numAlphaComponents; ++i) {
@@ -257,43 +234,46 @@ class CLSAGContext {
     _cParams[cParamsLOffset] = RCT.identity();
     _cParams[cParamsROffset] = RCT.identity();
     final RctKey bI = RCT.identity();
-    CryptoOps.scZero(alphaCombinedR);
+    alphaCombinedR.setAll(0, List<int>.filled(32, 0));
     for (int i = 0; i < numAlphaComponents; ++i) {
-      _cParams[cParamsLOffset] = RCT.addKeysVar(
+      _cParams[cParamsLOffset] = RCT.addKeys(
         _cParams[cParamsLOffset],
         RCT.scalarmultKey(totalAlphaG[i], bI),
       );
-      _cParams[cParamsROffset] = RCT.addKeysVar(
+      _cParams[cParamsROffset] = RCT.addKeys(
         _cParams[cParamsROffset],
         RCT.scalarmultKey(totalAlphaH[i], bI),
       );
-      CryptoOps.scMulAdd(alphaCombinedR, alpha[i], bI, alphaCombinedR);
-      CryptoOps.scMul(bI, bI, b);
+      alphaCombinedR.setAll(
+        0,
+        blockchainUtils.api.ed25519.scMulAdd(alpha[i], bI, alphaCombinedR),
+      );
+      bI.setAll(0, blockchainUtils.api.ed25519.scMul(bI, b));
     }
     c = RCT.hashToScalarKeys(_cParams);
+    final gen = blockchainUtils.api.ed25519.generator();
     for (int i = (l + 1) % n; i != l; i = (i + 1) % n) {
       if (i == 0) c0 = c.clone();
-      RCT.addKeys3_(
-        _cParams[cParamsLOffset],
+      // L = s*G + c*W[i]; R = s*H[i] + c*wHL.
+      _cParams[cParamsLOffset] = blockchainUtils.api.ed25519.mulAdd(
         _s[i],
-        _gPrecomp,
+        gen,
         c,
-        _wPrecomp[i],
+        _wPoints[i],
       );
-      RCT.addKeys3_(
-        _cParams[cParamsROffset],
+      _cParams[cParamsROffset] = blockchainUtils.api.ed25519.mulAdd(
         _s[i],
-        _hPrecomp[i],
+        _hPoints[i],
         c,
-        _wHlprecomp,
+        _wHL,
       );
       c = RCT.hashToScalarKeys(_cParams);
     }
     if (l == 0) {
       c0 = c.clone();
     }
-    CryptoOps.scFill(cR, c);
-    CryptoOps.scFill(c0R, c0);
+    cR.setAll(0, c);
+    c0R.setAll(0, c0);
   }
 
   List<int> get muP => _muP.clone();

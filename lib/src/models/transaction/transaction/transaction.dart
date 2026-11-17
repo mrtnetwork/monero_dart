@@ -1,6 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/models/transaction/signature/rct_prunable.dart';
 import 'package:monero_dart/src/models/transaction/signature/signature.dart';
 import 'package:monero_dart/src/models/transaction/transaction/input.dart';
@@ -226,14 +225,14 @@ class MoneroTransaction extends MoneroTransactionPrefix {
 
   List<int> txHashBytes() {
     if (version == 1) {
-      return QuickCrypto.keccack256Hash(serialize());
+      return QuickCrypto.keccak256Hash(serialize());
     } else {
       final prefix = getTranactionPrefixHash();
       final sig = signature.cast<RCTSignature>();
       if (sig.rctSigPrunable == null) {
         if (!isCoinbase()) {
-          throw const DartMoneroPluginException(
-            "signature prunable required for determinate tx hash.",
+          throw BuError(DefaultErrorType.invalidArgument, 
+            "Signature prunable required to determine transaction hash.",
           );
         }
       }
@@ -241,7 +240,7 @@ class MoneroTransaction extends MoneroTransactionPrefix {
         inputLength: vin.length,
         outputLength: vout.length,
       ).serialize(sig.signature.toVariantLayoutStruct());
-      final baseSigHash = QuickCrypto.keccack256Hash(bsaeBytes);
+      final baseSigHash = QuickCrypto.keccak256Hash(bsaeBytes);
       List<int> lastPart;
       if (sig.signature.type == RCTType.rctTypeNull) {
         lastPart = RCT.zero(clone: false);
@@ -257,9 +256,9 @@ class MoneroTransaction extends MoneroTransactionPrefix {
           type: sig.type,
           mixinLength: mixinLength,
         ).serialize(sig.rctSigPrunable!.toLayoutStruct());
-        lastPart = QuickCrypto.keccack256Hash(lastPart);
+        lastPart = QuickCrypto.keccak256Hash(lastPart);
       }
-      return QuickCrypto.keccack256Hash([
+      return QuickCrypto.keccak256Hash([
         ...prefix,
         ...baseSigHash,
         ...lastPart,

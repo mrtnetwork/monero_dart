@@ -27,17 +27,17 @@ class DaemonRequestGetOutputHistogram
   String get method => "get_output_histogram";
   @override
   Map<String, dynamic> get params => {
-    "amounts": amounts.map((e) => e.toString()).toList(),
-    "min_count": minCount.toString(),
-    "max_count": maxCount.toString(),
+    "amounts": amounts.toList(),
+    "min_count": minCount,
+    "max_count": maxCount,
     "unlocked": unlocked,
-    "recent_cutoff": recentCutoff.toString(),
+    "recent_cutoff": recentCutoff,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonGetOutputHistogramResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetOutputHistogramResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetOutputHistogramResponse.fromJson(result);
   }
 }

@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 
 enum MoneroNetwork {
   /// mainnet
@@ -36,7 +35,10 @@ enum MoneroNetwork {
     return values.firstWhere(
       (e) => e.name == name,
       orElse:
-          () => throw ItemNotFoundException(name: "MoneroNetwork", value: name),
+          () =>
+              throw BuError(DefaultErrorType.invalidArgument, 
+                'Unknown monero network "$name".',
+              ),
     );
   }
 
@@ -44,7 +46,11 @@ enum MoneroNetwork {
   static MoneroNetwork fromValue(int? index) {
     return values.firstWhere(
       (e) => e.index == index,
-      orElse: () => throw ItemNotFoundException(name: "MoneroNetwork"),
+      orElse:
+          () =>
+              throw BuError(DefaultErrorType.invalidArgument, 
+                "Unknown monero network index $index.",
+              ),
     );
   }
 
@@ -55,7 +61,7 @@ enum MoneroNetwork {
         return n;
       }
     }
-    throw const DartMoneroPluginException(
+    throw BuError(DefaultErrorType.invalidArgument, 
       "Invalid prefix: no related network found for the provided prefix.",
     );
   }

@@ -16,10 +16,10 @@ class DaemonRequestFlushTxPool
   @override
   Map<String, dynamic> get params => {"txids": txids};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonBaseResponse onResonse(Map<String, dynamic> result) {
+  DaemonBaseResponse onResponse(Map<String, dynamic> result) {
     return DaemonBaseResponse.fromJson(result);
   }
 }

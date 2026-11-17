@@ -1,4 +1,4 @@
-export 'exception/exception.dart';
+export '../error/monero_error.dart';
 export 'gamma/gamma.dart';
 export 'models/ct_key.dart';
 export 'models/ec_signature.dart';

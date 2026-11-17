@@ -31,9 +31,9 @@ class DaemonRequestGetHashesBin
     "start_height": startHeight,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.binary;
+  DaemonRequestType get encodingType => DaemonRequestType.binary;
   @override
-  DaemonGetHashesBinResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetHashesBinResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetHashesBinResponse.fromBinaryResponse(result);
   }
 }

@@ -29,7 +29,7 @@ class WalletRequestMakeMultisig
     "password": password,
   };
   @override
-  WalletRPCMakeMultisigResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCMakeMultisigResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCMakeMultisigResponse.fromJson(result);
   }
 }

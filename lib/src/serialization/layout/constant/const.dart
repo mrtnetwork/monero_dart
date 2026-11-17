@@ -36,8 +36,8 @@ class MoneroLayoutConst {
     );
   }
 
-  /// vector layout with specify sub layoyt.
-  /// this convert length as varint then serialize each object of list.
+  /// vector layout with the specified sub layout.
+  /// this converts length as varint then serializes each object of the list.
   static CustomLayout<Map<String, dynamic>, List<T>> variantVec<T>(
     Layout<T> elementLayout, {
     String? property,

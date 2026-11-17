@@ -30,12 +30,12 @@ class WalletRequestGetReserveProof
   Map<String, dynamic> get params => {
     "all": all,
     "account_index": accountIndex,
-    "amount": amount.toString(),
+    "amount": amount,
     "message": message,
   };
 
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["signature"];
   }
 }

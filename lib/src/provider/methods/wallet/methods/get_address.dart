@@ -27,7 +27,7 @@ class WalletRequestGetAddress
   };
 
   @override
-  WalletRPCGetAddressResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCGetAddressResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCGetAddressResponse.fromJson(result);
   }
 }

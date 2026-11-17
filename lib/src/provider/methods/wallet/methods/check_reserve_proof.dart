@@ -36,7 +36,7 @@ class WalletRequestCheckReserveProof
   };
 
   @override
-  WalletRPCCheckReserveProofResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCCheckReserveProofResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCCheckReserveProofResponse.fromJson(result);
   }
 }

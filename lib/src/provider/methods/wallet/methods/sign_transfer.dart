@@ -34,7 +34,7 @@ class WalletRequestSignTransfer
   };
 
   @override
-  WalletRPCSignTransferResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCSignTransferResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCSignTransferResponse.fromJson(result);
   }
 }

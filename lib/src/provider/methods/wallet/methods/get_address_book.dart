@@ -20,8 +20,8 @@ class WalletRequestGetAddressBook
   Map<String, dynamic> get params => {"entries": entries};
 
   @override
-  List<WalletRPCAddressBookResponse> onResonse(Map<String, dynamic> result) {
-    return (result["entries"] as List)
+  List<WalletRPCAddressBookResponse> onResponse(Map<String, dynamic> result) {
+    return ((result["entries"] as List?) ?? [])
         .map((e) => WalletRPCAddressBookResponse.fromJson(e))
         .toList();
   }

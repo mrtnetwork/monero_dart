@@ -20,7 +20,7 @@ class WalletRequestExportKeyImages
   Map<String, dynamic> get params => {"all": all};
 
   @override
-  WalletRPCExportKeyImagesResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCExportKeyImagesResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCExportKeyImagesResponse.fromJson(result);
   }
 }

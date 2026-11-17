@@ -22,10 +22,10 @@ class DaemonRequestGetOIndexes
     "txid": MoneroStorageBinary.fromListOfHex([txId]),
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.binary;
+  DaemonRequestType get encodingType => DaemonRequestType.binary;
 
   @override
-  DaemonGetTxGlobalOutputIndexesResponse onResonse(
+  DaemonGetTxGlobalOutputIndexesResponse onResponse(
     Map<String, dynamic> result,
   ) {
     return DaemonGetTxGlobalOutputIndexesResponse.fromJson(result);

@@ -1,8 +1,7 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/serialization/exception/exception.dart';
 
-/// deserialize struct info for variant models.
-/// like models have multiple subclass.
+/// Decoded struct info for variant models,
+/// used when a model has multiple subclasses.
 class MoneroVariantDecodeResult {
   final Map<String, dynamic> result;
   String get variantName => result["key"];
@@ -34,7 +33,7 @@ abstract class MoneroSerialization {
   /// model struct in map
   Map<String, dynamic> toLayoutStruct();
 
-  /// serialize object with current layout and strcut.
+  /// serialize object with current layout and struct.
   List<int> serialize({String? property}) {
     final layout = createLayout(property: property);
     return layout.serialize(toLayoutStruct());
@@ -53,7 +52,7 @@ abstract class MoneroVariantSerialization extends MoneroSerialization {
     Map<String, dynamic> json,
   ) {
     if (json["key"] is! String || !json.containsKey("value")) {
-      throw const MoneroSerializationException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.",
       );
     }
@@ -67,7 +66,7 @@ abstract class MoneroVariantSerialization extends MoneroSerialization {
   }) {
     final json = layout.deserialize(bytes).value;
     if (json["key"] is! String || !json.containsKey("value")) {
-      throw const MoneroSerializationException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.",
       );
     }

@@ -3,21 +3,27 @@ import 'package:monero_dart/src/serialization/layout/serialization/serialization
 
 class CtKey extends MoneroSerialization with Equality {
   /// The destination key
-  final List<int> dest;
+  final BuBytes dest;
 
   /// The mask key,
-  final List<int> mask;
+  final BuBytes mask;
   CtKey({required List<int> dest, required List<int> mask})
-    : dest = dest.asImmutableBytes.exc(
-        length: 32,
-        operation: "CtKey",
-        reason: "Invalid dest bytes length.",
-      ),
-      mask = mask.asImmutableBytes.exc(
-        length: 32,
-        operation: "CtKey",
-        reason: "Invalid mask bytes length.",
-      );
+    : dest =
+          dest
+              .exc(
+                length: 32,
+                operation: "CtKey",
+                reason: "Invalid dest bytes length.",
+              )
+              .asImmutableBytes,
+      mask =
+          mask
+              .exc(
+                length: 32,
+                operation: "CtKey",
+                reason: "Invalid mask bytes length.",
+              )
+              .asImmutableBytes;
   CtKey copyWith({List<int>? dest, List<int>? mask}) {
     return CtKey(dest: dest ?? this.dest, mask: mask ?? this.mask);
   }

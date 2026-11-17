@@ -18,5 +18,5 @@ class WalletRequestSetTxNotes
   Map<String, dynamic> get params => {"txids": txIds, "notes": notes};
 
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

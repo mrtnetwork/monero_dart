@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/serialization/exception/exception.dart';
 import 'package:monero_dart/src/serialization/storage_format/constant/constant.dart';
 import 'package:monero_dart/src/serialization/storage_format/tools/serializer.dart';
 import 'package:monero_dart/src/serialization/storage_format/types/types.dart';
@@ -70,10 +69,10 @@ class MoneroSection {
 }
 
 abstract class MoneroStorageEntry<T> {
-  /// the value of entery
+  /// the value of entry
   final T value;
 
-  /// the name of entery
+  /// the name of entry
   final String name;
 
   /// the type of value
@@ -93,7 +92,7 @@ abstract class MoneroStorageEntry<T> {
       final type = MoneroStorageFormatValidator.findType(value);
 
       if (type.isPrimitive) {
-        entry = MoneroStorageEntryPromitive(name: name, value: value);
+        entry = MoneroStorageEntryPrimitive(name: name, value: value);
       } else if (type == MoneroStorageTypes.object) {
         entry = MoneroStorageEntrySection(
           json: MoneroStorageFormatValidator.asMap(value),
@@ -112,9 +111,9 @@ abstract class MoneroStorageEntry<T> {
       }
     }
     if (entry is! MoneroStorageEntry<T>) {
-      throw MoneroSerializationException(
+      throw BuError(DefaultErrorType.castFailed, 
         "Incorrect MoneroStorageEntry<$T> type",
-        details: {"expected": "$T", "entery": entry.runtimeType.toString()},
+        details: {"expected": "$T", "entry": entry.runtimeType.toString()},
       );
     }
     return entry;
@@ -126,7 +125,7 @@ abstract class MoneroStorageEntry<T> {
   }
 }
 
-/// Entery for null objects
+/// Entry for null objects
 class MoneroStorageEntryNull extends MoneroStorageEntry<Null> {
   MoneroStorageEntryNull._({required super.name})
     : super(type: MoneroStorageTypes.unknown, value: null);
@@ -140,16 +139,16 @@ class MoneroStorageEntryNull extends MoneroStorageEntry<Null> {
   }
 }
 
-class MoneroStorageEntryPromitive<T> extends MoneroStorageEntry<T> {
+class MoneroStorageEntryPrimitive<T> extends MoneroStorageEntry<T> {
   @override
   final bool hasValue;
-  MoneroStorageEntryPromitive._({
+  MoneroStorageEntryPrimitive._({
     required super.name,
     required super.type,
     required super.value,
     required this.hasValue,
   });
-  factory MoneroStorageEntryPromitive({
+  factory MoneroStorageEntryPrimitive({
     required String name,
     required T value,
   }) {
@@ -158,7 +157,7 @@ class MoneroStorageEntryPromitive<T> extends MoneroStorageEntry<T> {
     if (hasValue && value is MoneroStorageContainer) {
       hasValue = value.hasValue;
     }
-    return MoneroStorageEntryPromitive._(
+    return MoneroStorageEntryPrimitive._(
       name: name,
       type: correctValue.$2,
       value: correctValue.$1,

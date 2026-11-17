@@ -12,7 +12,7 @@ class WalletRequestCloseWallet
   Map<String, dynamic> get params => {};
 
   @override
-  Null onResonse(Map<String, dynamic> result) {
+  Null onResponse(Map<String, dynamic> result) {
     return null;
   }
 }

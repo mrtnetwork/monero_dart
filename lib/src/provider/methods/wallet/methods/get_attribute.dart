@@ -15,7 +15,7 @@ class WalletRequestGetAttribute
   Map<String, dynamic> get params => {"key": key};
 
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["value"];
   }
 }

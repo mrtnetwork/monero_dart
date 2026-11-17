@@ -25,8 +25,6 @@
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
-import 'package:monero_dart/src/crypto/multisig/exception/exception.dart';
 import 'package:monero_dart/src/crypto/multisig/core/kex_message.dart';
 import 'package:monero_dart/src/crypto/multisig/utils/multi_sig_kex_utils.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
@@ -35,27 +33,42 @@ import 'package:monero_dart/src/serialization/layout/serialization/serialization
 abstract class MoneroMultisigAccountCore extends MoneroSerialization {
   int _threshold;
   int get threshold => _threshold;
-  List<MoneroPublicKey> _signers;
-  List<MoneroPublicKey> get signers => _signers.clone();
-  final MoneroPrivateKey basePrivateKey;
-  final MoneroPublicKey basePublicKey;
-  MoneroPrivateKey baseCommonPrivateKey;
-  List<MoneroPrivateKey> _multisigPrivateKeys;
-  List<MoneroPrivateKey> get multisigPrivateKeys =>
+  List<ED25519MoneroPublicKey> _signers;
+  List<ED25519MoneroPublicKey> get signers => _signers.clone();
+  final ED25519MoneroPrivateKey basePrivateKey;
+  final ED25519MoneroPublicKey basePublicKey;
+  ED25519MoneroPrivateKey baseCommonPrivateKey;
+  List<ED25519MoneroPrivateKey> _multisigPrivateKeys;
+  List<ED25519MoneroPrivateKey> get multisigPrivateKeys =>
       _multisigPrivateKeys.clone();
-  MoneroPrivateKey _commonPrivateKey;
-  MoneroPrivateKey get commonPrivateKey => _commonPrivateKey;
-  MoneroPublicKey _multisigPubKey;
+  ED25519MoneroPrivateKey? _commonPrivateKey;
+  ED25519MoneroPrivateKey get commonPrivateKey {
+    final p = _commonPrivateKey;
+    if (p == null) throw BuError(DefaultErrorType.invalidArgument, "Missing commonPrivateKey");
+    return p;
+  }
 
-  /// same at all
-  MoneroPublicKey get multisigPubKey => _multisigPubKey;
-  MoneroPublicKey get multisigSignerPubKey => basePublicKey;
-  MoneroPublicKey _commonPubKey;
-  MoneroPublicKey get commonPubKey => _commonPubKey;
+  ED25519MoneroPublicKey? _multisigPubKey;
+
+  /// Joint multisig public key shared by all participants once key exchange completes.
+  ED25519MoneroPublicKey get multisigPubKey {
+    final p = _multisigPubKey;
+    if (p == null) throw BuError(DefaultErrorType.invalidArgument, "Missing multisigPubKey");
+    return p;
+  }
+
+  ED25519MoneroPublicKey get multisigSignerPubKey => basePublicKey;
+  ED25519MoneroPublicKey? _commonPubKey;
+  ED25519MoneroPublicKey get commonPubKey {
+    final p = _commonPubKey;
+    if (p == null) throw BuError(DefaultErrorType.invalidArgument, "Missing commonPubKey");
+    return p;
+  }
+
   int _kexRoundsComplete;
   int get kexRoundsComplete => _kexRoundsComplete;
   MultisigKexMessageSerializable _nextRoundKexMessage;
-  Map<MoneroPublicKey, Set<MoneroPublicKey>> _kexKeysInMap;
+  Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>> _kexKeysInMap;
   MultisigKexMessageSerializable get nextRoundKexMessage =>
       _nextRoundKexMessage;
   @override
@@ -64,19 +77,20 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     return {
       "threshold": threshold,
       "kex_rounds_complete": kexRoundsComplete,
-      "signers": signers.map((e) => e.key).toList(),
-      "base_private_key": basePrivateKey.key,
-      "base_public_key": basePublicKey.key,
-      "base_common_private_key": baseCommonPrivateKey.key,
-      "multisig_private_keys": multisigPrivateKeys.map((e) => e.key).toList(),
-      "common_private_key": commonPrivateKey.key,
-      "multisig_pub_key": multisigPubKey.key,
-      "common_pub_key": commonPubKey.key,
+      "signers": signers.map((e) => e.toBytes()).toList(),
+      "base_private_key": basePrivateKey.takeSecretKey(),
+      "base_public_key": basePublicKey.toBytes(),
+      "base_common_private_key": baseCommonPrivateKey.takeSecretKey(),
+      "multisig_private_keys":
+          multisigPrivateKeys.map((e) => e.takeSecretKey()).toList(),
+      "common_private_key": commonPrivateKey.takeSecretKey(),
+      "multisig_pub_key": multisigPubKey.toBytes(),
+      "common_pub_key": commonPubKey.toBytes(),
       "kex_round_message": message,
       "kex_keys": _kexKeysInMap.map(
         (k, v) => MapEntry<List<int>, List<List<int>>>(
-          k.key,
-          v.map((e) => e.key).toList(),
+          k.toBytes(),
+          v.map((e) => e.toBytes()).toList(),
         ),
       ),
     };
@@ -116,17 +130,18 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
 
   MoneroMultisigAccountCore({
     required int threshold,
-    required List<MoneroPublicKey> signers,
+    required List<ED25519MoneroPublicKey> signers,
     required this.basePrivateKey,
     required this.basePublicKey,
     required this.baseCommonPrivateKey,
-    required List<MoneroPrivateKey> multisigPrivateKeys,
-    required MoneroPrivateKey commonPrivateKey,
-    required MoneroPublicKey multisigPubKey,
-    required MoneroPublicKey commonPubKey,
+    required List<ED25519MoneroPrivateKey> multisigPrivateKeys,
+    required ED25519MoneroPrivateKey? commonPrivateKey,
+    ED25519MoneroPublicKey? multisigPubKey,
+    ED25519MoneroPublicKey? commonPubKey,
     required int kexRoundsComplete,
     required MultisigKexMessageSerializable nextRoundKexMessage,
-    required Map<MoneroPublicKey, Set<MoneroPublicKey>> kexKeysToOriginsMap,
+    required Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+    kexKeysToOriginsMap,
   }) : _signers = signers.clone(),
        _multisigPrivateKeys = multisigPrivateKeys.clone(),
        _commonPrivateKey = commonPrivateKey,
@@ -151,7 +166,7 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     // Collect participants' base common privkey shares
     // Note: Duplicate privkeys are acceptable, and duplicates due to duplicate signers
     //       will be blocked by duplicate-signer errors after this function is called
-    final List<MoneroPrivateKey> participantBaseCommonPrivkeys = [];
+    final List<ED25519MoneroPrivateKey> participantBaseCommonPrivkeys = [];
     // Add local ancillary base privkey
     participantBaseCommonPrivkeys.add(baseCommonPrivateKey);
 
@@ -166,38 +181,44 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     );
 
     // Set common pubkey
-    _commonPubKey = _commonPrivateKey.publicKey;
+    _commonPubKey = commonPrivateKey.publicKey;
 
     // If N-of-N, then the base privkey will be used directly to make the account's share of the final key
     if (kexRoundsRequired == 1) {
       _multisigPrivateKeys.clear();
+      _multisigPrivateKeys.add(basePrivateKey);
     }
   }
 
   void _finalizeKexUpdate(
     int kexRoundsRequired,
-    Map<MoneroPublicKey, Set<MoneroPublicKey>> resultKeysToOriginsMap,
+    Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+    resultKeysToOriginsMap,
   ) {
-    List<MoneroPublicKey> nextMsgKeys = [];
+    List<ED25519MoneroPublicKey> nextMsgKeys = [];
 
     if (_kexRoundsComplete == kexRoundsRequired) {
       // Post-KEX Verification
-      if (!resultKeysToOriginsMap.containsKey(_multisigPubKey)) {
-        throw const MoneroMultisigAccountException(
+      final multisigPubKey = _multisigPubKey;
+      final commonPubKey = _commonPubKey;
+      if (multisigPubKey == null ||
+          !resultKeysToOriginsMap.containsKey(multisigPubKey)) {
+        throw BuError(DefaultErrorType.notFound, 
           "Multisig post-kex round: expected multisig pubkey not found.",
         );
       }
-      if (!resultKeysToOriginsMap.containsKey(_commonPubKey)) {
-        throw const MoneroMultisigAccountException(
+      if (commonPubKey == null ||
+          !resultKeysToOriginsMap.containsKey(commonPubKey)) {
+        throw BuError(DefaultErrorType.notFound, 
           "Multisig post-kex round: expected common pubkey not found.",
         );
       }
 
-      nextMsgKeys.add(_multisigPubKey);
-      nextMsgKeys.add(_commonPubKey);
+      nextMsgKeys.add(multisigPubKey);
+      nextMsgKeys.add(commonPubKey);
     } else if (_kexRoundsComplete + 1 == kexRoundsRequired) {
       // Final Key Aggregation
-      final List<MoneroPublicKey> resultKeys =
+      final List<ED25519MoneroPublicKey> resultKeys =
           resultKeysToOriginsMap.keys.toList();
       final aggregateKey = MoneroMultisigKexUtils.generateMultisigAggregateKey(
         resultKeys,
@@ -208,8 +229,14 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       // Reset mapping for the next round
       _kexKeysInMap.clear();
 
-      nextMsgKeys.add(_multisigPubKey);
-      nextMsgKeys.add(_commonPubKey);
+      nextMsgKeys.add(_multisigPubKey!);
+      final commonPubKey = _commonPubKey;
+      if (commonPubKey == null) {
+        throw BuError(DefaultErrorType.notFound, 
+          "Multisig post-kex round: expected common pubkey not found.",
+        );
+      }
+      nextMsgKeys.add(commonPubKey);
     } else if (_kexRoundsComplete + 2 == kexRoundsRequired) {
       // Derivation of Private Keys for Next Round
       _multisigPrivateKeys.clear();
@@ -218,7 +245,7 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       for (final derivationAndOrigins in resultKeysToOriginsMap.entries) {
         final derivedPubkey =
             MoneroMultisigKexUtils.calculateMultisigKeypairFromDerivation(
-              derivationAndOrigins.key.key,
+              derivationAndOrigins.key.toBytes(),
             );
         _multisigPrivateKeys.add(derivedPubkey.$1);
         _kexKeysInMap[derivedPubkey.$2] = derivationAndOrigins.value.toSet();
@@ -264,13 +291,13 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
         );
 
     if (kexRoundsRequired <= 0) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         'Multisig kex rounds required unexpectedly 0.',
       );
     }
 
     if (_kexRoundsComplete >= kexRoundsRequired + 1) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidState, 
         'Multisig kex has already completed all required rounds (including post-kex verification).',
       );
     }
@@ -329,11 +356,11 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
 
   void initializeKex(
     int threshold,
-    List<MoneroPublicKey> signers,
+    List<ED25519MoneroPublicKey> signers,
     List<MultisigKexMessage> messages,
   ) {
     if (accountIsActive) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidState, 
         "multisig account: tried to initialize kex, but already initialized.",
       );
     }
@@ -351,12 +378,12 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     bool forceUpdate = false,
   }) {
     if (!accountIsActive) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidState, 
         "multisig account: tried to update kex, but kex isn't initialized yet.",
       );
     }
     if (multisigIsReady) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidState, 
         "multisig account: tried to update kex, but kex is already complete.",
       );
     }

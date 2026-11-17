@@ -1,10 +1,16 @@
-import 'package:blockchain_utils/bip/monero/monero_base.dart';
-import 'package:blockchain_utils/utils/binary/utils.dart';
+import 'package:blockchain_utils/protocol/protocol.dart';
+import 'package:blockchain_utils/utils/utils.dart';
 import 'package:monero_dart/monero_dart.dart';
 import 'package:test/test.dart';
 
-void main() {
+import '../utils.dart';
+
+void proofTest() {
   _testProofIn();
+}
+
+void main() {
+  MoneroTestApi.runTest(proofTest, "Proof");
 }
 
 void _testProofIn() {

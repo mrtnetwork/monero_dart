@@ -17,7 +17,7 @@ class WalletRequestImportOutputs
 
   /// number of outputs imported.
   @override
-  int onResonse(Map<String, dynamic> result) {
+  int onResponse(Map<String, dynamic> result) {
     return IntUtils.parse(result["num_imported"]);
   }
 }

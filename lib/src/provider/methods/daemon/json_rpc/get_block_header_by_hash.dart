@@ -32,9 +32,9 @@ class DaemonRequestGetBlockHeaderByHash
     if (hashes.isNotEmpty) "hashes": hashes,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonBlockHeadersResponse onResonse(Map<String, dynamic> result) {
+  DaemonBlockHeadersResponse onResponse(Map<String, dynamic> result) {
     return DaemonBlockHeadersResponse.fromJson(result);
   }
 }

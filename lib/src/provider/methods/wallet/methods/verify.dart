@@ -24,7 +24,7 @@ class WalletRequestVerify
   };
 
   @override
-  bool onResonse(Map<String, dynamic> result) {
+  bool onResponse(Map<String, dynamic> result) {
     return result["good"];
   }
 }

@@ -1,4 +1,4 @@
-import 'package:monero_dart/src/serialization/exception/exception.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 
 class MoneroStorageTypes {
   const MoneroStorageTypes._(
@@ -16,7 +16,7 @@ class MoneroStorageTypes {
 
   int get flag {
     if (this == MoneroStorageTypes.unknown) {
-      throw const MoneroSerializationException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Unknown type: No associated flag found.",
       );
     }
@@ -84,7 +84,7 @@ class MoneroStorageTypes {
       (e) => e.flag == flag,
       orElse:
           () =>
-              throw MoneroSerializationException(
+              throw BuError(DefaultErrorType.invalidArgument, 
                 "Invalid storage type: Unable to determine the correct type from the provided flag.",
                 details: {"flag": flag.toString()},
               ),

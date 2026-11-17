@@ -104,7 +104,7 @@ class MoneroBlock extends MoneroBlockheader {
     final header = MoneroBlockheader.layout().serialize(toLayoutStruct());
     final txTree = getTxTreeHash();
     final extra = MoneroLayoutConst.varintInt().serialize(txHashes.length + 1);
-    return QuickCrypto.keccack256Hash(
+    return QuickCrypto.keccak256Hash(
       MoneroLayoutConst.variantBytes().serialize([
         ...header,
         ...txTree,
@@ -124,7 +124,7 @@ class MoneroBlock extends MoneroBlockheader {
       return hashes[0];
     }
     if (hashes.length == 2) {
-      return QuickCrypto.keccack256Hash([...hashes[0], ...hashes[1]]);
+      return QuickCrypto.keccak256Hash([...hashes[0], ...hashes[1]]);
     }
     int count = hashes.length;
     int cnt = () {
@@ -147,15 +147,15 @@ class MoneroBlock extends MoneroBlockheader {
       ints[i] = hashes[i - offset];
     }
     for (int i = offset, j = offset; j < cnt; i += 2, j++) {
-      ints[j] = QuickCrypto.keccack256Hash([...hashes[i], ...hashes[i + 1]]);
+      ints[j] = QuickCrypto.keccak256Hash([...hashes[i], ...hashes[i + 1]]);
     }
     while (cnt > 2) {
       cnt >>= 1;
 
       for (int i = 0, j = 0; j < cnt; i += 2, j++) {
-        ints[j] = QuickCrypto.keccack256Hash([...ints[i], ...ints[i + 1]]);
+        ints[j] = QuickCrypto.keccak256Hash([...ints[i], ...ints[i + 1]]);
       }
     }
-    return QuickCrypto.keccack256Hash([...ints[0], ...ints[1]]);
+    return QuickCrypto.keccak256Hash([...ints[0], ...ints[1]]);
   }
 }

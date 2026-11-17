@@ -20,7 +20,7 @@ class WalletRequestSplitIntegratedAddress
   Map<String, dynamic> get params => {"integrated_address": integratedAddress};
 
   @override
-  WalletRPCSplitIntegratedAddressResponse onResonse(
+  WalletRPCSplitIntegratedAddressResponse onResponse(
     Map<String, dynamic> result,
   ) {
     return WalletRPCSplitIntegratedAddressResponse.fromJson(result);

@@ -36,9 +36,9 @@ class DaemonRequestGetOutputDistributionBin
     "compress": compress,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.binary;
+  DaemonRequestType get encodingType => DaemonRequestType.binary;
   @override
-  OutputDistributionResponse onResonse(Map<String, dynamic> result) {
+  OutputDistributionResponse onResponse(Map<String, dynamic> result) {
     return OutputDistributionResponse.fromJson(result);
   }
 }

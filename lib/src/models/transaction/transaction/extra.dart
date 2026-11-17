@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 import 'package:monero_dart/src/serialization/layout/layouts/tx_extra_pading.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
@@ -28,7 +27,10 @@ enum TxExtraTypes {
     return values.firstWhere(
       (e) => e.name == name,
       orElse:
-          () => throw ItemNotFoundException(name: "TxExtraTypes", value: name),
+          () =>
+              throw BuError(DefaultErrorType.invalidArgument, 
+                'Unknown transaction extra type "$name".',
+              ),
     );
   }
 }
@@ -104,19 +106,23 @@ abstract class TxExtra extends MoneroVariantSerialization {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    throw DartMoneroPluginException("Unsupported feature.");
+    throw BuError(DefaultErrorType.unsupported, 
+      "Unsupported feature: TxExtra base class cannot be serialized directly; use a concrete extra type.",
+    );
   }
 
   @override
   Layout<Map<String, dynamic>> createLayout({String? property}) {
-    throw DartMoneroPluginException("Unsupported feature.");
+    throw BuError(DefaultErrorType.unsupported, 
+      "Unsupported feature: TxExtra base class has no layout; use a concrete extra type.",
+    );
   }
 
   @override
   String get variantName => type.name;
   T cast<T extends TxExtra>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "Casting tx extra failed.",
         details: {"expected": "$T", "type": type.name},
       );
@@ -126,12 +132,15 @@ abstract class TxExtra extends MoneroVariantSerialization {
 }
 
 class TxExtraPadding extends TxExtra {
-  final List<int> data;
+  final BuBytes data;
   TxExtraPadding(List<int> data)
-    : data = data.asImmutableBytes.max(
-        length: TxExtraConst.txPaddingMaxCount,
-        operation: "Invalid txExtra padding bytes length.",
-      ),
+    : data =
+          data
+              .max(
+                length: TxExtraConst.txPaddingMaxCount,
+                operation: "Invalid txExtra padding bytes length.",
+              )
+              .asImmutableBytes,
       super(TxExtraTypes.padding);
   factory TxExtraPadding.deserializeJson(Map<String, dynamic> json) {
     return TxExtraPadding(json.valueAsBytes("data"));
@@ -154,7 +163,7 @@ class TxExtraPadding extends TxExtra {
 }
 
 class TxExtraPublicKey extends TxExtra {
-  final List<int> publicKey;
+  final BuBytes publicKey;
   TxExtraPublicKey(List<int> publicKey)
     : publicKey =
           publicKey
@@ -174,8 +183,8 @@ class TxExtraPublicKey extends TxExtra {
     ], property: property);
   }
 
-  MoneroPublicKey asPublicKey() {
-    return MoneroPublicKey.fromBytes(publicKey);
+  ED25519MoneroPublicKey asPublicKey() {
+    return ED25519MoneroPublicKey.fromBytes(publicKey);
   }
 
   @override
@@ -190,7 +199,7 @@ class TxExtraPublicKey extends TxExtra {
 }
 
 class TxExtraNonce extends TxExtra {
-  final List<int> nonce;
+  final BuBytes nonce;
   TxExtraNonce(List<int> nonce)
     : nonce =
           nonce
@@ -234,13 +243,13 @@ class TxExtraNonce extends TxExtra {
     );
     return TxExtraNonce([TxExtraConst.txExtraNoncePaymentId, ...pId]);
   }
-  List<int>? tryExtractEncryptedPaymetId() {
+  BuBytes? tryExtractEncryptedPaymetId() {
     if (nonce.length != TxExtraConst.paymentIdWithPrefixLength) return null;
     if (nonce[0] != TxExtraConst.txExtraNonceEncryptedPaymentId) return null;
     return nonce.sublist(1);
   }
 
-  List<int>? tryExtractPaymentId() {
+  BuBytes? tryExtractPaymentId() {
     if (nonce.length != TxExtraConst.paymentIdWithPrefixLength) return null;
     if (nonce[0] != TxExtraConst.txExtraNoncePaymentId) return null;
     return nonce.sublist(1);
@@ -272,14 +281,17 @@ class TxExtraNonce extends TxExtra {
 
 class TxExtraMergeMiningTag extends TxExtra {
   final BigInt depth;
-  final List<int> merkleRoot;
+  final BuBytes merkleRoot;
   TxExtraMergeMiningTag({required BigInt depth, required List<int> merkleRoot})
     : depth = depth.asU64,
-      merkleRoot = merkleRoot.asImmutableBytes.exc(
-        length: 32,
-        operation: "TxExtraMergeMiningTag",
-        reason: "Invalid merkleRoot bytes length.",
-      ),
+      merkleRoot =
+          merkleRoot
+              .exc(
+                length: 32,
+                operation: "TxExtraMergeMiningTag",
+                reason: "Invalid merkleRoot bytes length.",
+              )
+              .asImmutableBytes,
       super(TxExtraTypes.mergeMiningTag);
   factory TxExtraMergeMiningTag.deserializeJson(Map<String, dynamic> json) {
     return TxExtraMergeMiningTag(
@@ -306,7 +318,7 @@ class TxExtraMergeMiningTag extends TxExtra {
 }
 
 class TxExtraAdditionalPubKeys extends TxExtra {
-  final List<List<int>> pubKeys;
+  final List<BuBytes> pubKeys;
   TxExtraAdditionalPubKeys(List<List<int>> data)
     : pubKeys =
           data
@@ -346,8 +358,8 @@ class TxExtraAdditionalPubKeys extends TxExtra {
     return {"pubKeys": pubKeys};
   }
 
-  List<MoneroPublicKey> asPublicKeys() {
-    return pubKeys.map((e) => MoneroPublicKey.fromBytes(e)).toList();
+  List<ED25519MoneroPublicKey> asPublicKeys() {
+    return pubKeys.map((e) => ED25519MoneroPublicKey.fromBytes(e)).toList();
   }
 }
 

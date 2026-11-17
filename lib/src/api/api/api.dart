@@ -1,9 +1,9 @@
 part of 'package:monero_dart/src/api/api.dart';
 
-class MoneroApi extends MoneroApiInterface {
+class MoneroApi extends MoneroApiInterface with MoneroQuickClientApi {
   @override
-  final QuickMoneroProvider provider;
-  MoneroApi(MoneroProvider provider) : provider = QuickMoneroProvider(provider);
+  final MoneroProvider provider;
+  MoneroApi(this.provider);
 
   @override
   Future<MoneroMultisigTxBuilder> createMultisigTransfer({
@@ -11,11 +11,11 @@ class MoneroApi extends MoneroApiInterface {
     required List<MoneroUnlockedMultisigPayment> payments,
     required List<MoneroTxDestination> destinations,
     required MoneroAddress changeAddress,
-    required List<MoneroPublicKey> signers,
+    required List<ED25519MoneroPublicKey> signers,
     MoneroFeePrority priority = MoneroFeePrority.defaultPriority,
   }) async {
     if (payments.toSet().length != payments.length) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Multiple payment with same keyimage detected.",
       );
     }
@@ -28,20 +28,20 @@ class MoneroApi extends MoneroApiInterface {
       (p, c) => p + c.output.amount,
     );
     if (outAmounts >= inAmounts) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "output amounts exceed the total input amount and the fee.",
       );
     }
     if (!account.type.isMultisig) {
-      throw const DartMoneroPluginException("Account is not a valid multisig.");
+      throw BuError(DefaultErrorType.invalidArgument, "Account is not a valid multisig.");
     }
     if (payments.isEmpty) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.notFound, 
         "No payment details were provided.",
       );
     }
 
-    final baseFee = await provider.baseFee();
+    final baseFee = await this.baseFee();
     MoneroTxDestination change = _getChange(
       destinations: destinations,
       change: changeAddress,
@@ -49,7 +49,7 @@ class MoneroApi extends MoneroApiInterface {
       fee: priority.getBaseFee(baseFee),
     );
     List<SpendablePayment<MoneroUnlockedMultisigPayment>> spendablePayment =
-        provider.generateFakePaymentOuts(payments: payments);
+        generateFakePaymentOuts(payments: payments);
     final estimateTx = MoneroMultisigTxBuilder(
       account: account as MoneroMultisigAccountKeys,
       destinations: [...destinations, change],
@@ -68,9 +68,7 @@ class MoneroApi extends MoneroApiInterface {
       inamount: inAmounts,
       fee: fee,
     );
-    spendablePayment = await provider.generatePaymentOutputs(
-      payments: payments,
-    );
+    spendablePayment = await generatePaymentOutputs(payments: payments);
     return MoneroMultisigTxBuilder(
       account: account,
       destinations: destinations,
@@ -92,12 +90,12 @@ class MoneroApi extends MoneroApiInterface {
     bool fast = true,
   }) async {
     if (payments.toSet().length != payments.length) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Multiple payment with same keyimage detected.",
       );
     }
     if (payments.length > MoneroNetworkConst.bulletproofPlussMaxOutputs) {
-      throw const DartMoneroPluginException("to many outputs.");
+      throw BuError(DefaultErrorType.invalidArgument, "Too many outputs.");
     }
     final outAmounts = destinations.fold<BigInt>(
       BigInt.zero,
@@ -108,19 +106,19 @@ class MoneroApi extends MoneroApiInterface {
       (p, c) => p + c.output.amount,
     );
     if (outAmounts >= inAmounts) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "output amounts exceed the total input amount and the fee.",
       );
     }
-    final baseFee = await provider.baseFee();
+    final baseFee = await this.baseFee();
     MoneroTxDestination change = _getChange(
       destinations: destinations,
       change: changeAddress,
       inamount: inAmounts,
       fee: priority.getBaseFee(baseFee),
     );
-    List<SpendablePayment<MoneroUnLockedPayment>> spendablePayment = provider
-        .generateFakePaymentOuts(payments: payments);
+    List<SpendablePayment<MoneroUnLockedPayment>> spendablePayment =
+        generateFakePaymentOuts(payments: payments);
     MoneroRctTxBuilder tx = MoneroRctTxBuilder(
       account: account,
       destinations: destinations,
@@ -140,9 +138,7 @@ class MoneroApi extends MoneroApiInterface {
       inamount: inAmounts,
       fee: fee,
     );
-    spendablePayment = await provider.generatePaymentOutputs(
-      payments: payments,
-    );
+    spendablePayment = await generatePaymentOutputs(payments: payments);
     tx = MoneroRctTxBuilder(
       account: account,
       destinations: destinations,
@@ -161,10 +157,7 @@ class MoneroApi extends MoneroApiInterface {
     required MoneroBaseAccountKeys account,
     bool cleanUpSpent = false,
   }) async {
-    final transactions = await provider.getTxes(
-      txHashes: txHashes,
-      allowMempol: true,
-    );
+    final transactions = await getTxes(txHashes: txHashes, allowMempol: true);
     return unlockTransactionsPayments(
       transactions: transactions.where((e) => e.hasIndices).toList(),
       account: account,
@@ -206,7 +199,6 @@ class MoneroApi extends MoneroApiInterface {
       if (!tx.hasIndices) continue;
       for (int i = 0; i < tx.transaction.vout.length; i++) {
         final indeces = tx.outputIndices;
-        assert(indeces != null, "Mempool tx detected");
         if (indeces == null) continue;
         final txOutputs = MoneroTransactionHelper.getUnlockedPayment(
           tx: tx.transaction,
@@ -230,7 +222,7 @@ class MoneroApi extends MoneroApiInterface {
     required List<String> txHashes,
     required MoneroBaseAccountKeys account,
   }) async {
-    final transactions = await provider.getTxes(txHashes: txHashes);
+    final transactions = await getTxes(txHashes: txHashes);
     return watchTransactipnsPayments(
       transactions: transactions,
       account: account,
@@ -282,7 +274,7 @@ class MoneroApi extends MoneroApiInterface {
     return outputs;
   }
 
-  /// unlock signle tx outputs.
+  /// Unlocks the spendable outputs of a single in-memory [transaction].
   @override
   List<MoneroUnlockedOutput> unlockSingleTxOutputs({
     required MoneroTransaction transaction,
@@ -307,7 +299,7 @@ class MoneroApi extends MoneroApiInterface {
     required List<String> txHashes,
     required MoneroBaseAccountKeys account,
   }) async {
-    final txes = await provider.getTxes(txHashes: txHashes);
+    final txes = await getTxes(txHashes: txHashes);
     return watchTransactionOutputs(
       transactions: txes.map((e) => e.transaction).toList(),
       account: account,
@@ -340,7 +332,7 @@ class MoneroApi extends MoneroApiInterface {
     List<T> payments,
   ) async {
     final keyImages = payments.map((e) => e.keyImageAsHex).toList();
-    final status = await provider.keyImagesStatus(keyImages);
+    final status = await keyImagesStatus(keyImages);
     final List<T> unspentPayments = [];
     for (int i = 0; i < payments.length; i++) {
       if (status.spentStatus[i].isUnspent) {
@@ -350,14 +342,14 @@ class MoneroApi extends MoneroApiInterface {
     return unspentPayments;
   }
 
-  /// unlock transaction
+  /// Unlocks the spendable outputs of the transactions identified by [txHashes].
   @override
   Future<List<MoneroUnlockedOutput>> unlockTxHashesOutputs({
     required List<String> txHashes,
     required MoneroBaseAccountKeys account,
   }) async {
     if (txHashes.isEmpty) return [];
-    final txes = await provider.getTxes(txHashes: txHashes);
+    final txes = await getTxes(txHashes: txHashes);
     return txes
         .map(
           (e) =>
@@ -381,7 +373,7 @@ class MoneroApi extends MoneroApiInterface {
 
     final changeAmount = inamount - outAmounts;
     if (changeAmount.isNegative) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "output amounts exceed the total input amount and the fee.",
       );
     }

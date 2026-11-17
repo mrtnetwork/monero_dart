@@ -18,9 +18,9 @@ class DaemonRequestGetLastBlockHeader
   @override
   Map<String, dynamic> get params => {"fill_pow_hash": fillPowHash};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonGetLastBlockHeaderResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetLastBlockHeaderResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetLastBlockHeaderResponse.fromJson(result);
   }
 }

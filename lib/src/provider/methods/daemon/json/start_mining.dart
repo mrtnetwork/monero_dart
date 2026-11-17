@@ -27,16 +27,16 @@ class DaemonRequestStartMining
   String get method => "start_mining";
   @override
   Map<String, dynamic> get params => {
-    "threads_count": threadsCount.toString(),
+    "threads_count": threadsCount,
     "miner_address": minerAddress,
     "do_background_mining": doBackgroundMining,
     "ignore_battery": ignoreBattery,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonBaseResponse onResonse(Map<String, dynamic> result) {
+  DaemonBaseResponse onResponse(Map<String, dynamic> result) {
     return DaemonBaseResponse.fromJson(result);
   }
 }

@@ -14,14 +14,14 @@ class DaemonRequestSetLimit
   String get method => "set_limit";
   @override
   Map<String, dynamic> get params => {
-    "limit_up": limitUp.toString(),
-    "limit_down": limitDown.toString(),
+    "limit_up": limitUp,
+    "limit_down": limitDown,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonLimitResponse onResonse(Map<String, dynamic> result) {
+  DaemonLimitResponse onResponse(Map<String, dynamic> result) {
     return DaemonLimitResponse.fromJson(result);
   }
 }

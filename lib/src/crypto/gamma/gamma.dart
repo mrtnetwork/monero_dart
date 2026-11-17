@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/network/config.dart';
 
 class Gamma {
@@ -37,7 +36,7 @@ class Gamma {
   }) {
     if (rctOffsets.length <
         MoneroNetworkConst.cryptonoteDefaultTxSpendableAge) {
-      throw const MoneroCryptoException("Bad offset calculation");
+      throw BuError(DefaultErrorType.internal, "Bad offset calculation");
     }
     const int blocksInYear =
         86400 * 365 ~/ MoneroNetworkConst.difficultyTargetV2;
@@ -83,12 +82,12 @@ class Gamma {
     outIndex = numRctOuts - BigInt.one - outIndex;
     final index = lowerBound(outIndex);
     if (index == end) {
-      throw const MoneroCryptoException("output index not found");
+      throw BuError(DefaultErrorType.notFound, "output index not found");
     }
     final BigInt firstRct = index == 0 ? BigInt.zero : _rctOffsets[index - 1];
     final int nrct = (_rctOffsets[index] - firstRct).toInt();
     if (nrct == 0) {
-      throw const MoneroCryptoException("No RCT values found in the range");
+      throw BuError(DefaultErrorType.notFound, "No RCT values found in the range");
     }
     return firstRct + BigInt.from(gammaDistribution.randomIndex(nrct));
   }

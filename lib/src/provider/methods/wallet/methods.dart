@@ -17,7 +17,6 @@ export 'methods/exchange_multisig_keys.dart';
 export 'methods/export_key_images.dart';
 export 'methods/export_multisig_info.dart';
 export 'methods/export_outputs.dart';
-export 'methods/finalize_multisig.dart';
 export 'methods/freeze.dart';
 export 'methods/frozen.dart';
 export 'methods/generate_from_keys.dart';

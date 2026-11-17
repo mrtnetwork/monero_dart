@@ -3,8 +3,14 @@ import 'package:monero_dart/monero_dart.dart';
 import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
 import 'package:test/test.dart';
 
-void main() {
+import '../utils.dart';
+
+void transactionSerializeTest() {
   _transaction();
+}
+
+void main() {
+  MoneroTestApi.runTest(transactionSerializeTest, "Transaction Serialize");
 }
 
 void _transaction() {

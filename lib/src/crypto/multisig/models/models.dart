@@ -6,7 +6,7 @@ import 'package:monero_dart/src/serialization/layout/serialization/serialization
 class MultisigLR extends MoneroSerialization with Equality {
   final RctKey l;
   final RctKey r;
-  MultisigLR({required RctKey l, required RctKey r})
+  MultisigLR({required List<int> l, required List<int> r})
     : l = l.asImmutableBytes,
       r = r.asImmutableBytes;
 
@@ -69,10 +69,10 @@ class MultisigKLRKI extends MoneroSerialization {
   }
 
   MultisigKLRKI({
-    required RctKey k,
-    required RctKey L,
-    required RctKey R,
-    required RctKey ki,
+    required List<int> k,
+    required List<int> L,
+    required List<int> R,
+    required List<int> ki,
   }) : k = k.asImmutableBytes,
        L = L.asImmutableBytes,
        R = R.asImmutableBytes,
@@ -80,28 +80,30 @@ class MultisigKLRKI extends MoneroSerialization {
 }
 
 class MoneroMultisigOutputInfo extends MoneroSerialization with Equality {
-  final MoneroPublicKey signer;
+  final ED25519MoneroPublicKey signer;
   final List<MultisigLR> lr;
   final List<RctKey> partialKeyImages;
 
   MoneroMultisigOutputInfo({
     required this.signer,
     required List<MultisigLR> lr,
-    required List<RctKey> partialKeyImages,
+    required List<List<int>> partialKeyImages,
   }) : lr = lr.immutable,
        partialKeyImages =
            partialKeyImages
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "MoneroMultisigOutputInfo",
-                   reason: "Invalid key image bytes length.",
-                 ),
+                 (e) => e
+                     .exc(
+                       length: 32,
+                       operation: "MoneroMultisigOutputInfo",
+                       reason: "Invalid key image bytes length.",
+                     )
+                     .asImmutableBytes,
                )
                .toImutableList;
   factory MoneroMultisigOutputInfo.deserializeJson(Map<String, dynamic> json) {
     return MoneroMultisigOutputInfo(
-      signer: MoneroPublicKey.fromBytes(json.valueAsBytes("signer")),
+      signer: ED25519MoneroPublicKey.fromBytes(json.valueAsBytes("signer")),
       lr:
           json
               .valueEnsureAsList<Map<String, dynamic>>("lr")
@@ -125,7 +127,7 @@ class MoneroMultisigOutputInfo extends MoneroSerialization with Equality {
   @override
   Map<String, dynamic> toLayoutStruct() {
     return {
-      "signer": signer.key,
+      "signer": signer.toBytes(),
       "lr": lr.map((e) => e.toLayoutStruct()).toList(),
       "partialKeyImages": partialKeyImages,
     };
@@ -142,10 +144,10 @@ class MoneroMultisigOutputInfo extends MoneroSerialization with Equality {
 
 class MoneroMultisigInfo extends MoneroSerialization {
   final MoneroMultisigOutputInfo info;
-  final List<MoneroPrivateKey> nonces;
+  final List<ED25519MoneroPrivateKey> nonces;
   MoneroMultisigInfo({
     required this.info,
-    required List<MoneroPrivateKey> nonces,
+    required List<ED25519MoneroPrivateKey> nonces,
   }) : nonces = nonces.immutable;
   factory MoneroMultisigInfo.deserialize(List<int> bytes, {String? property}) {
     final decode = MoneroSerialization.deserialize(
@@ -163,7 +165,7 @@ class MoneroMultisigInfo extends MoneroSerialization {
       nonces:
           json
               .valueEnsureAsList<List<int>>("nonces")
-              .map((e) => MoneroPrivateKey.fromBytes(e))
+              .map((e) => ED25519MoneroPrivateKey.fromBytes(e))
               .toList(),
     );
   }
@@ -187,7 +189,7 @@ class MoneroMultisigInfo extends MoneroSerialization {
   Map<String, dynamic> toLayoutStruct() {
     return {
       "info": info.toLayoutStruct(),
-      "nonces": nonces.map((e) => e.key).toList(),
+      "nonces": nonces.map((e) => e.takeSecretKey()).toList(),
     };
   }
 }

@@ -3,25 +3,25 @@ part of 'package:monero_dart/src/tx_builder/tx_builder.dart';
 class ComputeDestinationKeys extends MoneroSerialization {
   final List<RctKey> amountKeys;
   final List<TxExtra> extras;
-  final MoneroPublicKey txPubKey;
-  final List<MoneroPublicKey> additionalTxPubKey;
-  final List<MoneroPrivateKey> allTxKeys;
+  final ED25519MoneroPublicKey txPubKey;
+  final List<ED25519MoneroPublicKey> additionalTxPubKey;
+  final List<ED25519MoneroPrivateKey> allTxKeys;
   final List<MoneroTxout> outs;
-  List<MoneroPublicKey> get destinationPubKeys =>
+  List<ED25519MoneroPublicKey> get destinationPubKeys =>
       outs.map((e) => e.target.getPublicKey()!).toList();
   late final int destinationLength = outs.length;
   List<MoneroTxout> get toRctOuts =>
       outs.map((e) => e.copyWith(amount: BigInt.zero)).toList();
   List<BigInt> get amounts => outs.map((e) => e.amount).toList();
   final BigInt total;
-  MoneroPrivateKey get txKey => allTxKeys[0];
+  ED25519MoneroPrivateKey get txKey => allTxKeys[0];
   ComputeDestinationKeys({
-    required List<RctKey> amountKeys,
+    required List<List<int>> amountKeys,
     required List<TxExtra> extras,
     required this.txPubKey,
-    required List<MoneroPublicKey> additionalTxPubKey,
+    required List<ED25519MoneroPublicKey> additionalTxPubKey,
     required List<MoneroTxout> outs,
-    required List<MoneroPrivateKey> allTxKeys,
+    required List<ED25519MoneroPrivateKey> allTxKeys,
   }) : total = outs.fold(BigInt.zero, (p, c) => p + c.amount),
        amountKeys = amountKeys.map((e) => e.asImmutableBytes).toImutableList,
        extras = extras.immutable,
@@ -33,12 +33,12 @@ class ComputeDestinationKeys extends MoneroSerialization {
       additionalTxPubKey:
           json
               .valueEnsureAsList<List<int>>("additionalTxPubKey")
-              .map((e) => MoneroPublicKey.fromBytes(e))
+              .map((e) => ED25519MoneroPublicKey.fromBytes(e))
               .toList(),
       allTxKeys:
           json
               .valueEnsureAsList<List<int>>("allTxKeys")
-              .map((e) => MoneroPrivateKey.fromBytes(e))
+              .map((e) => ED25519MoneroPrivateKey.fromBytes(e))
               .toList(),
       amountKeys: json.valueEnsureAsList<List<int>>("amountKeys"),
       extras:
@@ -51,7 +51,7 @@ class ComputeDestinationKeys extends MoneroSerialization {
               .valueEnsureAsList<Map<String, dynamic>>("outs")
               .map((e) => MoneroTxout.deserializeJson(e))
               .toList(),
-      txPubKey: MoneroPublicKey.fromBytes(json.valueAsBytes("txPubKey")),
+      txPubKey: ED25519MoneroPublicKey.fromBytes(json.valueAsBytes("txPubKey")),
     );
   }
 
@@ -80,9 +80,9 @@ class ComputeDestinationKeys extends MoneroSerialization {
     return {
       "amountKeys": amountKeys,
       "extras": extras.map((e) => e.toVariantLayoutStruct()).toList(),
-      "txPubKey": txPubKey.key,
-      "additionalTxPubKey": additionalTxPubKey.map((e) => e.key).toList(),
-      "allTxKeys": allTxKeys.map((e) => e.key).toList(),
+      "txPubKey": txPubKey.toBytes(),
+      "additionalTxPubKey": additionalTxPubKey.map((e) => e.toBytes()).toList(),
+      "allTxKeys": allTxKeys.map((e) => e.takeSecretKey()).toList(),
       "outs": outs.map((e) => e.toLayoutStruct()).toList(),
     };
   }
@@ -107,17 +107,20 @@ class ComputeSourceKeys extends MoneroSerialization {
   late final int sourcesLength = inputs.length;
 
   ComputeSourceKeys._({
-    required KeyV inputSecretKeys,
+    required List<List<int>> inputSecretKeys,
     required List<TxinToKey> inputs,
   }) : total = inputs.fold<BigInt>(BigInt.zero, (p, c) => p + c.amount).asU64,
        inputSecretKeys =
            inputSecretKeys
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "ComputeSourceKeys",
-                   reason: "Invalid inputSecretKeys bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "ComputeSourceKeys",
+                           reason: "Invalid inputSecretKeys bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toImutableList,
        inputs = inputs.immutable;
@@ -158,14 +161,14 @@ class ComputeSourceKeys extends MoneroSerialization {
 
 class MoneroMultisigSignedInfo extends MoneroSerialization {
   final KeyM l;
-  final List<MoneroPublicKey> signingKeys;
+  final List<ED25519MoneroPublicKey> signingKeys;
   final KeyM totalAlphaG;
   final KeyM totalAlphaH;
   final KeyV c0;
   final KeyV s;
 
   factory MoneroMultisigSignedInfo.initial({
-    required List<MoneroPublicKey> signingKeys,
+    required List<ED25519MoneroPublicKey> signingKeys,
     required int sourceLength,
   }) {
     final KeyM totalAlphaG = List.generate(
@@ -195,23 +198,38 @@ class MoneroMultisigSignedInfo extends MoneroSerialization {
   }
 
   MoneroMultisigSignedInfo({
-    required this.l,
-    required this.signingKeys,
-    required KeyM totalAlphaG,
-    required KeyM totalAlphaH,
-    required KeyV c0,
-    required KeyV s,
-  }) : totalAlphaG = totalAlphaG.toImutableList,
-       totalAlphaH = totalAlphaH.toImutableList,
-       c0 = c0.toImutableList,
-       s = s.toImutableList;
+    required List<List<List<int>>> l,
+    required List<ED25519MoneroPublicKey> signingKeys,
+    required List<List<List<int>>> totalAlphaG,
+    required List<List<List<int>>> totalAlphaH,
+    required List<List<int>> c0,
+    required List<List<int>> s,
+  }) : signingKeys = List<ED25519MoneroPublicKey>.from(signingKeys),
+       totalAlphaG =
+           totalAlphaG
+               .map((e) => e.map((e) => e.toImutableBytes).toList())
+               .toImutableList,
+       totalAlphaH =
+           totalAlphaH
+               .map((e) => e.map((e) => e.toImutableBytes).toList())
+               .toImutableList,
+       // c0/s are mutated in place by the builder (setAll on the inner
+       // buffers in _firstPartialSign and index assignment in
+       // _nextPartialSing), so both the outer lists and the inner buffers
+       // must stay writable.
+       c0 = c0.map((e) => e.toBytes).toList(),
+       s = s.map((e) => e.toBytes).toList(),
+       l =
+           l
+               .map((e) => e.map((e) => e.toImutableBytes).toList())
+               .toImutableList;
   factory MoneroMultisigSignedInfo.deserializeJson(Map<String, dynamic> json) {
     return MoneroMultisigSignedInfo(
       l: json.valueEnsureAsList<List<List<int>>>("l"),
       signingKeys:
           json
               .valueEnsureAsList<List<int>>("signingKeys")
-              .map((e) => MoneroPublicKey.fromBytes(e))
+              .map((e) => ED25519MoneroPublicKey.fromBytes(e))
               .toList(),
       totalAlphaG: json.valueEnsureAsList<List<List<int>>>("totalAlphaG"),
       totalAlphaH: json.valueEnsureAsList<List<List<int>>>("totalAlphaH"),
@@ -252,7 +270,7 @@ class MoneroMultisigSignedInfo extends MoneroSerialization {
   Map<String, dynamic> toLayoutStruct() {
     return {
       "l": l,
-      "signingKeys": signingKeys.map((e) => e.key).toList(),
+      "signingKeys": signingKeys.map((e) => e.toBytes()).toList(),
       "totalAlphaG": totalAlphaG,
       "totalAlphaH": totalAlphaH,
       "c0": c0,
@@ -276,18 +294,18 @@ class TxDestinationInfo {
   final int stdAddressesCount;
   final int subAddressesCount;
   final MoneroAddress? singleDestionation;
-  MoneroPublicKey getTxPubKey(MoneroPrivateKey txSecretKey) {
+  ED25519MoneroPublicKey getTxPubKey(ED25519MoneroPrivateKey txSecretKey) {
     RctKey txPubKey;
 
     if (singleDestionation != null) {
       txPubKey = RCT.scalarmultKey(
         singleDestionation!.pubSpendKey,
-        txSecretKey.key,
+        txSecretKey.takeSecretKey(),
       );
     } else {
-      txPubKey = RCT.scalarmultBase(txSecretKey.key);
+      txPubKey = RCT.scalarmultBase(txSecretKey.takeSecretKey());
     }
-    return MoneroPublicKey.fromBytes(txPubKey);
+    return ED25519MoneroPublicKey.fromBytes(txPubKey);
   }
 
   bool get needAdditionalTxkeys =>

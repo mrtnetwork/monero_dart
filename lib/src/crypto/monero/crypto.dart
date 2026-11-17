@@ -1,31 +1,4 @@
-// Copyright (c) 2021-2024, The Monero Project
-// Copyright (c) 2024, MRTNETWORK (https://github.com/mrtnetwork)
-
-// All rights reserved.
-
-// This software includes portions of the Monero Project's original C/C++ implementation,
-// which have been adapted and reimplemented in Dart.
-
-// Redistribution and use in source and binary forms, with or without modification,
-// are permitted provided that the following conditions are met:
-// Redistributions of source code must retain the above copyright notice,
-// this list of conditions, and the following disclaimers.
-// Redistributions in binary form must reproduce the above copyright notice,
-// this list of conditions, and the following disclaimers in the documentation and/or other materials provided with the distribution.
-// Neither the name of the copyright holders nor the names of their contributors
-// may be used to endorse or promote products derived from this software without specific prior written permission.
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-// EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/models/ec_signature.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
@@ -38,10 +11,15 @@ class MoneroCrypto {
   // /// Validates a scalar's byte representation and ensures it is valid.
 
   /// Validates a public key, ensuring it is in the main subgroup and not zero or identity.
-  static MoneroPublicKey asValidPublicKey(MoneroPublicKey publicKey) {
-    if (BytesUtils.bytesEqual(publicKey.key, RCT.zero(clone: false)) ||
-        BytesUtils.bytesEqual(publicKey.key, RCT.identity(clone: false))) {
-      throw const MoneroCryptoException(
+  static ED25519MoneroPublicKey asValidPublicKey(
+    ED25519MoneroPublicKey publicKey,
+  ) {
+    if (BytesUtils.bytesEqual(publicKey.toBytes(), RCT.zero(clone: false)) ||
+        BytesUtils.bytesEqual(
+          publicKey.toBytes(),
+          RCT.identity(clone: false),
+        )) {
+      throw BuError(DefaultErrorType.badPublicKey, 
         "Public key was not in prime subgroup.",
       );
     }
@@ -49,26 +27,22 @@ class MoneroCrypto {
   }
 
   /// Adds two public keys and returns the resulting public key.
-  static MoneroPublicKey addPublicKey(MoneroPublicKey a, MoneroPublicKey b) {
-    final GroupElementP3 b2 = GroupElementP3(), a2 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(b2, b.key) != 0) {
-      throw const MoneroCryptoException("Invalid public key.");
+  ///
+  static ED25519MoneroPublicKey addPublicKey(
+    ED25519MoneroPublicKey a,
+    ED25519MoneroPublicKey b,
+  ) {
+    try {
+      return ED25519MoneroPublicKey.fromBytes(
+        blockchainUtils.api.ed25519.add(a.toBytes(), b.toBytes()),
+      );
+    } catch (_) {
+      throw BuError(DefaultErrorType.badPublicKey, "Invalid public key.");
     }
-    if (CryptoOps.geFromBytesVartime_(a2, a.key) != 0) {
-      throw const MoneroCryptoException("Invalid public key.");
-    }
-    final GroupElementCached tmp2 = GroupElementCached();
-    CryptoOps.geP3ToCached(tmp2, b2);
-    final GroupElementP1P1 tmp3 = GroupElementP1P1();
-    CryptoOps.geAdd(tmp3, a2, tmp2);
-    CryptoOps.geP1P1ToP3(a2, tmp3);
-    final resultKey = RCT.zero();
-    CryptoOps.geP3Tobytes(resultKey, a2);
-    return MoneroPublicKey.fromBytes(resultKey);
   }
 
   /// Converts a derivation and output index to a scalar value.
-  static List<int> derivationToScalar({
+  static BuBytes derivationToScalar({
     required List<int> derivation,
     required int outIndex,
   }) {
@@ -79,96 +53,35 @@ class MoneroCrypto {
     );
     final outputIndex = MoneroLayoutConst.varint48.serialize(outIndex);
     final bytes = [...derivation.asImmutableBytes, ...outputIndex];
-    final hash = RCT.hashToScalar_(bytes);
+    final hash = RCT.hashToScalar(bytes);
     return hash;
   }
 
-  /// Converts a derivation and output index to a scalar value.
-  static List<int> derivationToScalarVar({
-    required List<int> derivation,
-    required int outIndex,
-  }) {
-    derivation.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "derivationToScalarVar",
-      reason: "Invalid bytes length.",
-    );
-    final outputIndex = MoneroLayoutConst.varint48.serialize(outIndex);
-    final bytes = [...derivation.asImmutableBytes, ...outputIndex];
-    return RCT.hashToScalarVar(bytes);
-  }
-
   /// Derives a public key from a base public key using a derivation and output index.
-  static MoneroPublicKey derivePublicKeyVar({
+  static ED25519MoneroPublicKey derivePublicKey({
     required List<int> derivation,
     required int outIndex,
-    required MoneroPublicKey basePublicKey,
-  }) {
-    derivation.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "derivePublicKeyVar",
-      reason: "Invalid bytes length.",
-    );
-    final RctKey scalar = derivationToScalarVar(
-      derivation: derivation,
-      outIndex: outIndex,
-    );
-    final sc = Ed25519Utils.asScalarInt(scalar);
-    EDPoint mb = Curves.generatorED25519 * sc;
-    mb += basePublicKey.point;
-    return MoneroPublicKey.fromBytes(mb.toBytes());
-  }
-
-  static List<int> derivePublicKeyBytesVar({
-    required List<int> derivation,
-    required int outIndex,
-    required MoneroPublicKey basePublicKey,
-  }) {
-    derivation.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "derivePublicKeyBytesVar",
-      reason: "Invalid bytes length.",
-    );
-    final RctKey scalar = derivationToScalarVar(
-      derivation: derivation,
-      outIndex: outIndex,
-    );
-    final sc = Ed25519Utils.scalarAsBig(scalar);
-    EDPoint mb = Curves.generatorED25519 * sc;
-    mb += basePublicKey.point;
-    return mb.toBytes();
-  }
-
-  /// Derives a public key from a base public key using a derivation and output index.
-  static MoneroPublicKey derivePublicKey({
-    required List<int> derivation,
-    required int outIndex,
-    required MoneroPublicKey basePublicKey,
+    required ED25519MoneroPublicKey basePublicKey,
   }) {
     derivation.exc(
       length: Ed25519KeysConst.privKeyByteLen,
       operation: "derivePublicKey",
       reason: "Invalid bytes length.",
     );
-    final GroupElementP3 point1 = GroupElementP3();
-    final GroupElementP3 point2 = GroupElementP3();
-    final GroupElementCached point3 = GroupElementCached();
-    final GroupElementP1P1 point4 = GroupElementP1P1();
-    final GroupElementP2 point5 = GroupElementP2();
-    if (CryptoOps.geFromBytesVartime_(point1, basePublicKey.key) != 0) {
-      throw const MoneroCryptoException("Invalid public key.");
-    }
+    final ed25519 = blockchainUtils.api.ed25519;
     final RctKey scalar = derivationToScalar(
       derivation: derivation,
       outIndex: outIndex,
     );
-    CryptoOps.geScalarMultBase(point2, scalar);
-    CryptoOps.geP3ToCached(point3, point2);
-    CryptoOps.geAdd(point4, point1, point3);
-    CryptoOps.geP1P1ToP2(point5, point4);
-    final resultKey = RCT.zero();
-    CryptoOps.geToBytes(resultKey, point5);
-    return MoneroPublicKey.fromBytes(resultKey);
+    try {
+      final derived = ed25519.add(
+        ed25519.reduceMultBase(scalar),
+        basePublicKey.toBytes(),
+      );
+      return ED25519MoneroPublicKey.fromBytes(derived);
+    } catch (_) {
+      throw BuError(DefaultErrorType.badPublicKey, "Invalid public key.");
+    }
   }
 
   static const List<int> _viewTagDomain = [
@@ -193,7 +106,7 @@ class MoneroCrypto {
       reason: "Invalid bytes length.",
     );
     final outputIndex = MoneroLayoutConst.varint48.serialize(outIndex);
-    final hash = QuickCrypto.keccack256Hash([
+    final hash = QuickCrypto.keccak256Hash([
       ..._viewTagDomain,
       ...derivation,
       ...outputIndex,
@@ -202,124 +115,63 @@ class MoneroCrypto {
   }
 
   /// Generates a key image from a public key and private key.
-  static List<int> generateKeyImageBytes({
+  static BuBytes generateKeyImageBytes({
     required List<int> pubkey,
     required List<int> secretKey,
-    RctKey? resultKey,
   }) {
-    final GroupElementP3 point = GroupElementP3();
-    final GroupElementP2 point2 = GroupElementP2();
-    RCT.hashToP3(point, pubkey);
-    CryptoOps.geScalarMult(point2, secretKey, point);
-    resultKey ??= RCT.zero();
-    resultKey.exc(
+    final BuBytes key = RCT.zero();
+    key.exc(
       length: Ed25519KeysConst.privKeyByteLen,
       operation: "generateKeyImageBytes",
       reason: "Invalid bytes length.",
     );
-    CryptoOps.geToBytes(resultKey, point2);
-    return resultKey;
-  }
-
-  /// Generates a key image from a public key and private key.
-  static List<int> generateKeyImage({
-    required MoneroPublicKey pubkey,
-    required MoneroPrivateKey secretKey,
-    RctKey? resultKey,
-  }) {
-    final GroupElementP3 point = GroupElementP3();
-    final GroupElementP2 point2 = GroupElementP2();
-    RCT.hashToP3(point, pubkey.key);
-    CryptoOps.geScalarMult(point2, secretKey.key, point);
-    resultKey ??= RCT.zero();
-    resultKey.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "generateKeyImage",
-      reason: "Invalid bytes length.",
+    final ed25519 = blockchainUtils.api.ed25519;
+    // Reduce first: the backend rejects non-canonical scalars while the
+    // previous code multiplied raw bytes; (x mod L) * P is the same point.
+    key.setAll(
+      0,
+      ed25519.mult(ed25519.scReduce(secretKey), ed25519.hashToEc(pubkey)),
     );
-    CryptoOps.geToBytes(resultKey, point2);
-    return resultKey;
+    return key;
   }
 
   /// Generates key derivation bytes from a public key and secret key.
-  static List<int> generateKeyDerivationBytes({
-    required RctKey pubkey,
-    required RctKey secretKey,
-    RctKey? resultKey,
-  }) {
-    if (CryptoOps.scCheck(secretKey) != 0) {
-      throw const MoneroCryptoException("Invalid secret key.");
-    }
-    final GroupElementP3 point = GroupElementP3();
-    final GroupElementP2 point2 = GroupElementP2();
-    final GroupElementP1P1 point3 = GroupElementP1P1();
-    if (CryptoOps.geFromBytesVartime_(point, pubkey) != 0) {
-      throw const MoneroCryptoException("Invalid public key.");
-    }
-    CryptoOps.geScalarMult(point2, secretKey, point);
-    CryptoOps.geMul8(point3, point2);
-    CryptoOps.geP1P1ToP2(point2, point3);
-    resultKey ??= RCT.zero();
-    CryptoOps.geToBytes(resultKey, point2);
-    return resultKey;
-  }
-
-  /// Generates key derivation bytes from a public key and secret key.
-  static List<int> generateKeyDerivationVar({
-    required MoneroPublicKey pubkey,
-    required MoneroPrivateKey secretKey,
-    RctKey? resultKey,
-  }) {
-    final sc = secretKey.privateKey.secret;
-    final p = pubkey.point;
-    EDPoint se = p * sc;
-    se = se * BigInt.from(8);
-    return se.toBytes();
-  }
-
-  static List<int> generateKeyDerivationBytesVar({
+  /// Fused `8 * (secret * pub)` without intermediate encoding.
+  static BuBytes generateKeyDerivationBytes({
     required List<int> pubkey,
     required List<int> secretKey,
-    RctKey? resultKey,
   }) {
-    final sc = Ed25519Utils.asScalarInt(secretKey);
-    final p = RCT.asPoint(pubkey);
-    EDPoint se = p * sc;
-    se = se * BigInt.from(8);
-    return se.toBytes();
+    final ed25519 = blockchainUtils.api.ed25519;
+    final BuBytes result = RCT.zero();
+    try {
+      result.setAll(0, ed25519.mul8Mult(secretKey, pubkey));
+    } catch (_) {
+      throw BuError(DefaultErrorType.badPublicKey, "Invalid public key.");
+    }
+    return result;
   }
 
-  static List<int> generateKeyDerivationBigVar({
-    required List<int> pubkey,
-    required BigInt secretKey,
-    RctKey? resultKey,
-  }) {
-    final p = RCT.asPoint(pubkey);
-    EDPoint se = p * secretKey;
-
-    se = se * BigInt.from(8);
-
-    return se.toBytes();
-  }
-
-  /// Generates key derivation bytes from a public key and secret key.
+  /// Generates a key derivation shared secret from key objects.
+  ///
+  /// Object wrapper around [generateKeyDerivationBytes] taking
+  /// [ED25519MoneroPublicKey]/[ED25519MoneroPrivateKey] instead of raw bytes.
   static List<int> generateKeyDerivation({
-    required MoneroPublicKey pubkey,
-    required MoneroPrivateKey secretKey,
-    RctKey? resultKey,
+    required ED25519MoneroPublicKey pubkey,
+    required ED25519MoneroPrivateKey secretKey,
   }) {
-    return generateKeyDerivationBytes(
-      pubkey: pubkey.key,
-      secretKey: secretKey.key,
-      resultKey: resultKey,
+    return secretKey.takeSecretKey().useValue(
+      (k) => generateKeyDerivationBytes(
+        pubkey: pubkey.toBytes(),
+        secretKey: k,
+      ),
     );
   }
 
   static MECSignature generateSignature({
-    required RctKey hash,
-    required RctKey publicKey,
-    required RctKey secretKey,
-    RctKey? k,
+    required List<int> hash,
+    required List<int> publicKey,
+    required List<int> secretKey,
+    List<int>? k,
   }) {
     hash.exc(
       length: Ed25519KeysConst.privKeyByteLen,
@@ -337,18 +189,17 @@ class MoneroCrypto {
       reason: "Invalid bytes length.",
     );
     while (true) {
-      final GroupElementP3 tmp3 = GroupElementP3();
-      k ??= RCT.skGen_();
+      k ??= RCT.skGen();
       RCT.asValidScalar(k);
-      CryptoOps.geScalarMultBase(tmp3, k);
-      final comm = CryptoOps.geP3Tobytes_(tmp3);
-      final c = RCT.hashToScalar_([...hash, ...publicKey, ...comm]);
-      if (CryptoOps.scIsNonZero(c) == 0) {
+      final ed25519 = blockchainUtils.api.ed25519;
+      final comm = ed25519.reduceMultBase(k);
+      final c = RCT.hashToScalar([...hash, ...publicKey, ...comm]);
+      if (!ed25519.scIsNonZero(c)) {
         continue;
       }
       final r = RCT.zero();
-      CryptoOps.scMulSub(r, c, secretKey, k);
-      if (CryptoOps.scIsNonZero(r) == 0) {
+      r.setAll(0, ed25519.scMulSub(c, secretKey, k));
+      if (!ed25519.scIsNonZero(r)) {
         continue;
       }
       return MECSignature(c: c, r: r);
@@ -370,107 +221,29 @@ class MoneroCrypto {
       operation: "checkSignature",
       reason: "Invalid bytes length.",
     );
-    final p = RCT.asPoint(publicKey);
-
-    final sR = Ed25519Utils.scCheckVar(signature.r);
-    final sC = Ed25519Utils.scCheckVar(signature.c);
-    if (!sR ||
-        !sC ||
+    final ed25519 = blockchainUtils.api.ed25519;
+    if (!ed25519.scCheck(signature.r) ||
+        !ed25519.scCheck(signature.c) ||
         BytesUtils.bytesEqual(signature.c, RCT.zero(clone: false))) {
       return false;
     }
-    final comm =
-        CryptoOps.geDoubleScalarMultBasePointVar(
-          a: signature.c,
-          gA: p,
-          b: signature.r,
-        ).toBytes();
-
-    if (BytesUtils.bytesEqual(comm, CryptoOpsConst.infinity)) {
+    late final List<int> comm;
+    try {
+      comm = ed25519.mulAdd(
+        signature.c,
+        publicKey,
+        signature.r,
+        ed25519.generator(),
+      );
+    } catch (_) {
       return false;
     }
-    RctKey sH = RCT.hashToScalarBytes([...hash, ...publicKey, ...comm]);
-    sH = Ed25519Utils.scSubVar(sH, signature.c);
-    return CryptoOps.scIsNonZero(sH) == 0;
-  }
-
-  static MECSignature generateTxProofVar({
-    required List<int> hash,
-    required List<int> R,
-    required List<int> A,
-    required List<int>? B,
-    required List<int> d,
-    required List<int> r,
-  }) {
-    hash.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "generateTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    R.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "generateTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    A.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "generateTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    B?.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "generateTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    d.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "generateTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    r.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "generateTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    // sanity check
-    final rP3 = Ed25519Utils.mybeAsPoint(R);
-    final aP3 = Ed25519Utils.mybeAsPoint(A);
-    EDPoint? bP3;
-    final dP3 = Ed25519Utils.mybeAsPoint(d);
-    if (rP3 == null || aP3 == null || dP3 == null) {
-      throw const MoneroCryptoException("Invalid tx public keys.");
+    if (BytesUtils.bytesEqual(comm, ed25519.identity())) {
+      return false;
     }
-    if (B != null) {
-      bP3 = Ed25519Utils.mybeAsPoint(B);
-      if (bP3 == null) {
-        throw const MoneroCryptoException("Invalid tx public keys.");
-      }
-    }
-    final k = RCT.skGen_();
-    final sK = Ed25519Utils.asScalarInt(k);
-
-    final sep = QuickCrypto.keccack256Hash("TXPROOF_V2".codeUnits);
-    List<int> x;
-    List<int> y;
-    if (bP3 != null) {
-      x = (bP3 * sK).toBytes();
-    } else {
-      x = (Curves.generatorED25519 * sK).toBytes();
-    }
-    y = (aP3 * sK).toBytes();
-    final c = RCT.hashToScalar_([
-      ...hash,
-      ...d,
-      ...x,
-      ...y,
-      ...sep,
-      ...R,
-      ...A,
-      ...B ?? CryptoOpsConst.zero,
-    ]);
-    final List<int> sigR = RCT.zero();
-    CryptoOps.scMulSub(sigR, c, r, k);
-    return MECSignature(c: c, r: sigR);
+    RctKey sH = RCT.hashToScalar([...hash, ...publicKey, ...comm]);
+    sH = ed25519.scSub(sH, signature.c);
+    return !ed25519.scIsNonZero(sH);
   }
 
   /// generate tx proof
@@ -512,48 +285,38 @@ class MoneroCrypto {
       operation: "generateTxProof",
       reason: "Invalid bytes length.",
     );
-    // sanity check
-    final GroupElementP3 rP3 = GroupElementP3();
-    final GroupElementP3 aP3 = GroupElementP3();
-    final GroupElementP3 bP3 = GroupElementP3();
-    final GroupElementP3 dP3 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(rP3, R) != 0) {
-      throw const MoneroCryptoException("tx pubkey is invalid");
+    final ed25519 = blockchainUtils.api.ed25519;
+    if (!BaseEd25519PublicKey.isValidBytes(R)) {
+      throw BuError(DefaultErrorType.badPublicKey, "tx pubkey is invalid");
     }
-    if (CryptoOps.geFromBytesVartime_(aP3, A) != 0) {
-      throw const MoneroCryptoException("recipient view pubkey is invalid");
+    if (!BaseEd25519PublicKey.isValidBytes(A)) {
+      throw BuError(DefaultErrorType.badPublicKey, "recipient view pubkey is invalid");
     }
-    if (B != null && CryptoOps.geFromBytesVartime_(bP3, B) != 0) {
-      throw const MoneroCryptoException("recipient spend pubkey is invalid");
+    if (B != null && !BaseEd25519PublicKey.isValidBytes(B)) {
+      throw BuError(DefaultErrorType.badPublicKey, "recipient spend pubkey is invalid");
     }
-    if (CryptoOps.geFromBytesVartime_(dP3, d) != 0) {
-      throw const MoneroCryptoException("key derivation is invalid");
+    if (!BaseEd25519PublicKey.isValidBytes(d)) {
+      throw BuError(DefaultErrorType.badPrivateKey, "key derivation is invalid");
     }
 
-    final k = RCT.skGen_();
+    final k = RCT.skGen();
 
-    final sep = QuickCrypto.keccack256Hash("TXPROOF_V2".codeUnits);
+    final sep = QuickCrypto.keccak256Hash("TXPROOF_V2".codeUnits);
     List<int> x;
     List<int> y;
     if (B != null) {
-      // compute x = k*B
-      final GroupElementP2 xP2 = GroupElementP2();
-      CryptoOps.geScalarMult(xP2, k, bP3);
-      x = CryptoOps.geTobytes_(xP2);
+      // compute x = k*B (`k` comes from skGen_, hence canonical)
+      x = ed25519.mult(k, B);
     } else {
       // compute x = k*G
-      final GroupElementP3 xP3 = GroupElementP3();
-      CryptoOps.geScalarMultBase(xP3, k);
-      x = CryptoOps.geP3Tobytes_(xP3);
+      x = ed25519.reduceMultBase(k);
     }
 
     // compute y = k*A
-    final GroupElementP2 yP2 = GroupElementP2();
-    CryptoOps.geScalarMult(yP2, k, aP3);
-    y = CryptoOps.geTobytes_(yP2);
+    y = ed25519.mult(k, A);
 
     // sig.c = Hs(Msg || d || x || y || sep || R || A || B)
-    final c = RCT.hashToScalar_([
+    final c = RCT.hashToScalar([
       ...hash,
       ...d,
       ...x,
@@ -561,20 +324,20 @@ class MoneroCrypto {
       ...sep,
       ...R,
       ...A,
-      ...B ?? CryptoOpsConst.zero,
+      ...B ?? RCT.zero(clone: false),
     ]);
     final List<int> sigR = RCT.zero();
-    CryptoOps.scMulSub(sigR, c, r, k);
+    sigR.setAll(0, ed25519.scMulSub(c, r, k));
     return MECSignature(c: c, r: sigR);
   }
 
   /// verify tx proof
   static bool verifyTxProof({
-    required RctKey hash,
-    required RctKey R,
-    required RctKey A,
-    required RctKey? B,
-    required RctKey d,
+    required List<int> hash,
+    required List<int> R,
+    required List<int> A,
+    required List<int>? B,
+    required List<int> d,
     required MECSignature signature,
     required int version,
   }) {
@@ -603,69 +366,33 @@ class MoneroCrypto {
       operation: "verifyTxProof",
       reason: "Invalid bytes length.",
     );
-    final GroupElementP3 rP3 = GroupElementP3();
-    final GroupElementP3 aP3 = GroupElementP3();
-    final GroupElementP3 bP3 = GroupElementP3();
-    final GroupElementP3 dP3 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(rP3, R) != 0) return false;
-    if (CryptoOps.geFromBytesVartime_(aP3, A) != 0) return false;
-    if (B != null && CryptoOps.geFromBytesVartime_(bP3, B) != 0) return false;
-    if (CryptoOps.geFromBytesVartime_(dP3, d) != 0) return false;
-    final GroupElementP3 crP32 = GroupElementP3();
-    {
-      final GroupElementP2 crP2 = GroupElementP2();
-      CryptoOps.geScalarMult(crP2, signature.c, rP3);
-      final cR = CryptoOps.geTobytes_(crP2);
-      if (CryptoOps.geFromBytesVartime_(crP32, cR) != 0) return false;
+    final ed25519 = blockchainUtils.api.ed25519;
+    if (!BaseEd25519PublicKey.isValidBytes(R) ||
+        !BaseEd25519PublicKey.isValidBytes(A) ||
+        !BaseEd25519PublicKey.isValidBytes(d) ||
+        (B != null && !BaseEd25519PublicKey.isValidBytes(B))) {
+      return false;
     }
-    final GroupElementP1P1 xP1P1 = GroupElementP1P1();
-    if (B != null) {
-      final GroupElementP2 rbP2 = GroupElementP2();
-      CryptoOps.geScalarMult(rbP2, signature.r, bP3);
-      final rB = CryptoOps.geTobytes_(rbP2);
-      final GroupElementP3 rbP3 = GroupElementP3();
-      if (CryptoOps.geFromBytesVartime_(rbP3, rB) != 0) return false;
-      final GroupElementCached rbCached = GroupElementCached();
-      CryptoOps.geP3ToCached(rbCached, rbP3);
-      CryptoOps.geAdd(xP1P1, crP32, rbCached);
-    } else {
-      final GroupElementP3 rgP3 = GroupElementP3();
-      CryptoOps.geScalarMultBase(rgP3, signature.r);
-      final GroupElementCached rgCached = GroupElementCached();
-      CryptoOps.geP3ToCached(rgCached, rgP3);
-      CryptoOps.geAdd(xP1P1, crP32, rgCached);
+    // Reduce first (the legacy ladder reduced raw scalars implicitly).
+    final rc = ed25519.scReduce(signature.c);
+    final rr = ed25519.scReduce(signature.r);
+    late final List<int> x;
+    late final List<int> y;
+    try {
+      x =
+          B != null
+              ? ed25519.doubleScalarMult(rc, R, rr, B)
+              : ed25519.doubleScalarMult(rc, R, rr, ed25519.generator());
+      y = ed25519.doubleScalarMult(rc, d, rr, A);
+    } catch (_) {
+      return false;
     }
-    final GroupElementP2 xP2 = GroupElementP2();
-    CryptoOps.geP1P1ToP2(xP2, xP1P1);
-
-    // compute sig.c*d
-    final GroupElementP2 cdP2 = GroupElementP2();
-    CryptoOps.geScalarMult(cdP2, signature.c, dP3);
-
-    // compute sig.r*A
-    final GroupElementP2 raP2 = GroupElementP2();
-    CryptoOps.geScalarMult(raP2, signature.r, aP3);
-
-    final cD = CryptoOps.geTobytes_(cdP2);
-    final rA = CryptoOps.geTobytes_(raP2);
-    final GroupElementP3 cdP3 = GroupElementP3();
-    final GroupElementP3 raP3 = GroupElementP3();
-    if (CryptoOps.geFromBytesVartime_(cdP3, cD) != 0) return false;
-    if (CryptoOps.geFromBytesVartime_(raP3, rA) != 0) return false;
-    final GroupElementCached raCached = GroupElementCached();
-    CryptoOps.geP3ToCached(raCached, raP3);
-    final GroupElementP1P1 yP1P1 = GroupElementP1P1();
-    CryptoOps.geAdd(yP1P1, cdP3, raCached);
-    final GroupElementP2 yP2 = GroupElementP2();
-    CryptoOps.geP1P1ToP2(yP2, yP1P1);
-    final sep = QuickCrypto.keccack256Hash("TXPROOF_V2".codeUnits);
-    final x = CryptoOps.geTobytes_(xP2);
-    final y = CryptoOps.geTobytes_(yP2);
+    final sep = QuickCrypto.keccak256Hash("TXPROOF_V2".codeUnits);
     List<int> c2;
     if (version == 1) {
-      c2 = RCT.hashToScalar_([...hash, ...d, ...x, ...y, ...sep]);
+      c2 = RCT.hashToScalar([...hash, ...d, ...x, ...y, ...sep]);
     } else if (version == 2) {
-      c2 = RCT.hashToScalar_([
+      c2 = RCT.hashToScalar([
         ...hash,
         ...d,
         ...x,
@@ -676,111 +403,21 @@ class MoneroCrypto {
         ...B ?? RCT.zero(clone: false),
       ]);
     } else {
-      throw MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid tx proof version",
         details: {"version": version.toString()},
       );
     }
-    CryptoOps.scSub(c2, c2, signature.c);
-    return CryptoOps.scIsNonZero(c2) == 0;
-  }
-
-  /// verify tx proof
-  static bool verifyTxProofVar({
-    required RctKey hash,
-    required RctKey R,
-    required RctKey A,
-    required RctKey? B,
-    required RctKey d,
-    required MECSignature signature,
-    required int version,
-  }) {
-    hash.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "verifyTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    R.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "verifyTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    A.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "verifyTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    B?.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "verifyTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    d.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "verifyTxProofVar",
-      reason: "Invalid bytes length.",
-    );
-    final rP3 = Ed25519Utils.mybeAsPoint(R);
-    final aP3 = Ed25519Utils.mybeAsPoint(A);
-    final bP3 = B == null ? null : Ed25519Utils.asPoint(B);
-    final dP3 = Ed25519Utils.mybeAsPoint(d);
-    if (rP3 == null || aP3 == null || dP3 == null) return false;
-    final crP32 = rP3 * Ed25519Utils.asScalarInt(signature.c);
-    if (crP32.isZero()) return false;
-    EDPoint xP1P1;
-    if (bP3 != null) {
-      final rbP3 = bP3 * Ed25519Utils.asScalarInt(signature.r);
-      if (rbP3.isZero()) return false;
-      xP1P1 = crP32 + rbP3;
-    } else {
-      xP1P1 =
-          crP32 +
-          (Curves.generatorED25519 * Ed25519Utils.asScalarInt(signature.r));
-    }
-    final EDPoint cdP2 = dP3 * Ed25519Utils.asScalarInt(signature.c);
-    final raP2 = aP3 * Ed25519Utils.asScalarInt(signature.r);
-    if (cdP2.isZero() || raP2.isZero()) return false;
-    final yP2 = cdP2 + raP2;
-    final sep = QuickCrypto.keccack256Hash("TXPROOF_V2".codeUnits);
-    List<int> c2;
-    if (version == 1) {
-      c2 = RCT.hashToScalarVar([
-        ...hash,
-        ...d,
-        ...xP1P1.toBytes(),
-        ...yP2.toBytes(),
-        ...sep,
-      ]);
-    } else if (version == 2) {
-      c2 = RCT.hashToScalarVar([
-        ...hash,
-        ...d,
-        ...xP1P1.toBytes(),
-        ...yP2.toBytes(),
-        ...sep,
-        ...R,
-        ...A,
-        ...B ?? RCT.zero(clone: false),
-      ]);
-    } else {
-      throw MoneroCryptoException(
-        "Invalid tx proof version",
-        details: {"version": version.toString()},
-      );
-    }
-    final c = Ed25519Utils.scSubVar(c2, signature.c);
-    return CryptoOps.scIsNonZero(c) == 0;
+    c2 = ed25519.scSub(c2, signature.c);
+    return !ed25519.scIsNonZero(c2);
   }
 
   /// Derives a secret key from a derivation, output index, and private spend key.
-  static MoneroPrivateKey deriveSecretKey({
+  static ED25519MoneroPrivateKey deriveSecretKey({
     /// receiver drivation
-    required RctKey derivation,
+    required List<int> derivation,
     required int outIndex,
-    required RctKey privateSpendKey,
-
-    /// store key here
-    RctKey? resultKey,
+    required List<int> privateSpendKey,
   }) {
     derivation.exc(
       length: Ed25519KeysConst.privKeyByteLen,
@@ -792,31 +429,31 @@ class MoneroCrypto {
       operation: "deriveSecretKey",
       reason: "Invalid bytes length.",
     );
-    if (CryptoOps.scCheck(privateSpendKey) != 0) {
-      throw const MoneroCryptoException("Invalid secret key.");
+    if (!blockchainUtils.api.ed25519.scCheck(privateSpendKey)) {
+      throw BuError(DefaultErrorType.badPrivateKey, "Invalid secret key.");
     }
     final scalar = derivationToScalar(
       derivation: derivation,
       outIndex: outIndex,
     );
-    resultKey ??= RCT.zero();
-    CryptoOps.scAdd(resultKey, privateSpendKey, scalar);
-    return MoneroPrivateKey.fromBytes(resultKey);
+    final List<int> result = RCT.zero();
+    result.setAll(
+      0,
+      blockchainUtils.api.ed25519.scAdd(privateSpendKey, scalar),
+    );
+    return ED25519MoneroPrivateKey.fromBytes(result);
   }
 
   /// Adds two secret keys and returns the resulting secret key.
-  static MoneroPrivateKey scSecretAdd({
-    required MoneroPrivateKey a,
-    required MoneroPrivateKey b,
-    RctKey? resultKey,
+  static ED25519MoneroPrivateKey scSecretAdd({
+    required ED25519MoneroPrivateKey a,
+    required ED25519MoneroPrivateKey b,
   }) {
-    resultKey?.exc(
-      length: Ed25519KeysConst.privKeyByteLen,
-      operation: "scSecretAdd",
-      reason: "Invalid bytes length.",
+    final List<int> result = RCT.zero();
+    result.setAll(
+      0,
+      blockchainUtils.api.ed25519.scAdd(a.takeSecretKey(), b.takeSecretKey()),
     );
-    resultKey ??= RCT.zero();
-    CryptoOps.scAdd(resultKey, a.key, b.key);
-    return MoneroPrivateKey.fromBytes(resultKey);
+    return ED25519MoneroPrivateKey.fromBytes(result);
   }
 }

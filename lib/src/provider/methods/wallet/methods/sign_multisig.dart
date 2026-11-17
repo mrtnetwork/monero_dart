@@ -20,7 +20,7 @@ class WalletRequestSignMultisig
   Map<String, dynamic> get params => {"tx_data_hex": txDataHex};
 
   @override
-  WalletRPCSignMultisigResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCSignMultisigResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCSignMultisigResponse.fromJson(result);
   }
 }

@@ -3,7 +3,7 @@ import 'package:monero_dart/src/provider/core/core.dart';
 
 typedef MoneroServiceResponse = BaseServiceResponse;
 
-/// A mixin defining the service provider contract for interacting with the Ton network.
+/// A mixin defining the service provider contract for interacting with the Monero network.
 mixin MoneroServiceProvider
     implements
         IServiceProvider<MoneroRequestDetails, BaseGRPCServiceRequestParams> {
@@ -25,19 +25,23 @@ mixin MoneroServiceProvider
     request,
     Duration? timeout,
   }) {
-    throw UnsupportedError(
-      "Subscribtion requests are not supported by this service.",
+    throw BuError(DefaultErrorType.unsupported, 
+      "Subscription requests are not supported by this service.",
     );
   }
 
   @override
   Future<List<int>> doGrpcRequest(params, {Duration? timeout}) {
-    throw UnsupportedError("gRPC requests are not supported by this service.");
+    throw BuError(DefaultErrorType.unsupported, 
+      "gRPC requests are not supported by this service.",
+    );
   }
 
   @override
   Stream<List<int>> doGrpcRequestStream(params, {Duration? timeout}) {
-    throw UnsupportedError("gRPC requests are not supported by this service.");
+    throw BuError(DefaultErrorType.unsupported, 
+      "gRPC requests are not supported by this service.",
+    );
   }
 
   @override
@@ -45,6 +49,8 @@ mixin MoneroServiceProvider
     params, {
     Duration? timeout,
   }) {
-    throw UnsupportedError("gRPC requests are not supported by this service.");
+    throw BuError(DefaultErrorType.unsupported, 
+      "gRPC requests are not supported by this service.",
+    );
   }
 }

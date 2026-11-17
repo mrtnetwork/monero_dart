@@ -13,5 +13,5 @@ class WalletRequestScanTx
   Map<String, dynamic> get params => {"txids": txids};
 
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

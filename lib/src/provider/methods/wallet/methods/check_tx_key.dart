@@ -35,7 +35,7 @@ class WalletRequestCheckTxKey
   };
 
   @override
-  WalletRPCCheckTxKeyResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCCheckTxKeyResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCCheckTxKeyResponse.fromJson(result);
   }
 }

@@ -1,3 +1,6 @@
+## 2.0.0
+- Cryptography now routes through the `blockchain_utils` dual backend (pure Dart default, optional Rust FFI/WASM). For faster Bulletproofs+ / RingCT proof generation, call `blockchainUtils.setRustApi()`.
+
 ## 1.7.0
 - Updated dependencies.
 - Updated MoneroAddress to inherit from IAddress provided by blockchain_utils.

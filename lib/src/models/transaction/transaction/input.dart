@@ -1,5 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/exception/exception.dart';
+import 'package:monero_dart/src/crypto/types/types.dart';
 import 'package:monero_dart/src/models/transaction/transaction/output.dart';
 import 'package:monero_dart/src/serialization/serialization.dart';
 
@@ -18,7 +18,9 @@ enum MoneroTxinType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw ItemNotFoundException(name: "MoneroTxinType", value: name),
+              throw BuError(DefaultErrorType.invalidArgument, 
+                'Unknown transaction input type "$name".',
+              ),
     );
   }
 }
@@ -75,7 +77,7 @@ abstract class MoneroTxin extends MoneroVariantSerialization {
   String get variantName => type.name;
   T cast<T extends MoneroTxin>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "MoneroTxin casting failed.",
         details: {"expected": "$T", "type": type.name},
       );
@@ -298,13 +300,16 @@ class TxinGen extends MoneroTxin {
 
 class TxKeyImage extends MoneroSerialization
     with Equality, CborTagSerializable {
-  final List<int> keyImage;
+  final RctKey keyImage;
   TxKeyImage(List<int> keyImage)
-    : keyImage = keyImage.asImmutableBytes.exc(
-        length: Ed25519KeysConst.privKeyByteLen,
-        operation: "TxKeyImage",
-        reason: "Invalid key image bytes length.",
-      );
+    : keyImage =
+          keyImage
+              .exc(
+                length: Ed25519KeysConst.privKeyByteLen,
+                operation: "TxKeyImage",
+                reason: "Invalid key image bytes length.",
+              )
+              .asImmutableBytes;
   factory TxKeyImage.deserializeJson(Map<String, dynamic> json) {
     return TxKeyImage(json.valueAsBytes("key_image"));
   }

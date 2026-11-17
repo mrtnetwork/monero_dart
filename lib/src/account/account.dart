@@ -2,7 +2,6 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/address/address/address.dart';
 import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/crypto/crypto.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/network/config.dart';
 import 'package:monero_dart/src/network/network.dart';
 import 'package:monero_dart/src/serialization/layout/layout.dart';
@@ -26,9 +25,8 @@ class MoneroAccountKeysType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw ItemNotFoundException(
-                name: "MoneroAccountKeysType",
-                value: name,
+              throw BuError(DefaultErrorType.invalidArgument, 
+                'Unknown account keys type "$name".',
               ),
     );
   }
@@ -53,8 +51,10 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
 
   /// monero account
   final MoneroAccount account;
-  final Map<MoneroSubIndex, MoneroPrivateKey> _cachedIndexSpendSecretKey = {};
-  final Map<MoneroSubIndex, MoneroPublicKey> _cachedIndexSpendPubKey = {};
+  final Map<MoneroSubIndex, ED25519MoneroPrivateKey>
+  _cachedIndexSpendSecretKey = {};
+  final Map<MoneroSubIndex, ED25519MoneroPublicKey> _cachedIndexSpendPubKey =
+      {};
   MoneroBaseAccountKeys._({
     required this.network,
     required List<MoneroSubIndex> indexes,
@@ -82,7 +82,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
       case MoneroAccountKeysType.simple:
         return MoneroAccountKeys.deserializeJson(decode.value);
       default:
-        throw const DartMoneroPluginException("Invalod account info type.");
+        throw BuError(DefaultErrorType.invalidArgument, "Invalid account info type.");
     }
   }
 
@@ -106,11 +106,11 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
     return layout(property: property);
   }
 
-  /// add subadress index
+  /// add subaddress index
   MoneroBaseAccountKeys addIndex({int minor = 1, int major = 0}) {
     final index = MoneroSubIndex(major: major, minor: minor);
     if (indexes.contains(index)) {
-      throw const DartMoneroPluginException("Cccount index already exist.");
+      throw BuError(DefaultErrorType.invalidArgument, "Account index already exists.");
     }
     return MoneroAccountKeys(
       account: account,
@@ -122,16 +122,16 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   /// get private spend key
   RctKey getPrivateSpendKey() {
     if (isWatchOnly) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidState, 
         "Watch only account does not have a private spend key",
       );
     }
-    return account.privSkey!.key;
+    return account.privSkey!.takeSecretKey().toBytes();
   }
 
-  MoneroPrivateKey getSubAddressSpendPrivateKey(MoneroSubIndex index) {
+  ED25519MoneroPrivateKey getSubAddressSpendPrivateKey(MoneroSubIndex index) {
     if (!indexes.contains(index)) {
-      throw const DartMoneroPluginException("Index does not exists.");
+      throw BuError(DefaultErrorType.notFound, "Index does not exist.");
     }
     _cachedIndexSpendSecretKey[index] ??=
         account.scubaddr.computeKeys(index.minor, index.major).privateKey;
@@ -139,9 +139,9 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   }
 
   /// get spend public key
-  MoneroPublicKey getSpendPublicKey(MoneroSubIndex index) {
+  ED25519MoneroPublicKey getSpendPublicKey(MoneroSubIndex index) {
     if (!indexes.contains(index)) {
-      throw const DartMoneroPluginException("Index does not exists.");
+      throw BuError(DefaultErrorType.notFound, "Index does not exist.");
     }
     if (!index.isSubaddress) {
       return account.pubSkey;
@@ -154,11 +154,11 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   /// create integrated address with specify paymentId
   MoneroAddress integratedAddress({List<int>? paymentId}) {
     paymentId ??= QuickCrypto.generateRandom(
-      MoneroNetworkConst.paymentIdLength,
+      length: MoneroNetworkConst.paymentIdLength,
     );
     return MoneroIntegratedAddress.fromPubKeys(
-      pubSpendKey: account.pubSkey.key,
-      pubViewKey: account.pubVkey.key,
+      pubSpendKey: account.pubSkey.toBytes(),
+      pubViewKey: account.pubVkey.toBytes(),
       paymentId: paymentId,
       network: network,
     );
@@ -167,8 +167,8 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   /// primary address
   MoneroAddress primaryAddress() {
     return MoneroAccountAddress.fromPubKeys(
-      pubSpendKey: account.pubSkey.key,
-      pubViewKey: account.pubVkey.key,
+      pubSpendKey: account.pubSkey.toBytes(),
+      pubViewKey: account.pubVkey.toBytes(),
       network: network,
     );
   }
@@ -177,7 +177,7 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   MoneroBaseAccountKeys removeIndex(MoneroSubIndex index) {
     final rIndex = indexes.remove(index);
     if (!rIndex) {
-      throw const DartMoneroPluginException("Index does not exists.");
+      throw BuError(DefaultErrorType.notFound, "Index does not exist.");
     }
     return MoneroAccountKeys(
       account: account,
@@ -187,17 +187,17 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   }
 
   /// create subAddress with specify index
-  /// index must be exists
+  /// index must already exist in [indexes]
   MoneroAddress subAddress(MoneroSubIndex index) {
     if (!index.isSubaddress) {
-      throw const DartMoneroPluginException(
-        "Use primary address for Non-subaddress index.",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Use primary address for non-subaddress index.",
       );
     }
     final keys = account.scubaddr.computeKeys(index.minor, index.major);
     return MoneroAccountAddress.fromPubKeys(
-      pubSpendKey: keys.pubSKey.key,
-      pubViewKey: keys.pubVKey.key,
+      pubSpendKey: keys.pubSKey.toBytes(),
+      pubViewKey: keys.pubVKey.toBytes(),
       network: network,
       type: XmrAddressType.subaddress,
     );
@@ -248,10 +248,10 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
     required MoneroNetwork network,
   }) {
     if (indexes.isEmpty) {
-      throw const DartMoneroPluginException("Indexes must not be empty");
+      throw BuError(DefaultErrorType.invalidArgument, "Indexes must not be empty");
     }
     if (indexes.toSet().length != indexes.length) {
-      throw const DartMoneroPluginException("Duplicate indexes find.");
+      throw BuError(DefaultErrorType.invalidArgument, "Duplicate indexes found.");
     }
     return MoneroAccountKeys._(
       account: account,
@@ -261,20 +261,23 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
   }
   factory MoneroAccountKeys.deserializeJson(Map<String, dynamic> json) {
     final List<int>? privSkey = json.valueAsBytes("privSkey");
-    final MoneroPrivateKey privVkey = MoneroPrivateKey.fromBytes(
+    final ED25519MoneroPrivateKey privVkey = ED25519MoneroPrivateKey.fromBytes(
       json.valueAsBytes("privVkey"),
     );
-    final MoneroPublicKey pubSkey = MoneroPublicKey.fromBytes(
+    final ED25519MoneroPublicKey pubSkey = ED25519MoneroPublicKey.fromBytes(
       json.valueAsBytes("pubSkey"),
     );
     MoneroAccount account;
     if (privSkey != null) {
       account = MoneroAccount.fromPrivateSpendKey(privSkey);
     } else {
-      account = MoneroAccount.fromWatchOnly(privVkey.key, pubSkey.key);
+      account = MoneroAccount.fromWatchOnly(
+        privVkey.takeSecretKey(),
+        pubSkey.toBytes(),
+      );
     }
     if (account.privVkey != privVkey || account.pubSkey != pubSkey) {
-      throw const DartMoneroPluginException("Account verification failed.");
+      throw BuError(DefaultErrorType.cryptoVerifyFailed, "Account verification failed.");
     }
     return MoneroAccountKeys(
       account: account,
@@ -308,9 +311,9 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
   Map<String, dynamic> toLayoutStruct() {
     return {
       "network": network.name,
-      "privSkey": account.privSkey?.key,
-      "privVkey": account.privVkey.key,
-      "pubSkey": account.pubVkey.key,
+      "privSkey": account.privSkey?.takeSecretKey(),
+      "privVkey": account.privVkey.takeSecretKey(),
+      "pubSkey": account.pubVkey.toBytes(),
       "indexes": indexes.map((e) => e.toLayoutStruct()).toList(),
     };
   }
@@ -335,10 +338,10 @@ class MoneroMultisigAccountKeys extends MoneroBaseAccountKeys {
     MoneroNetwork network = MoneroNetwork.mainnet,
   }) {
     if (indexes.isEmpty) {
-      throw const DartMoneroPluginException("Indexes must not be empty");
+      throw BuError(DefaultErrorType.invalidArgument, "Indexes must not be empty");
     }
     if (indexes.toSet().length != indexes.length) {
-      throw const DartMoneroPluginException("Duplicate indexes find.");
+      throw BuError(DefaultErrorType.invalidArgument, "Duplicate indexes found.");
     }
     return MoneroMultisigAccountKeys._(
       multisigAccount: multisigAccount,
@@ -375,7 +378,10 @@ class MoneroMultisigAccountKeys extends MoneroBaseAccountKeys {
   RctKey getPrivateSpendKey() {
     final spendKey = RCT.zero();
     for (final i in multisigAccount.multisigPrivateKeys) {
-      CryptoOps.scAdd(spendKey, i.key, spendKey);
+      spendKey.setAll(
+        0,
+        blockchainUtils.api.ed25519.scAdd(i.takeSecretKey(), spendKey),
+      );
     }
     return spendKey;
   }

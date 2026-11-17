@@ -19,7 +19,7 @@ class WalletRequestGetPayments
   Map<String, dynamic> get params => {"payment_id": paymentId};
 
   @override
-  List<WalletRPCPaymentResponse> onResonse(Map<String, dynamic> result) {
+  List<WalletRPCPaymentResponse> onResponse(Map<String, dynamic> result) {
     return (result["payments"] as List)
         .map((e) => WalletRPCPaymentResponse.fromJson(e))
         .toList();

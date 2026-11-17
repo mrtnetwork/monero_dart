@@ -79,7 +79,7 @@ class WalletRequestSweepSingle
   };
 
   @override
-  WalletRPCSweepSingleResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCSweepSingleResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCSweepSingleResponse.fromJson(result);
   }
 }

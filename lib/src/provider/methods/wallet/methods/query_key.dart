@@ -14,7 +14,7 @@ class WalletRequestQueryKey
   Map<String, dynamic> get params => {"key_type": keyType};
 
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["key"];
   }
 }

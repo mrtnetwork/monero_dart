@@ -13,7 +13,7 @@ class WalletRequestGetVersion
   Map<String, dynamic> get params => {};
 
   @override
-  int onResonse(Map<String, dynamic> result) {
+  int onResponse(Map<String, dynamic> result) {
     return IntUtils.parse(result["version"]);
   }
 }

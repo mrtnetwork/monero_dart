@@ -43,16 +43,16 @@ class WalletRequestGetTransfers
     "pending": pendingTransfers,
     "failed": failedTransfers,
     "pool": poolTransfers,
-    "filter_by_height": filterByHeight?.toString(),
-    "min_height": mintHeight?.toString(),
-    "max_height": maxHeight?.toString(),
+    "filter_by_height": filterByHeight,
+    "min_height": mintHeight,
+    "max_height": maxHeight,
     "account_index": accountIndex,
     "subaddr_indices": subaddrIndices,
     "all_accounts": allAccount,
   };
 
   @override
-  WalletRPCGetTransfersResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCGetTransfersResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCGetTransfersResponse.fromJson(result);
   }
 }

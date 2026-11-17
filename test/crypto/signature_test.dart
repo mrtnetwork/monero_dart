@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:blockchain_utils/utils/binary/utils.dart';
 import 'package:monero_dart/src/crypto/models/ec_signature.dart';
 import 'package:monero_dart/src/crypto/monero/crypto.dart';
 import 'package:test/test.dart';
@@ -7,9 +6,13 @@ import 'package:test/test.dart';
 import '../utils.dart';
 import 'signature_vector.dart';
 
-void main() {
+void signatureTest() {
   _verifySignature();
   _generateSignature();
+}
+
+void main() {
+  MoneroTestApi.runTest(signatureTest, "Signature");
 }
 
 void _verifySignature() {

@@ -13,8 +13,10 @@ class DaemonRequestGetBlock
     this.hash,
     this.fillPowHash = false,
   }) : assert(
+         /// Const constructor: throwing is impossible here, so this
+         /// programming-error precondition stays an assert (debug-checked).
          height != null || hash != null,
-         "Pick height or hash to retrive block informations.",
+         "Pick height or hash to retrieve block information.",
        );
 
   /// The block's height.
@@ -27,15 +29,15 @@ class DaemonRequestGetBlock
   String get method => "get_block";
   @override
   Map<String, dynamic> get params => {
-    if (height != null) "height": height.toString(),
+    if (height != null) "height": height,
     if (hash != null) "hash": hash,
     "fill_pow_hash": fillPowHash,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonGetBlockResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetBlockResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetBlockResponse.fromJson(result);
   }
 }

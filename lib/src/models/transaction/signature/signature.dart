@@ -1,7 +1,6 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/models/transaction/transaction/input.dart';
 import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
@@ -18,7 +17,7 @@ abstract class MoneroTxSignatures extends MoneroSerialization {
     } else if (json.containsKey("v2")) {
       return RCTSignature.deserializeJson(json);
     }
-    throw DartMoneroPluginException("Invalid MoneroTxSignatures json struct.");
+    throw BuError(DefaultErrorType.invalidArgument, "Invalid MoneroTxSignatures json struct.");
   }
 
   static Layout<Map<String, dynamic>> layout({
@@ -45,12 +44,12 @@ abstract class MoneroTxSignatures extends MoneroSerialization {
         forcePrunable: forcePrunable,
       );
     }
-    throw const DartMoneroPluginException("Invalid monero tx version.");
+    throw BuError(DefaultErrorType.invalidArgument, "Invalid monero tx version.");
   }
 
   T cast<T extends MoneroTxSignatures>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "MoneroTxSignatures casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -84,7 +83,7 @@ class RCTSignature<S extends RCTSignatureBase, P extends RctSigPrunable>
       },
     );
     if (sig is! S) {
-      throw const DartMoneroPluginException("RCTSignature casting failed.");
+      throw BuError(DefaultErrorType.castFailed, "RCTSignature casting failed.");
     }
     return RCTSignature(signature: sig, rctSigPrunable: p as P?);
   }
@@ -279,7 +278,11 @@ class RCTType {
   static RCTType fromName(String? name) {
     return values.firstWhere(
       (e) => e.name == name,
-      orElse: () => throw ItemNotFoundException(name: "RCTType", value: name),
+      orElse:
+          () =>
+              throw BuError(DefaultErrorType.invalidArgument, 
+                'Unknown range proof type "$name".',
+              ),
     );
   }
 
@@ -370,7 +373,7 @@ abstract class EcdhInfo extends MoneroSerialization {
   abstract final EcdhInfoVersion version;
   T cast<T extends EcdhInfo>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "EcdhInfo casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -387,7 +390,7 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
     required CtKeyV outPk,
     required RctKey? message,
     required CtKeyM? mixRing,
-    required KeyV? pseudoOuts,
+    required List<List<int>>? pseudoOuts,
     required BigInt txnFee,
   }) : ecdhInfo = ecdhInfo.immutable,
        outPk = outPk.immutable,
@@ -395,11 +398,14 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
        pseudoOuts =
            pseudoOuts
                ?.map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "RCTSignatureBase",
-                   reason: "Invalid pseudoOuts bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "RCTSignatureBase",
+                           reason: "Invalid pseudoOuts bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toList()
                .immutable,
@@ -437,7 +443,7 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
       case RCTType.rctTypeBulletproofPlus:
         return RCTBulletproofPlus.deserializeJson(decode.value);
       default:
-        throw DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid RCTSignature.",
           details: {"type": type.name},
         );
@@ -518,7 +524,7 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
 
   T cast<T extends RCTSignatureBase>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "RCTSignatureBase casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -617,7 +623,9 @@ class RCTNull extends RCTSignatureBase {
   }
 
   factory RCTNull.deserializeJson(Map<String, dynamic> json) {
-    assert(json.isEmpty, "Unexpected data in json.");
+    if (json.isNotEmpty) {
+      throw BuError(DefaultErrorType.invalidArgument, "Unexpected data in RCTNull json.");
+    }
     return RCTNull();
   }
   @override
@@ -632,17 +640,17 @@ class RCTNull extends RCTSignatureBase {
 
   @override
   List<EcdhInfoV2> get ecdhInfo =>
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.unsupported, 
         "RCTNULL does not support ECDH information.",
       );
   @override
   List<CtKey> get outPk =>
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.unsupported, 
         "RCTNULL does not support public key information.",
       );
   @override
   BigInt get txnFee =>
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.unsupported, 
         "RCTNULL does not support txnFee information.",
       );
 }
@@ -717,7 +725,7 @@ class RCTSimple extends RCTSignatureBase {
   RCTSimple({
     required List<EcdhInfoV1> super.ecdhInfo,
     required super.txnFee,
-    required List<List<int>> super.pseudoOuts,
+    required super.pseudoOuts,
     required super.outPk,
     super.message,
     super.mixRing,

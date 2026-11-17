@@ -3,7 +3,6 @@ import 'package:monero_dart/src/address/address/address.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/multisig/models/models.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/helper/transaction.dart';
 import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/network/config.dart';
@@ -19,11 +18,7 @@ enum MoneroOutputType {
     return values.firstWhere(
       (e) => e.name == name,
       orElse:
-          () =>
-              throw ItemNotFoundException(
-                name: "MoneroOutputType",
-                value: name,
-              ),
+          () => throw BuError(DefaultErrorType.invalidArgument, 'Unknown output type "$name".'),
     );
   }
 
@@ -47,10 +42,7 @@ enum MoneroPaymentType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw ItemNotFoundException(
-                name: "MoneroPaymentType",
-                value: name,
-              ),
+              throw BuError(DefaultErrorType.invalidArgument, 'Unknown payment type "$name".'),
     );
   }
 
@@ -77,23 +69,29 @@ abstract class MoneroOutput extends MoneroVariantSerialization with Equality {
     required BigInt amount,
     required this.accountIndex,
     required this.type,
-    required RctKey mask,
-    required RctKey derivation,
+    required List<int> mask,
+    required List<int> derivation,
     required List<int> outputPublicKey,
     required BigInt unlockTime,
     required int realIndex,
     required this.coinbase,
   }) : amount = amount.asU64,
-       mask = mask.asImmutableBytes.exc(
-         length: 32,
-         operation: "MoneroOutput",
-         reason: "Invalid mask bytes length.",
-       ),
-       derivation = derivation.asImmutableBytes.exc(
-         length: 32,
-         operation: "MoneroOutput",
-         reason: "Invalid derivation bytes length.",
-       ),
+       mask =
+           mask
+               .exc(
+                 length: 32,
+                 operation: "MoneroOutput",
+                 reason: "Invalid mask bytes length.",
+               )
+               .asImmutableBytes,
+       derivation =
+           derivation
+               .exc(
+                 length: 32,
+                 operation: "MoneroOutput",
+                 reason: "Invalid derivation bytes length.",
+               )
+               .asImmutableBytes,
        unlockTime = unlockTime.asU64,
        realIndex = realIndex.asU32,
        outputPublicKey = outputPublicKey.exc(
@@ -163,7 +161,7 @@ abstract class MoneroOutput extends MoneroVariantSerialization with Equality {
 
   T cast<T extends MoneroOutput>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "Monero output casting failed.",
         details: {"expected": "$T", "type": type.name},
       );
@@ -172,9 +170,9 @@ abstract class MoneroOutput extends MoneroVariantSerialization with Equality {
   }
 
   MoneroOutputUnlockTime getUnlockTime() {
-    final unlocktime = unlockTime.toIntOrNull;
+    final unlocktime = unlockTime.tryAsSafeInt;
     if (unlocktime == null) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid output unlock time. value is too large.",
         details: {"value": unlockTime.toString()},
       );
@@ -284,8 +282,8 @@ class MoneroUnlockedOutput extends MoneroOutput {
   MoneroUnlockedOutput._({
     required super.amount,
     required super.derivation,
-    required RctKey ephemeralSecretKey,
-    required RctKey ephemeralPublicKey,
+    required List<int> ephemeralSecretKey,
+    required List<int> ephemeralPublicKey,
     required this.keyImage,
     required super.mask,
     required super.outputPublicKey,
@@ -294,26 +292,32 @@ class MoneroUnlockedOutput extends MoneroOutput {
     required super.realIndex,
     required super.coinbase,
     MoneroOutputType type = MoneroOutputType.unlocked,
-  }) : ephemeralPublicKey = ephemeralPublicKey.asImmutableBytes.exc(
-         length: 32,
-         operation: "MoneroUnlockedOutput",
-         reason: "Invalid ephemeralPublicKey bytes length.",
-       ),
-       ephemeralSecretKey = ephemeralSecretKey.asImmutableBytes.exc(
-         length: 32,
-         operation: "MoneroUnlockedOutput",
-         reason: "Invalid ephemeralSecretKey bytes length.",
-       ),
+  }) : ephemeralPublicKey =
+           ephemeralPublicKey
+               .exc(
+                 length: 32,
+                 operation: "MoneroUnlockedOutput",
+                 reason: "Invalid ephemeralPublicKey bytes length.",
+               )
+               .asImmutableBytes,
+       ephemeralSecretKey =
+           ephemeralSecretKey
+               .exc(
+                 length: 32,
+                 operation: "MoneroUnlockedOutput",
+                 reason: "Invalid ephemeralSecretKey bytes length.",
+               )
+               .asImmutableBytes,
 
        super(type: MoneroOutputType.unlocked);
   factory MoneroUnlockedOutput({
     required BigInt amount,
-    required RctKey derivation,
-    required RctKey ephemeralSecretKey,
-    required RctKey ephemeralPublicKey,
+    required List<int> derivation,
+    required List<int> ephemeralSecretKey,
+    required List<int> ephemeralPublicKey,
     required TxKeyImage keyImage,
-    required RctKey mask,
-    required RctKey outputPublicKey,
+    required List<int> mask,
+    required List<int> outputPublicKey,
     required MoneroSubIndex accountIndex,
     required BigInt unlockTime,
     required int realIndex,
@@ -534,8 +538,8 @@ abstract class MoneroPayment<T extends MoneroOutput>
     required this.type,
     required this.output,
     required List<int> txPubkey,
-    required RctKey? paymentId,
-    required RctKey? encryptedPaymentid,
+    required List<int>? paymentId,
+    required List<int>? encryptedPaymentid,
     required this.globalIndex,
   }) : paymentId = paymentId?.asImmutableBytes,
        encryptedPaymentid = encryptedPaymentid?.asImmutableBytes,
@@ -569,7 +573,7 @@ abstract class MoneroPayment<T extends MoneroOutput>
         break;
     }
     if (payment is! MoneroPayment<T>) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "Monero payment casting failed.",
         details: {"expected": "$T", "type": type.name},
       );
@@ -606,7 +610,7 @@ abstract class MoneroPayment<T extends MoneroOutput>
 
   E cast<E extends MoneroPayment>() {
     if (this is! E) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "Payment casting failed.",
         details: {"expected": "$E", "type": type.name},
       );
@@ -616,7 +620,7 @@ abstract class MoneroPayment<T extends MoneroOutput>
 
   @override
   String toString() {
-    return output.toString();
+    return "MoneroPayment(type: ${type.name}, amount: ${output.amount}, globalIndex: $globalIndex)";
   }
 }
 
@@ -855,7 +859,7 @@ class MoneroUnlockedMultisigPayment
 
 class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
   final T payment;
-  final List<OutsEntery> outs;
+  final List<OutsEntry> outs;
   final int realOutIndex;
 
   SpendablePayment<E> updatePayment<E extends MoneroPayment>(E updatePayment) {
@@ -868,7 +872,7 @@ class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
 
   SpendablePayment({
     required this.payment,
-    required List<OutsEntery> outs,
+    required List<OutsEntry> outs,
     required int realOutIndex,
   }) : outs = outs.immutable,
        realOutIndex = realOutIndex.asU32;
@@ -888,7 +892,7 @@ class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
       outs:
           json
               .valueEnsureAsList<Map<String, dynamic>>("outs")
-              .map((e) => OutsEntery.deserializeJson(e))
+              .map((e) => OutsEntry.deserializeJson(e))
               .toList(),
       realOutIndex: json.valueAs("realOutIndex"),
     );
@@ -897,7 +901,7 @@ class SpendablePayment<T extends MoneroPayment> extends MoneroSerialization {
   static Layout<Map<String, dynamic>> layout({String? property}) {
     return LayoutConst.struct([
       MoneroPayment.layout(property: "payment"),
-      MoneroLayoutConst.variantVec(OutsEntery.layout(), property: "outs"),
+      MoneroLayoutConst.variantVec(OutsEntry.layout(), property: "outs"),
       MoneroLayoutConst.varintInt(property: "realOutIndex"),
     ], property: property);
   }
@@ -947,7 +951,7 @@ class MoneroTransactionWithOutputIndeces {
   }) {
     if (outputIndices != null &&
         transaction.vout.length != outputIndices.length) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
         details: {
           "out_indices": outputIndices.join(","),
@@ -966,7 +970,7 @@ class MoneroTransactionWithOutputIndeces {
   }) {
     if (outputIndices == null ||
         transaction.vout.length != outputIndices.length) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
         details: {
           "out_indices": outputIndices?.join(","),
@@ -1033,7 +1037,7 @@ class MoneroTxDestination extends MoneroSerialization {
   String toString() {
     return {
       "amount": MoneroTransactionHelper.toXMR(amount),
-      "address": address.toString(),
+      "address": address.address,
     }.toString();
   }
 }
@@ -1056,17 +1060,13 @@ class MoneroSubIndex extends MoneroSerialization
   }
   factory MoneroSubIndex({int major = 0, int minor = 0}) {
     if (minor < 0 || minor > MoneroSubaddressConst.subaddrMaxIdx) {
-      throw ArgumentException.invalidOperationArguments(
-        "MoneroSubIndex",
-        name: "minor",
-        reason: "Invalid minor index.",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid minor subaddress index $minor: expected 0..${MoneroSubaddressConst.subaddrMaxIdx}.",
       );
     }
     if (major < 0 || major > MoneroSubaddressConst.subaddrMaxIdx) {
-      throw ArgumentException.invalidOperationArguments(
-        "MoneroSubIndex",
-        name: "major",
-        reason: "Invalid major index.",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid major subaddress index $major: expected 0..${MoneroSubaddressConst.subaddrMaxIdx}.",
       );
     }
     return MoneroSubIndex.unsafe(major: major, minor: minor);
@@ -1138,12 +1138,12 @@ class MoneroSubIndex extends MoneroSerialization
   List<CborObject?> get serializationItems => [major.toCbor(), minor.toCbor()];
 }
 
-class OutsEntery extends MoneroSerialization with Equality {
+class OutsEntry extends MoneroSerialization with Equality {
   final BigInt index;
   final CtKey key;
-  const OutsEntery({required this.index, required this.key});
-  factory OutsEntery.deserializeJson(Map<String, dynamic> json) {
-    return OutsEntery(
+  const OutsEntry({required this.index, required this.key});
+  factory OutsEntry.deserializeJson(Map<String, dynamic> json) {
+    return OutsEntry(
       index: json.valueAs("index"),
       key: CtKey.deserializeJson(json.valueEnsureAsMap<String, dynamic>("key")),
     );
@@ -1176,13 +1176,13 @@ class OutsEntery extends MoneroSerialization with Equality {
 
 class TxEpemeralKeyResult {
   final TxoutTarget txOut;
-  final List<int> amountKey;
-  final MoneroPublicKey? additionalTxPubKey;
+  final BuBytes amountKey;
+  final ED25519MoneroPublicKey? additionalTxPubKey;
   TxEpemeralKeyResult({
     required this.txOut,
     required List<int> amountKey,
     this.additionalTxPubKey,
-  }) : amountKey = amountKey.immutable;
+  }) : amountKey = amountKey.asImmutableBytes;
 }
 
 /// Dont change order.
@@ -1199,7 +1199,7 @@ enum MoneroFeePrority {
     if (index == 0) return baseFee.fee;
     final fees = baseFee.fees;
     if (fees == null || index >= fees.length) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Failed to determine base fee based on your priority.",
       );
     }

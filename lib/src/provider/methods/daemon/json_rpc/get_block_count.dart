@@ -16,9 +16,9 @@ class DaemonRequestGetBlockCount
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonGetBlockCountResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetBlockCountResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetBlockCountResponse.fromJson(result);
   }
 }

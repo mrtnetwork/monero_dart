@@ -13,7 +13,7 @@ class WalletRequestGetHeight
   Map<String, dynamic> get params => {};
 
   @override
-  BigInt onResonse(Map<String, dynamic> result) {
+  BigInt onResponse(Map<String, dynamic> result) {
     return BigintUtils.parse(result["height"]);
   }
 }

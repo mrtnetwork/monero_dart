@@ -32,14 +32,14 @@ class WalletRequestRestoreDeterministicWallet
     "filename": fileName,
     "password": password,
     "seed": seed,
-    "restore_height": restoreHeight?.toString(),
+    "restore_height": restoreHeight,
     "language": language,
     "seed_offset": seedOffset,
     "autosave_current": autoSaveCurrent,
   };
 
   @override
-  WalletRPCRestoreDeterministicWalletResponse onResonse(
+  WalletRPCRestoreDeterministicWalletResponse onResponse(
     Map<String, dynamic> result,
   ) {
     return WalletRPCRestoreDeterministicWalletResponse.fromJson(result);

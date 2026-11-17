@@ -14,7 +14,7 @@ class WalletRequestSubmitTransfer
   Map<String, dynamic> get params => {"tx_data_hex": txDataHex};
 
   @override
-  List<String> onResonse(Map<String, dynamic> result) {
+  List<String> onResponse(Map<String, dynamic> result) {
     return (result["tx_hash_list"] as List).cast();
   }
 }

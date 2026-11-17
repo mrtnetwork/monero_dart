@@ -16,10 +16,12 @@ class DaemonRequestGetTransactionPoolStats
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonGetTransactionPoolStatsResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetTransactionPoolStatsResponse onResponse(
+    Map<String, dynamic> result,
+  ) {
     return DaemonGetTransactionPoolStatsResponse.fromJson(result);
   }
 }

@@ -1,5 +1,4 @@
-import 'package:blockchain_utils/helper/helper.dart';
-import 'package:blockchain_utils/utils/utils.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/provider/utils/utils.dart';
 
 class DaemonBaseResponse {
@@ -59,7 +58,7 @@ class DaemonChainInfo {
 }
 
 class DaemonGetAlternateChainsResponse extends DaemonBaseResponse {
-  /// unsigned int; Number of blocks in longest chain seen by the node.
+  /// Alternate chains seen by the node.
   final List<DaemonChainInfo> chains;
 
   DaemonGetAlternateChainsResponse.fromJson(super.json)
@@ -99,7 +98,7 @@ class DaemonCoinbaseTxSumResponse extends DaemonBaseResponse {
 }
 
 class DaemonGetBlockCountResponse extends DaemonBaseResponse {
-  /// unsigned int; Number of blocks in longest chain seen by the node.
+  /// Number of blocks in the longest chain seen by the node.
   final int count;
 
   DaemonGetBlockCountResponse.fromJson(super.json)
@@ -108,7 +107,7 @@ class DaemonGetBlockCountResponse extends DaemonBaseResponse {
 }
 
 class DaemonGenerateBlockResponse extends DaemonBaseResponse {
-  /// unsigned int; Number of blocks in longest chain seen by the node.
+  /// Hashes of the generated blocks.
   final List<String> blocks;
   final BigInt height;
   DaemonGenerateBlockResponse({
@@ -120,7 +119,7 @@ class DaemonGenerateBlockResponse extends DaemonBaseResponse {
     required bool super.untrusted,
   }) : blocks = blocks.immutable;
   DaemonGenerateBlockResponse.fromJson(super.json)
-    : blocks = (json["count"] as List).cast<String>().immutable,
+    : blocks = (json["blocks"] as List).cast<String>().immutable,
       height = BigintUtils.parse(json["height"]),
       super.fromJson();
 }
@@ -485,10 +484,15 @@ class DaemonIsKeyImageSpentResponse extends DaemonBaseResponse {
 
   DaemonIsKeyImageSpentResponse.fromJson(super.json)
     : spentStatus =
-          (json["spent_status"] as List)
-              .cast<int>()
-              .map((e) => DaemonKeyImageSpentStatus.values.elementAt(e))
-              .toImutableList,
+          (json["spent_status"] as List).cast<int>().map((e) {
+            if (e < 0 || e >= DaemonKeyImageSpentStatus.values.length) {
+              throw BuError(
+                DefaultErrorType.invalidArgument,
+                "Invalid key image spent status index $e.",
+              );
+            }
+            return DaemonKeyImageSpentStatus.values[e];
+          }).toImutableList,
       super.fromJson();
 }
 
@@ -708,7 +712,10 @@ class DaemonBlockHeaderResponse {
       difficulty = BigintUtils.parse(json['difficulty']),
       wideDifficulty = json['wide_difficulty'],
       difficultyTop64 = BigintUtils.parse(json['difficulty_top64']),
-      cumulativeDifficulty = BigintUtils.parse(json['cumulative_difficulty']),
+      cumulativeDifficulty = json.valueAsBigInt(
+        'cumulative_difficulty',
+        allowDecimals: true,
+      ),
       wideCumulativeDifficulty = json['wide_cumulative_difficulty'],
       cumulativeDifficultyTop64 = BigintUtils.parse(
         json['cumulative_difficulty_top64'],
@@ -723,12 +730,12 @@ class DaemonBlockHeaderResponse {
       minerTxHash = json['miner_tx_hash'];
 }
 
-class DaemonHFEnteryResponse {
+class DaemonHFEntryResponse {
   final int hfVersion;
   final BigInt height;
-  const DaemonHFEnteryResponse({required this.height, required this.hfVersion});
-  factory DaemonHFEnteryResponse.fromJson(Map<String, dynamic> json) {
-    return DaemonHFEnteryResponse(
+  const DaemonHFEntryResponse({required this.height, required this.hfVersion});
+  factory DaemonHFEntryResponse.fromJson(Map<String, dynamic> json) {
+    return DaemonHFEntryResponse(
       height: BigintUtils.parse(json["height"]),
       hfVersion: json["hf_version"],
     );
@@ -740,7 +747,7 @@ class DaemonGetVersionResponse extends DaemonBaseResponse {
   final bool release;
   final BigInt currentHeight;
   final BigInt targetHeight;
-  final List<DaemonHFEnteryResponse> hardForks;
+  final List<DaemonHFEntryResponse> hardForks;
   DaemonGetVersionResponse.fromJson(super.json)
     : version = json["version"],
       release = json["release"],
@@ -749,7 +756,7 @@ class DaemonGetVersionResponse extends DaemonBaseResponse {
       targetHeight = BigintUtils.tryParse(json["target_height"]) ?? BigInt.zero,
       hardForks =
           (json["hardForks"] as List?)
-              ?.map((e) => DaemonHFEnteryResponse.fromJson(e))
+              ?.map((e) => DaemonHFEntryResponse.fromJson(e))
               .toImutableList ??
           [],
       super.fromJson();
@@ -971,6 +978,6 @@ class DaemonGetOutRequestParams {
     );
   }
   Map<String, dynamic> toJson() {
-    return {"amount": amount.toString(), "index": index.toString()};
+    return {"amount": amount, "index": index};
   }
 }

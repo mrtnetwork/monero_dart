@@ -13,10 +13,10 @@ class DaemonRequestBanned
   @override
   Map<String, dynamic> get params => {"address": address};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonBannedResponse onResonse(Map<String, dynamic> result) {
+  DaemonBannedResponse onResponse(Map<String, dynamic> result) {
     return DaemonBannedResponse.fromJson(result);
   }
 }

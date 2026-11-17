@@ -6,13 +6,17 @@ import 'package:test/test.dart';
 import '../utils.dart';
 import 'derive_public_key_test_vector.dart';
 
-void main() async {
+void hashToEcTest() {
   test("hash to ec", () {
-    for (final i in hashToEcVector.takeShuffle()) {
+    for (final i in hashToEcVector) {
       final hash = BytesUtils.fromHexString(i["hash"]);
       final expected = BytesUtils.fromHexString(i["point"]);
       final point = RCT.hashToP3Bytes(hash);
       expect(expected, point);
     }
   });
+}
+
+void main() {
+  MoneroTestApi.runTest(hashToEcTest, "Hash To Ec");
 }

@@ -29,7 +29,7 @@ class WalletRequestMakeIntegratedAddress
     "payment_id": paymentId,
   };
   @override
-  WalletRPCMakeIntegratedAddressResponse onResonse(
+  WalletRPCMakeIntegratedAddressResponse onResponse(
     Map<String, dynamic> result,
   ) {
     return WalletRPCMakeIntegratedAddressResponse.fromJson(result);

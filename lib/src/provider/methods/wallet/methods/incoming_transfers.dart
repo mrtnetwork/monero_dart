@@ -35,7 +35,7 @@ class WalletRequestIncommingTransfers
   };
 
   @override
-  List<WalletRPCIncommingTransferResponse> onResonse(
+  List<WalletRPCIncommingTransferResponse> onResponse(
     Map<String, dynamic> result,
   ) {
     if (result.isEmpty) return [];

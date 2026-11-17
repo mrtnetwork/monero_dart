@@ -2,7 +2,9 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/monero_dart.dart';
 import 'package:test/test.dart';
 
-void main() {
+import '../utils.dart';
+
+void multisigTest() {
   group("multisig", () {
     test("3/5", () {
       final addr = _createMultisigAccountsM3N5();
@@ -18,7 +20,21 @@ void main() {
         "5AoMqeai86EJh7YzQ9y9ZWHzSCR4QsbdtJidYq7PWxDjPWRKFoSdPXNQoK8r9Xo6PG33DScGPG4MiCrUtre6qMa8R9bSo8q",
       );
     });
+    test("2/2", () {
+      /// N-of-N kex (single round): every participant must derive the same
+      /// address, otherwise post-kex verification fails. Regression test for
+      /// the missing basePrivateKey in _initializeKexUpdate.
+      final addr = _createMultisigAccountsM2N2();
+      expect(
+        addr[0].primaryAddress().address,
+        addr[1].primaryAddress().address,
+      );
+    });
   });
+}
+
+void main() {
+  MoneroTestApi.runTest(multisigTest, "Multisig");
 }
 
 List<MoneroMultisigAccountKeys> _createMultisigAccountsM1N2() {
@@ -30,6 +46,75 @@ List<MoneroMultisigAccountKeys> _createMultisigAccountsM1N2() {
 
   /// then we have 1/2 multisig account.
   /// 1 signer requirment for building tx
+
+  /// initialize multisig account for each wallet
+  final List<MoneroMultisigAccount> accounts =
+      wallets
+          .map(
+            (e) => MoneroMultisigAccount.initialize(
+              privateSpendKey: e.privateSpendKey,
+              privateViewKey: e.privVkey,
+            ),
+          )
+          .toList();
+
+  /// get each account next round kex message
+  final messages =
+      accounts.map((e) => e.nextRoundKexMessage.toMessage()).toList();
+  final signers = messages.map((e) => e.signingPubKey).toList();
+
+  /// initializeKex for each account with all initialize message and threshhold
+  for (final i in accounts) {
+    i.initializeKex(threshold, signers, messages);
+  }
+
+  /// the we loop accounts to generate each round kex message and shared to other accounts.
+  while (!accounts[0].multisigIsReady) {
+    /// get all kex messages
+    final messages =
+        accounts.map((e) => e.nextRoundKexMessage.toMessage()).toList();
+
+    /// update each account in current round.
+    for (final i in accounts) {
+      i.kexUpdate(messages);
+    }
+
+    /// now the accounts round updated and in next itration we have new kex round messages.
+    /// we check all accounts has same round.
+    for (int i = 1; i < accounts.length; i++) {
+      expect(accounts[0].kexRoundsComplete, accounts[i].kexRoundsComplete);
+    }
+  }
+
+  /// at the end we check everything
+  expect(accounts[0].multisigIsReady, true);
+  expect(accounts[0].threshold, threshold);
+  for (int i = 1; i < accounts.length; i++) {
+    expect(accounts[i].multisigIsReady, true);
+    expect(accounts[i].threshold, threshold);
+    expect(accounts[0].toAddress(), accounts[i].toAddress());
+    expect(
+      CompareUtils.iterableIsEqual(accounts[0].signers, accounts[i].signers),
+      true,
+    );
+  }
+
+  return accounts
+      .map(
+        (e) => MoneroMultisigAccountKeys(
+          multisigAccount: e,
+          network: MoneroNetwork.stagenet,
+        ),
+      )
+      .toList();
+}
+
+List<MoneroMultisigAccountKeys> _createMultisigAccountsM2N2() {
+  /// threshhold 2
+  const int threshold = 2;
+
+  /// accounts 2
+  final List<MoneroAccount> wallets = [acc1(), acc2()];
 
   /// initialize multisig account for each wallet
   final List<MoneroMultisigAccount> accounts =

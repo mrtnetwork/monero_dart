@@ -5,7 +5,6 @@ import 'package:monero_dart/src/address/address/address.dart';
 import 'package:monero_dart/src/crypto/gamma/gamma.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/helper/transaction.dart';
 import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/network/config.dart';

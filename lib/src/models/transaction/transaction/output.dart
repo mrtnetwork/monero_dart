@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 
@@ -34,7 +33,9 @@ class TxOutTargetType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw ItemNotFoundException(name: "TxOutTargetType", value: name),
+              throw BuError(DefaultErrorType.invalidArgument, 
+                'Unknown transaction output target type "$name".',
+              ),
     );
   }
 }
@@ -55,7 +56,7 @@ abstract class TxoutTarget extends MoneroVariantSerialization {
       case TxOutTargetType.txoutToTaggedKey:
         return TxoutToTaggedKey.deserializeJson(decode.value);
       default:
-        throw DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid txout target.",
           details: {"type": type.name},
         );
@@ -97,7 +98,7 @@ abstract class TxoutTarget extends MoneroVariantSerialization {
 
   T cast<T extends TxoutTarget>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "TxoutTarget casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -105,12 +106,12 @@ abstract class TxoutTarget extends MoneroVariantSerialization {
     return this as T;
   }
 
-  MoneroPublicKey? getPublicKey() {
+  ED25519MoneroPublicKey? getPublicKey() {
     switch (type) {
       case TxOutTargetType.txoutToKey:
-        return MoneroPublicKey.fromBytes(cast<TxoutToKey>().key);
+        return ED25519MoneroPublicKey.fromBytes(cast<TxoutToKey>().key);
       case TxOutTargetType.txoutToTaggedKey:
-        return MoneroPublicKey.fromBytes(cast<TxoutToTaggedKey>().key);
+        return ED25519MoneroPublicKey.fromBytes(cast<TxoutToTaggedKey>().key);
       default:
         return null;
     }

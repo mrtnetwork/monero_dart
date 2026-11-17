@@ -3,10 +3,10 @@ import 'package:monero_dart/src/provider/core/core.dart';
 import 'package:monero_dart/src/provider/service/service.dart';
 import 'package:monero_dart/src/serialization/storage_format/tools/serializer.dart';
 
-/// Facilitates communication with the monero deamon or wallet api by making requests using a provided [MoneroProvider].
+/// Facilitates communication with the monero daemon or wallet api by making requests using a provided service.
 class MoneroProvider<SERVICE extends IServiceProvider>
     extends IProvider<SERVICE, MoneroRequestDetails> {
-  /// The underlying deamon service provider used for network communication.
+  /// The underlying daemon service provider used for network communication.
   @override
   final SERVICE service;
 
@@ -21,10 +21,10 @@ class MoneroProvider<SERVICE extends IServiceProvider>
     required bool catchStatus,
   }) {
     switch (params.requestType) {
-      case DemonRequestType.json:
-      case DemonRequestType.jsonRPC:
+      case DaemonRequestType.json:
+      case DaemonRequestType.jsonRPC:
         final data = params.toEncodingResponse<Map<String, dynamic>>(response);
-        if (params.requestType == DemonRequestType.json) {
+        if (params.requestType == DaemonRequestType.json) {
           if (catchStatus) {
             final result =
                 ServiceProviderUtils.toResponse<Map<String, dynamic>>(
@@ -63,7 +63,7 @@ class MoneroProvider<SERVICE extends IServiceProvider>
           object: data["result"],
           params: params,
         );
-      case DemonRequestType.binary:
+      case DaemonRequestType.binary:
         final data = params.toEncodingResponse<List<int>>(response);
         final jsonData = MoneroStorageSerializer.deserialize(data);
         if (catchStatus) {
@@ -95,7 +95,7 @@ class MoneroProvider<SERVICE extends IServiceProvider>
       request,
       timeout: timeout,
     );
-    return request.onResonse(r);
+    return request.onResponse(r);
   }
 
   /// Sends a request to the monero network using the specified [request] parameter.
@@ -108,11 +108,11 @@ class MoneroProvider<SERVICE extends IServiceProvider>
     Duration? timeout,
     bool catchStatus = true,
   }) async {
-    final params = request.buildRequest(_id++);
+    final params = await request.buildRequest(_id++);
     final response = switch (params.requestType) {
-      DemonRequestType.json || DemonRequestType.jsonRPC => await service
+      DaemonRequestType.json || DaemonRequestType.jsonRPC => await service
           .doRequest(params, timeout: timeout),
-      DemonRequestType.binary => await service.doRequest(
+      DaemonRequestType.binary => await service.doRequest(
         params,
         timeout: timeout,
       ),

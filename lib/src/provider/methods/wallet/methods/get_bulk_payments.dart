@@ -27,11 +27,11 @@ class WalletRequestGetBulkPayments
   @override
   Map<String, dynamic> get params => {
     "payment_ids": paymentIds,
-    "min_block_height": minBlockHeight.toString(),
+    "min_block_height": minBlockHeight,
   };
 
   @override
-  List<WalletRPCPaymentResponse> onResonse(Map<String, dynamic> result) {
+  List<WalletRPCPaymentResponse> onResponse(Map<String, dynamic> result) {
     return (result["payments"] as List)
         .map((e) => WalletRPCPaymentResponse.fromJson(e))
         .toList();

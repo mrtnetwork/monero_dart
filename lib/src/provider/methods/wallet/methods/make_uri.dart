@@ -32,13 +32,13 @@ class WalletRequestMakeUri
   @override
   Map<String, dynamic> get params => {
     "address": address.address,
-    "amount ": amount?.toString(),
+    "amount": amount,
     "payment_id": paymentId,
     "recipient_name": recipientName,
     "tx_description": txDescription,
   };
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["uri"];
   }
 }

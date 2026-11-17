@@ -15,7 +15,7 @@ class WalletRequestDeleteAddressBook
   Map<String, dynamic> get params => {"index": index};
 
   @override
-  Null onResonse(Map<String, dynamic> result) {
+  Null onResponse(Map<String, dynamic> result) {
     return null;
   }
 }

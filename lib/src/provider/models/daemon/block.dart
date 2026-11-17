@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
@@ -171,9 +170,15 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
   final List<String>? removedPoolTxids;
 
   DaemonGetBlockBinResponse.fromJson(super.json)
-    : poolInfoExtent = PoolInfoExtent.values.elementAt(
-        IntUtils.parse(json["pool_info_extent"] ?? 0),
-      ),
+    : poolInfoExtent = switch (IntUtils.tryParse(json["pool_info_extent"]) ??
+          0) {
+        final int e when e >= 0 && e < PoolInfoExtent.values.length =>
+          PoolInfoExtent.values[e],
+        _ =>
+          throw BuError(DefaultErrorType.invalidArgument, 
+            'Invalid pool info extent ${json["pool_info_extent"]}.',
+          ),
+      },
       blocks =
           (json["blocks"] as List)
               .map((e) => DaemonBlockCompleteEntryResponse.fromJson(e))
@@ -197,8 +202,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
 
   List<TxPrefixWithTxHashResponse> toPrefixTxes() {
     if (blocks.length != outputIndices.length) {
-      throw const DartMoneroPluginException(
-        "Invalid response. miss match blocks and output indices",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid response: mismatched blocks and output indices (${blocks.length} != ${outputIndices.length}).",
       );
     }
     final txWithIndices = List.generate(blocks.length, (i) {
@@ -206,8 +211,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
       final txes = block.getPrefixTxes();
       final txIds = block.txIds();
       if (txes.length != txIds.length) {
-        throw const DartMoneroPluginException(
-          "Invalid response. miss match txes and block tx hashes.",
+        throw BuError(DefaultErrorType.invalidArgument, 
+          "Invalid response: mismatched transactions and block transaction hashes (${txes.length} != ${txIds.length}).",
         );
       }
       final withIndices = List.generate(txes.length, (e) {
@@ -223,8 +228,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
 
   List<TxWithTxHashResponse> toTxes() {
     if (blocks.length != outputIndices.length) {
-      throw const DartMoneroPluginException(
-        "Invalid response. miss match blocks and output indices",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid response: mismatched blocks and output indices (${blocks.length} != ${outputIndices.length}).",
       );
     }
     final txWithIndices = List.generate(blocks.length, (i) {
@@ -232,8 +237,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
       final txes = block.getTxes();
       final txIds = block.txIds();
       if (txes.length != txIds.length) {
-        throw const DartMoneroPluginException(
-          "Invalid response. miss match txes and block tx hashes.",
+        throw BuError(DefaultErrorType.invalidArgument, 
+          "Invalid response: mismatched transactions and block transaction hashes (${txes.length} != ${txIds.length}).",
         );
       }
       final withIndices = List.generate(txes.length, (e) {

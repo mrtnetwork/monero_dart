@@ -11,5 +11,5 @@ class DaemonRequestGetTxPoolBackLog
   String get method => "get_txpool_backlog";
 
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 }

@@ -12,10 +12,10 @@ class DaemonRequestStartSaveGraph
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonBaseResponse onResonse(Map<String, dynamic> result) {
+  DaemonBaseResponse onResponse(Map<String, dynamic> result) {
     return DaemonBaseResponse.fromJson(result);
   }
 }

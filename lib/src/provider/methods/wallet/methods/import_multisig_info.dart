@@ -17,7 +17,7 @@ class WalletRequestImportMultisigInfo
 
   /// Number of outputs signed with those multisig info.
   @override
-  int onResonse(Map<String, dynamic> result) {
+  int onResponse(Map<String, dynamic> result) {
     return IntUtils.parse(result["n_outputs"]);
   }
 }

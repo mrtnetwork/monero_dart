@@ -1,12 +1,11 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 
 class MECSignature extends MoneroSerialization {
   final RctKey c;
   final RctKey r;
-  MECSignature({required RctKey c, required RctKey r})
+  MECSignature({required List<int> c, required List<int> r})
     : c =
           c
               .exc(
@@ -25,7 +24,7 @@ class MECSignature extends MoneroSerialization {
               .asImmutableBytes;
   factory MECSignature.fromBytes(List<int> bytes) {
     if (bytes.length != 64) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidLength, 
         "Invalid EcSignature bytes length.",
         details: {"expected": 64.toString(), "length": bytes.length.toString()},
       );

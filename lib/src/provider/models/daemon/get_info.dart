@@ -1,4 +1,4 @@
-import 'package:blockchain_utils/utils/utils.dart';
+import 'package:blockchain_utils/utils/json/json.dart';
 import 'package:monero_dart/src/provider/models/daemon/basic_models.dart';
 
 class DaemonGetInfoResponse extends DaemonBaseResponse {

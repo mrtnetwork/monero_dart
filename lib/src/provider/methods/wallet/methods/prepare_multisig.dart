@@ -4,15 +4,19 @@ import 'package:monero_dart/src/provider/core/core.dart';
 /// https://docs.getmonero.org/rpc-library/wallet-rpc/#prepare_multisig
 class WalletRequestPrepareMultisig
     extends MoneroWalletRequestParam<String, Map<String, dynamic>> {
-  WalletRequestPrepareMultisig();
+  WalletRequestPrepareMultisig({this.enableMultisigExperimental = false});
+
+  final bool enableMultisigExperimental;
 
   @override
   String get method => "prepare_multisig";
   @override
-  Map<String, dynamic> get params => {};
+  Map<String, dynamic> get params => {
+    "enable_multisig_experimental": enableMultisigExperimental,
+  };
 
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["multisig_info"];
   }
 }

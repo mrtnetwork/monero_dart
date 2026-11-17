@@ -1,17 +1,21 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/serialization/storage_format/types/entry.dart';
 
-enum DemonRequestType {
+enum DaemonRequestType {
   json(0),
   jsonRPC(1),
   binary(2);
 
   final int value;
-  const DemonRequestType(this.value);
-  static DemonRequestType fromValue(int? value) {
+  const DaemonRequestType(this.value);
+  static DaemonRequestType fromValue(int? value) {
     return values.firstWhere(
       (e) => e.value == value,
-      orElse: () => throw ItemNotFoundException(name: "DemonRequestType"),
+      orElse:
+          () =>
+              throw BuError(DefaultErrorType.invalidArgument, 
+                "Unknown daemon request type $value.",
+              ),
     );
   }
 }
@@ -30,7 +34,7 @@ abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
   Map<String, String> get headers => {'Content-Type': 'application/json'};
 
   /// type of request
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
   RequestMethod get requestMethod => RequestMethod.post;
@@ -41,18 +45,26 @@ abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
     ServiceReponseEncoding? encoding,
   }) {
     final String? bodyString = switch (encodingType) {
-      DemonRequestType.json => StringUtils.fromJson(params),
-      DemonRequestType.jsonRPC => StringUtils.fromJson(
+      DaemonRequestType.json => StringUtils.fromJson(
+        params,
+        options: const JsonEncodeOptions(
+          bigIntEncoding: BigIntEncoding.intOrString,
+        ),
+      ),
+      DaemonRequestType.jsonRPC => StringUtils.fromJson(
         ServiceProviderUtils.buildJsonRPCParams(
           params: params,
           method: method,
           requestId: requestID,
         ),
+        options: const JsonEncodeOptions(
+          bigIntEncoding: BigIntEncoding.intOrString,
+        ),
       ),
       _ => null,
     };
     List<int>? bodyBytes;
-    if (encodingType == DemonRequestType.binary) {
+    if (encodingType == DaemonRequestType.binary) {
       final bodyJson = params as Map<String, dynamic>;
       if (bodyJson.isNotEmpty) {
         final storage = MoneroStorage.fromJson(bodyJson);
@@ -69,7 +81,7 @@ abstract class MoneroDaemonRequestParam<RESULT, RESPONSE>
       responseEncoding:
           encoding ??
           switch (encodingType) {
-            DemonRequestType.binary => ServiceReponseEncoding.binary,
+            DaemonRequestType.binary => ServiceReponseEncoding.binary,
             _ => ServiceReponseEncoding.map,
           },
       requestMethod: requestMethod,
@@ -82,7 +94,7 @@ abstract class MoneroWalletRequestParam<RESULT, RESPONSE>
     extends MoneroDaemonRequestParam<RESULT, RESPONSE> {
   const MoneroWalletRequestParam();
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
   MoneroRequestDetails buildRequest(
     int requestID, {
@@ -98,6 +110,9 @@ abstract class MoneroWalletRequestParam<RESULT, RESPONSE>
           params: params,
           method: method,
           requestId: requestID,
+        ),
+        options: const JsonEncodeOptions(
+          bigIntEncoding: BigIntEncoding.intOrString,
         ),
       ),
       requestType: encodingType,
@@ -118,14 +133,18 @@ enum MoneroProviderApi {
   static MoneroProviderApi fromValue(int? value) {
     return values.firstWhere(
       (e) => e.value == value,
-      orElse: () => throw ItemNotFoundException(name: "MoneroProviderApi"),
+      orElse:
+          () =>
+              throw BuError(DefaultErrorType.invalidArgument, 
+                "Unknown monero provider api $value.",
+              ),
     );
   }
 }
 
 class MoneroRequestDetails extends BaseServiceRequestParams {
   final MoneroProviderApi api;
-  final DemonRequestType requestType;
+  final DaemonRequestType requestType;
   final String method;
 
   const MoneroRequestDetails({
@@ -174,7 +193,7 @@ class MoneroRequestDetails extends BaseServiceRequestParams {
       path: values.rawValueAt(7),
       requestID: values.rawValueAt(8),
       api: MoneroProviderApi.fromValue(values.rawValueAt(9)),
-      requestType: DemonRequestType.fromValue(values.rawValueAt(10)),
+      requestType: DaemonRequestType.fromValue(values.rawValueAt(10)),
       method: values.rawValueAt(11),
     );
   }
@@ -189,7 +208,7 @@ class MoneroRequestDetails extends BaseServiceRequestParams {
     List<int>? errorStatusCodes,
     List<int>? successStatusCodes,
     MoneroProviderApi? api,
-    DemonRequestType? requestType,
+    DaemonRequestType? requestType,
     String? method,
   }) {
     return MoneroRequestDetails(
@@ -210,10 +229,10 @@ class MoneroRequestDetails extends BaseServiceRequestParams {
 
   @override
   Uri encodeUrl(String uri) {
-    if (requestType == DemonRequestType.binary) {
+    if (requestType == DaemonRequestType.binary) {
       return Uri.parse(uri).replace(path: method);
     }
-    if (requestType == DemonRequestType.json) {
+    if (requestType == DaemonRequestType.json) {
       return Uri.parse(uri).replace(path: method);
     } else {
       return Uri.parse(uri).replace(path: "json_rpc");

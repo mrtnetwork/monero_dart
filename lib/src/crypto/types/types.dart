@@ -1,7 +1,8 @@
+import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/models/ct_key.dart';
 
 /// represents a 32-byte key.
-typedef RctKey = List<int>;
+typedef RctKey = BuBytes;
 
 /// is a list of `RctKey` (List of 32-byte keys)
 typedef Key64 = List<RctKey>;

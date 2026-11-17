@@ -1,14 +1,13 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/crypto/models/multiexp_data.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 
 class _StrausData {
-  final List<List<EDPoint>> multiples;
+  final List<List<EdwardsLimbPoint>> multiples;
   final int size;
-  EDPoint at(int point, int digit) {
+  EdwardsLimbPoint at(int point, int digit) {
     return multiples[point][digit - 1];
   }
 
@@ -19,7 +18,9 @@ class _StrausData {
       n = data.length;
     }
     if (n > data.length) {
-      throw const MoneroCryptoException("Bad cache base data.");
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Bad straus cache data: requested $n entries but cache holds ${data.length}.",
+      );
     }
     final _StrausData cache = _StrausData(
       size: n,
@@ -27,7 +28,7 @@ class _StrausData {
         n,
         (_) => List.generate(
           (1 << Multiexp.strausC) - 1,
-          (_) => EDPoint.infinity(curve: Curves.curveEd25519),
+          (_) => EdwardsLimbPoint.identity_,
         ),
       ),
     );
@@ -61,29 +62,35 @@ class Multiexp {
 
   static List<int> _pow2(int n) {
     if (n >= 256) {
-      throw const MoneroCryptoException("Invalid _pow2 argument");
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid power-of-two index $n: expected 0 <= n < 256.",
+      );
     }
-    final List<int> res = RCTConst.z.clone();
+    final RctKey res = RCTConst.z.clone();
     res[n >> 3] |= 1 << (n & 7);
     return res;
   }
 
-  static List<EDPoint> _getPippenger({
+  static List<EdwardsLimbPoint> _getPippenger({
     required List<MultiexpData> data,
     int startOffset = 0,
     int? N,
   }) {
     if (startOffset > data.length) {
-      throw const MoneroCryptoException("Bad cache base data");
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Bad pippenger cache data: start offset $startOffset exceeds cache length ${data.length}.",
+      );
     }
     if (N == null || N == 0) {
       N = data.length - startOffset;
     }
 
     if (N > data.length - startOffset) {
-      throw const MoneroCryptoException("Bad cache base data");
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Bad pippenger cache data: requested $N entries from offset $startOffset but cache holds ${data.length}.",
+      );
     }
-    final List<EDPoint> cache = [];
+    final List<EdwardsLimbPoint> cache = [];
     for (int i = 0; i < N; ++i) {
       cache.add(data[i + startOffset].point);
     }
@@ -91,7 +98,10 @@ class Multiexp {
     return cache;
   }
 
-  static EDPoint _strausP3({required List<MultiexpData> data, int? step}) {
+  static EdwardsLimbPoint _strausP3({
+    required List<MultiexpData> data,
+    int? step,
+  }) {
     if (step == null || step == 0) {
       step = 192;
     }
@@ -114,10 +124,10 @@ class Multiexp {
     while (startI < 256 && !_isLowerThan(maxScalar, _pow2(startI))) {
       startI += strausC;
     }
-    EDPoint? resp3;
+    EdwardsLimbPoint? resp3;
     for (int startOffset = 0; startOffset < data.length; startOffset += step) {
       final int numPoints = (data.length - startOffset).clamp(0, step);
-      EDPoint? bandP3;
+      EdwardsLimbPoint? bandP3;
       int i = startI;
       if (!(i < strausC)) {
         i -= strausC;
@@ -135,7 +145,7 @@ class Multiexp {
         }
       }
       while (!(i < strausC)) {
-        EDPoint p1 = bandP3!;
+        EdwardsLimbPoint p1 = bandP3!;
 
         for (int j = 0; j < strausC; ++j) {
           p1 = p1.double();
@@ -160,11 +170,17 @@ class Multiexp {
     return resp3!;
   }
 
-  static EDPoint _addPoint(EDPoint p3, EDPoint other) {
+  static EdwardsLimbPoint _addPoint(
+    EdwardsLimbPoint p3,
+    EdwardsLimbPoint other,
+  ) {
     return p3 + other;
   }
 
-  static EDPoint straus({required List<MultiexpData> data, int? step}) {
+  static EdwardsLimbPoint straus({
+    required List<MultiexpData> data,
+    int? step,
+  }) {
     return _strausP3(data: data, step: step);
   }
 
@@ -184,7 +200,7 @@ class Multiexp {
     return k[n >> 3] & (1 << (n & 7));
   }
 
-  static EDPoint pippenger({
+  static EdwardsLimbPoint pippenger({
     required List<MultiexpData> data,
     int? cacheSize,
     int? c,
@@ -192,7 +208,7 @@ class Multiexp {
     return _pippengerP3(data: data, cacheSize: cacheSize, c: c);
   }
 
-  static EDPoint _pippengerP3({
+  static EdwardsLimbPoint _pippengerP3({
     required List<MultiexpData> data,
     int? cacheSize,
     int? c,
@@ -201,12 +217,9 @@ class Multiexp {
     if (c == null || c == 0) {
       c = getPippengerC(data.length);
     }
-    EDPoint result = EDPoint.fromBytes(
-      curve: Curves.curveEd25519,
-      data: RCT.identity(),
-    );
+    EdwardsLimbPoint result = EdwardsLimbPoint.fromBytes(RCT.identity());
     bool resultInit = false;
-    final List<EDPoint?> buckets = List.filled(1 << c, null);
+    final List<EdwardsLimbPoint?> buckets = List.filled(1 << c, null);
     final List<bool> bucketsInit = List.filled(1 << 9, false);
     final localCache = _getPippenger(data: data);
 
@@ -227,9 +240,9 @@ class Multiexp {
     groups = (groups + c - 1) ~/ c;
     for (int k = groups; k-- > 0;) {
       if (resultInit) {
-        EDPoint p2 = result;
+        EdwardsLimbPoint p2 = result;
         for (int i = 0; i < c; ++i) {
-          final EDPoint p1 = p2.double();
+          final p1 = p2.double();
           if (i == c - 1) {
             result = p1;
           } else {
@@ -253,7 +266,9 @@ class Multiexp {
 
         if (bucket == 0) continue;
 
-        assert(bucket < (1 << c), "Bucket overflow");
+        if (bucket >= (1 << c)) {
+          throw BuError(DefaultErrorType.invalidArgument, "Multiexp bucket overflow.");
+        }
 
         if (bucketsInit[bucket]) {
           if (i < cacheSize) {
@@ -270,7 +285,7 @@ class Multiexp {
         }
       }
 
-      EDPoint pail = EDPoint.infinity(curve: Curves.curveEd25519);
+      EdwardsLimbPoint pail = EdwardsLimbPoint.identity_;
       bool pailInit = false;
       for (int i = (1 << c) - 1; i > 0; --i) {
         if (bucketsInit[i]) {

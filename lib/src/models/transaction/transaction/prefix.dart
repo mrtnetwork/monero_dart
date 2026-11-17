@@ -13,7 +13,7 @@ class MoneroTransactionPrefix extends MoneroSerialization {
   final BigInt unlockTime;
   final List<MoneroTxin> vin;
   final List<MoneroTxout> vout;
-  final List<int> extra;
+  final BuBytes extra;
 
   MoneroTransactionPrefix({
     int version = MoneroNetworkConst.currentVersion,
@@ -99,7 +99,7 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     return MoneroTransactionHelper.extraParsing(extra);
   }
 
-  MoneroPublicKey? _getTxExtraPubKey() {
+  ED25519MoneroPublicKey? _getTxExtraPubKey() {
     final pubKeyExtra =
         txExtras
             .firstWhereNullable((e) => e.type == TxExtraTypes.publicKey)
@@ -107,17 +107,13 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     if (pubKeyExtra == null) {
       return null;
     }
-    return MoneroPublicKey.fromBytes(pubKeyExtra.publicKey);
+    return ED25519MoneroPublicKey.fromBytes(pubKeyExtra.publicKey);
   }
 
   TxExtraAdditionalPubKeys? _getTxAdditionalPubKeys() {
-    try {
-      return txExtras
-          .firstWhere((e) => e.type == TxExtraTypes.additionalPubKeys)
-          .cast();
-    } on StateError {
-      return null;
-    }
+    return txExtras
+        .firstWhereNullable((e) => e.type == TxExtraTypes.additionalPubKeys)
+        ?.cast();
   }
 
   RctKey? _getTxEncryptedPaymentId() {
@@ -144,7 +140,7 @@ class MoneroTransactionPrefix extends MoneroSerialization {
 
   late final RctKey? txPaymentId = _getTxPaymentId()?.asImmutableBytes;
   late final List<TxExtra> txExtras = _toTxExtra();
-  late final MoneroPublicKey? txPublicKey = _getTxExtraPubKey();
+  late final ED25519MoneroPublicKey? txPublicKey = _getTxExtraPubKey();
   late final TxExtraAdditionalPubKeys? additionalPubKeys =
       _getTxAdditionalPubKeys();
   late final RctKey? txEncryptedPaymentId =
@@ -158,7 +154,12 @@ class MoneroTransactionPrefix extends MoneroSerialization {
         txExtras
             .firstWhereNullable((e) => e.type == TxExtraTypes.publicKey)
             ?.cast<TxExtraPublicKey>();
-    assert(pubKeyExtra != null || isCoinbase());
+
+    if (pubKeyExtra == null && !isCoinbase()) {
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Missing transaction public key in extra.",
+      );
+    }
     if (pubKeyExtra == null) return null;
 
     return pubKeyExtra.publicKey;
@@ -168,9 +169,9 @@ class MoneroTransactionPrefix extends MoneroSerialization {
     return txExtras.whereType<TxExtraNonce>().toList();
   }
 
-  List<int> getTranactionPrefixHash() {
+  BuBytes getTranactionPrefixHash() {
     final serialize = layout().serialize(toLayoutStruct());
-    return QuickCrypto.keccack256Hash(serialize);
+    return QuickCrypto.keccak256Hash(serialize);
   }
 
   @override

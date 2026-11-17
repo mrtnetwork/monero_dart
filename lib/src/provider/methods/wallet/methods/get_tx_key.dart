@@ -14,7 +14,7 @@ class WalletRequestGetTxKey
   Map<String, dynamic> get params => {"txid": txId};
 
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["tx_key"];
   }
 }

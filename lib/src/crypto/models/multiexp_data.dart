@@ -3,7 +3,7 @@ import 'package:monero_dart/src/crypto/types/types.dart';
 
 class MultiexpData {
   final RctKey scalar;
-  final EDPoint point;
+  final EdwardsLimbPoint point;
   MultiexpData({required List<int> scalar, required this.point})
     : scalar = scalar.asImmutableBytes;
 }

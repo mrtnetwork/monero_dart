@@ -12,10 +12,10 @@ class DaemonRequestSyncInfo
   String get method => "sync_info";
 
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonSyncInfoResponse onResonse(Map<String, dynamic> result) {
+  DaemonSyncInfoResponse onResponse(Map<String, dynamic> result) {
     return DaemonSyncInfoResponse.fromJson(result);
   }
 }

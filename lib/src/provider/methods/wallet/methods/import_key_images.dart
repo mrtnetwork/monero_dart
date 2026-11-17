@@ -25,7 +25,7 @@ class WalletRequestImportKeyImages
   };
 
   @override
-  WalletRPCImportKeyImagesResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCImportKeyImagesResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCImportKeyImagesResponse.fromJson(result);
   }
 }

@@ -1,5 +1,5 @@
 import 'package:blockchain_utils/helper/helper.dart';
-import 'package:blockchain_utils/utils/binary/utils.dart';
+import 'package:blockchain_utils/utils/binary/src/utils.dart';
 import 'package:monero_dart/monero_dart.dart';
 
 enum VerifyBlockStrategy { never, always, onReceiveFunds }

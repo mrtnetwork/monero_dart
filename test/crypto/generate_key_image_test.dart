@@ -6,21 +6,25 @@ import 'package:test/test.dart';
 import '../utils.dart';
 import 'derive_public_key_test_vector.dart';
 
-void main() async {
+void generateKeyImageTest() {
   test("generate key image", () {
     for (final i in keyImage.takeShuffle()) {
-      final publicKey = MoneroPublicKey.fromBytes(
+      final publicKey = ED25519MoneroPublicKey.fromBytes(
         BytesUtils.fromHexString(i["publicKey"]),
       );
-      final secretKey = MoneroPrivateKey.fromBytes(
+      final secretKey = ED25519MoneroPrivateKey.fromBytes(
         BytesUtils.fromHexString(i["secretKey"]),
       );
       final expected = BytesUtils.fromHexString(i["keyImage"]);
-      final keyImage = MoneroCrypto.generateKeyImage(
-        pubkey: publicKey,
-        secretKey: secretKey,
+      final keyImage = MoneroCrypto.generateKeyImageBytes(
+        pubkey: publicKey.keyBytes,
+        secretKey: secretKey.takeSecretKey(),
       );
       expect(expected, keyImage);
     }
   });
+}
+
+void main() {
+  MoneroTestApi.runTest(generateKeyImageTest, "Generate Key Image");
 }

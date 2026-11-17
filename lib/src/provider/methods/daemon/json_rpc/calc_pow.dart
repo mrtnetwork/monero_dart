@@ -20,10 +20,10 @@ class DaemonRequestCalcPow extends MoneroDaemonRequestParam<String, String> {
   @override
   Map<String, dynamic> get params => {
     "major_version": majorVersion,
-    "height": height.toString(),
+    "height": height,
     "block_blob": blockBlob,
     "seed_hash": seedHash,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 }

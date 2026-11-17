@@ -35,18 +35,18 @@ class DaemonRequestGetOutputDistribution
   @override
   Map<String, dynamic> get params {
     return {
-      "amounts": amounts.map((e) => e.toString()).toList(),
+      "amounts": amounts.toList(),
       "cumulative": cumulative,
-      "from_height": fromHeight?.toString() ?? BigInt.zero.toString(),
-      "to_height": toHeight?.toString() ?? BigInt.zero.toString(),
+      "from_height": fromHeight ?? 0,
+      "to_height": toHeight ?? 0,
       "binary": binary,
     };
   }
 
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  OutputDistributionResponse onResonse(Map<String, dynamic> result) {
+  OutputDistributionResponse onResponse(Map<String, dynamic> result) {
     return OutputDistributionResponse.fromJson(result);
   }
 }

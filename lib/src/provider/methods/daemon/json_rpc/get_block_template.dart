@@ -29,9 +29,9 @@ class DaemonRequestOnGetBlockTemplate
     "reserve_size": reserveSize,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonOnGetBlockTemplateResponse onResonse(Map<String, dynamic> result) {
+  DaemonOnGetBlockTemplateResponse onResponse(Map<String, dynamic> result) {
     return DaemonOnGetBlockTemplateResponse.fromJson(result);
   }
 }

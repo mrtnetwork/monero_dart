@@ -16,5 +16,5 @@ class WalletRequestSetAccountTagDescription
   Map<String, dynamic> get params => {"tag": tag, "description": description};
 
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

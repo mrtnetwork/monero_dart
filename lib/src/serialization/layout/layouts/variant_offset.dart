@@ -1,5 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:blockchain_utils/layout/byte/byte_handler.dart';
+import 'package:blockchain_utils/encoding/encoding.dart';
 
 import 'variant.dart';
 

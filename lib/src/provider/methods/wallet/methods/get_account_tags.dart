@@ -17,7 +17,7 @@ class WalletRequestGetAccountTags
   Map<String, dynamic> get params => {};
 
   @override
-  WalletRPCGetAccountTagsResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCGetAccountTagsResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCGetAccountTagsResponse.fromJson(result);
   }
 }

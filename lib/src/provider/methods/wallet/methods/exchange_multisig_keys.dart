@@ -16,7 +16,7 @@ class WalletRequestExchangeMultisigKeys
   });
 
   final String password;
-  final String multisigInfo;
+  final List<String> multisigInfo;
 
   /// only require the minimum number of signers to complete this round (including local signer)
   /// ( minimum = num_signers - (round num - 1).
@@ -32,7 +32,9 @@ class WalletRequestExchangeMultisigKeys
   };
 
   @override
-  WalletRPCExchangeMultisigKeysResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCExchangeMultisigKeysResponse onResponse(
+    Map<String, dynamic> result,
+  ) {
     return WalletRPCExchangeMultisigKeysResponse.fromJson(result);
   }
 }

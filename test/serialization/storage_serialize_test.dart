@@ -1,8 +1,14 @@
 import 'package:monero_dart/src/serialization/storage_format/types/entry.dart';
 import 'package:test/test.dart';
 
-void main() {
+import '../utils.dart';
+
+void storageSerializeTest() {
   _test();
+}
+
+void main() {
+  MoneroTestApi.runTest(storageSerializeTest, "Storage Serialize");
 }
 
 void _test() {

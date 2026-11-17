@@ -2,8 +2,14 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/monero_base.dart';
 import 'package:test/test.dart';
 
-void main() {
+import '../utils.dart';
+
+void txExtraTest() {
   return txExtraPadding();
+}
+
+void main() {
+  MoneroTestApi.runTest(txExtraTest, "Tx Extra");
 }
 
 void txExtraPadding() {

@@ -1,6 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/crypto.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 
 class MoneroTxVersion {
   final String name;
@@ -28,7 +27,7 @@ class MoneroTxVersion {
 class MoneroTxProof {
   final MoneroTxVersion version;
   static const int lenght = 96;
-  final List<MoneroPublicKey> sharedSecret;
+  final List<ED25519MoneroPublicKey> sharedSecret;
   final List<MECSignature> signatures;
   static bool isValidProof(String base58) {
     final version = MoneroTxVersion.values.firstWhereNullable(
@@ -49,12 +48,12 @@ class MoneroTxProof {
   }
 
   factory MoneroTxProof({
-    required List<MoneroPublicKey> sharedSecret,
+    required List<ED25519MoneroPublicKey> sharedSecret,
     required List<MECSignature> signatures,
     required MoneroTxVersion version,
   }) {
     if (sharedSecret.isEmpty || sharedSecret.length != signatures.length) {
-      throw const DartMoneroPluginException("Invalid proof data provided.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid proof data provided.");
     }
     return MoneroTxProof._(
       sharedSecret: sharedSecret,
@@ -63,7 +62,7 @@ class MoneroTxProof {
     );
   }
   MoneroTxProof._({
-    required List<MoneroPublicKey> sharedSecret,
+    required List<ED25519MoneroPublicKey> sharedSecret,
     required List<MECSignature> signatures,
     required this.version,
   }) : sharedSecret = sharedSecret.toImutableList,
@@ -77,13 +76,13 @@ class MoneroTxProof {
       if (proofBytes.length < lenght || proofBytes.length % lenght != 0) {
         return null;
       }
-      final List<MoneroPublicKey> sharedSecret = [];
+      final List<ED25519MoneroPublicKey> sharedSecret = [];
       final List<MECSignature> signatures = [];
       final sigLen = proofBytes.length ~/ lenght;
       for (int i = 0; i < sigLen; i++) {
         final int start = lenght * i;
         final part = proofBytes.sublist(start, start + lenght);
-        sharedSecret.add(MoneroPublicKey.fromBytes(part.sublist(0, 32)));
+        sharedSecret.add(ED25519MoneroPublicKey.fromBytes(part.sublist(0, 32)));
         signatures.add(MECSignature.fromBytes(part.sublist(32)));
       }
       return MoneroTxProof._(
@@ -102,7 +101,7 @@ class MoneroTxProof {
         (e) => proof.startsWith(e.name),
       );
       if (version == null) {
-        throw DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid proof data.",
           details: {"proof": proof},
         );
@@ -113,16 +112,16 @@ class MoneroTxProof {
 
       final decodeProof = _decodeProof(proofBytes, version);
       if (decodeProof == null) {
-        throw DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid proof data.",
           details: {"proof": proof},
         );
       }
       return decodeProof;
-    } on BaseDartMoneroPluginException {
+    } on BuError {
       rethrow;
     } catch (e) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid proof data.",
         details: {"proof": proof},
       );
@@ -132,7 +131,7 @@ class MoneroTxProof {
   String toBase58() {
     String result = version.name;
     for (int i = 0; i < signatures.length; i++) {
-      result += Base58XmrEncoder.encode(sharedSecret[i].key);
+      result += Base58XmrEncoder.encode(sharedSecret[i].toBytes());
       result += Base58XmrEncoder.encode(signatures[i].toBytes());
     }
     return result;

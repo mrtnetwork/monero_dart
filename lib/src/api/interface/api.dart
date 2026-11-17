@@ -1,7 +1,6 @@
 part of 'package:monero_dart/src/api/api.dart';
 
 abstract class MoneroApiInterface {
-  abstract final QuickMoneroProvider provider;
 
   /// Observes and decodes transaction outputs for a watch-only wallet.
   ///
@@ -226,7 +225,7 @@ abstract class MoneroApiInterface {
   /// - [destinations] : A list of [MoneroTxDestination] specifying the recipients and the amounts to transfer.
   /// - [changeAddress] : A [MoneroAddress] specifying the address where any remaining balance
   ///   (change) should be sent.
-  /// - [signers] : A list of [MoneroPublicKey] representing the public keys of the multisig signers
+  /// - [signers] : A list of [ED25519MoneroPublicKey] representing the public keys of the multisig signers
   ///   required for transaction signing.
   /// - [priority] : An optional [MoneroFeePrority] (default: `MoneroFeePrority.defaultPriority`)
   ///   that determines the transaction fee priority. Higher priorities result in faster confirmation
@@ -236,7 +235,7 @@ abstract class MoneroApiInterface {
     required List<MoneroUnlockedMultisigPayment> payments,
     required List<MoneroTxDestination> destinations,
     required MoneroAddress changeAddress,
-    required List<MoneroPublicKey> signers,
+    required List<ED25519MoneroPublicKey> signers,
     MoneroFeePrority priority = MoneroFeePrority.defaultPriority,
   });
 

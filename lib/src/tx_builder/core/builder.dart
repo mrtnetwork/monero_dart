@@ -2,16 +2,16 @@ part of 'package:monero_dart/src/tx_builder/tx_builder.dart';
 
 class _MonerTxBuilderConst {
   static TxEpemeralKeyResult generateOutputFakeEpemeralKeys({
-    required MoneroPrivateKey txSecretKey,
-    required MoneroPublicKey txPublicKey,
-    MoneroPrivateKey? changeAddressViewSecretKey,
+    required ED25519MoneroPrivateKey txSecretKey,
+    required ED25519MoneroPublicKey txPublicKey,
+    ED25519MoneroPrivateKey? changeAddressViewSecretKey,
     required MoneroAddress address,
     required int outIndex,
     MoneroAddress? changeAddr,
-    MoneroPrivateKey? additionalSecretKey,
+    ED25519MoneroPrivateKey? additionalSecretKey,
   }) {
     final fakePk = fakePubKey;
-    final key = TxoutToTaggedKey(key: fakePk.compressed, viewTag: 12);
+    final key = TxoutToTaggedKey(key: fakePk.toBytes(), viewTag: 12);
     return TxEpemeralKeyResult(
       txOut: key,
       amountKey: fakeScalar,
@@ -19,7 +19,7 @@ class _MonerTxBuilderConst {
     );
   }
 
-  static const List<int> fakeScalar = [
+  static const BuBytes fakeScalar = BuBytes.unsafe([
     217,
     248,
     239,
@@ -52,10 +52,13 @@ class _MonerTxBuilderConst {
     16,
     5,
     13,
-  ];
-  static MoneroPublicKey get fakePubKey => MoneroPublicKey.fromHex(
-    "5540ce412a435b535772cf0f8aa8686ae4bd948931304b401188171627d75a4c",
-  );
+  ]);
+  static ED25519MoneroPublicKey get fakePubKey =>
+      ED25519MoneroPublicKey.fromBytes(
+        BytesUtils.fromHexString(
+          "5540ce412a435b535772cf0f8aa8686ae4bd948931304b401188171627d75a4c",
+        ),
+      );
 }
 
 abstract class MoneroTxBuilder<T extends SpendablePayment>
@@ -68,7 +71,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
   final MoneroTxDestination? change;
   late final BigInt fee = sourceKeys.total - destinationKeys.total;
   BigInt get totalInput => sourceKeys.total;
-  BigInt get totalOutput => sourceKeys.total;
+  BigInt get totalOutput => destinationKeys.total;
   String get feeAsXMR => MoneroTransactionHelper.toXMR(fee);
   String get totalInputAsXMR => MoneroTransactionHelper.toXMR(totalInput);
   String get totalOutputAsXMR => MoneroTransactionHelper.toXMR(totalOutput);
@@ -78,7 +81,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     required MoneroAddress receiverAddress,
     String? message,
   }) {
-    return MoneroTransactionHelper.generateOutProofVar(
+    return MoneroTransactionHelper.generateOutProof(
       transaction: transaction,
       allTxKeys: destinationKeys.allTxKeys,
       receiverAddress: receiverAddress,
@@ -116,7 +119,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     required MoneroSubIndex index,
     String? message,
   }) {
-    return MoneroTransactionHelper.generateInProofVar(
+    return MoneroTransactionHelper.generateInProof(
       transaction: transaction,
       message: message,
       account: account,
@@ -146,16 +149,16 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     required bool fakeTx,
   }) {
     if (fakeTx) return _MonerTxBuilderConst.fakeScalar;
-    final entropy = RCT.skGen_();
+    final entropy = RCT.skGen();
     final List<int> data = [
       ...domain.codeUnits,
       ...entropy,
       ...sources.map((e) => e.payment.keyImage).expand((e) => e.keyImage),
     ];
-    return QuickCrypto.keccack256Hash(data).asImmutableBytes;
+    return QuickCrypto.keccak256Hash(data).asImmutableBytes;
   }
 
-  static List<MoneroPrivateKey> _makeTxSecretKeys({
+  static List<ED25519MoneroPrivateKey> _makeTxSecretKeys({
     required RctKey seed,
     required int length,
     String domain = "multisig_tx_privkeys",
@@ -164,16 +167,16 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     if (fakeTx) {
       return List.filled(
         length,
-        MoneroPrivateKey.fromBytes(_MonerTxBuilderConst.fakeScalar),
+        ED25519MoneroPrivateKey.fromBytes(_MonerTxBuilderConst.fakeScalar),
       );
     }
-    final data = [seed, QuickCrypto.keccack256Hash(domain.codeUnits)];
+    final data = [seed, QuickCrypto.keccak256Hash(domain.codeUnits)];
 
-    final List<MoneroPrivateKey> secretKeys = [];
+    final List<ED25519MoneroPrivateKey> secretKeys = [];
     for (int i = 0; i < length; i++) {
       final hash = RCT.hashToScalarKeys(data);
       data[1] = hash;
-      secretKeys.add(MoneroPrivateKey.fromBytes(hash));
+      secretKeys.add(ED25519MoneroPrivateKey.fromBytes(hash));
     }
     return secretKeys.immutable;
   }
@@ -230,15 +233,15 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
         MoneroTxDestination(
           amount: BigInt.zero,
           address: MoneroAccountAddress.fromPubKeys(
-            pubSpendKey: RCT.pkGenVar(),
-            pubViewKey: RCT.pkGenVar(),
+            pubSpendKey: RCT.pkGen(),
+            pubViewKey: RCT.pkGen(),
           ),
         ),
       );
     }
     final addresses = currentDestinations.map((e) => e.address).toList();
     if (addresses.toSet().length != addresses.length) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid transaction: multiple outputs cannot be sent to the same address.",
       );
     }
@@ -248,7 +251,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       (p, c) => p + c.amount,
     );
     if (inAmounts != outAmounts + fee) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Transaction validation failed: The sum of input amounts does not match the sum of output amounts plus the transaction fee. Ensure the inputs cover all outputs and the required fee.",
         details: {
           "inAmounts": inAmounts.toString(),
@@ -291,17 +294,17 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     } else if (currentDestinations.any(
       (e) => e.address.type == XmrAddressType.integrated,
     )) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Integrated address detected in multi-transfer transaction.",
       );
     }
-    final MoneroPublicKey txPubKey =
+    final ED25519MoneroPublicKey txPubKey =
         fakeTx ? _MonerTxBuilderConst.fakePubKey : cl.getTxPubKey(txKey);
 
     final List<MoneroTxout> vouts = [];
-    extras.add(TxExtraPublicKey(txPubKey.key));
-    List<MoneroPrivateKey>? additionalTxSecretKeys;
-    final List<MoneroPublicKey> additionalTxPubKey = [];
+    extras.add(TxExtraPublicKey(txPubKey.toBytes()));
+    List<ED25519MoneroPrivateKey>? additionalTxSecretKeys;
+    final List<ED25519MoneroPublicKey> additionalTxPubKey = [];
     if (cl.needAdditionalTxkeys) {
       additionalTxSecretKeys = txKeys.sublist(1);
     }
@@ -337,7 +340,9 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     }
     if (additionalTxPubKey.isNotEmpty) {
       extras.add(
-        TxExtraAdditionalPubKeys(additionalTxPubKey.map((e) => e.key).toList()),
+        TxExtraAdditionalPubKeys(
+          additionalTxPubKey.map((e) => e.toBytes()).toList(),
+        ),
       );
     }
     return ComputeDestinationKeys(
@@ -363,7 +368,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final List<int> index = sources.map((e) => e.realOutIndex).toList();
     final CtKeyV inSk =
         sources.map((e) => e.payment.output.toSecretKey).toList();
-    final List<MoneroPublicKey> destinationPubKeys =
+    final List<ED25519MoneroPublicKey> destinationPubKeys =
         destinationKeys.destinationPubKeys;
 
     final CtKeyM mixRing = List.generate(sources.length, (i) {
@@ -375,6 +380,11 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final List<BigInt> inamounts = sourceKeys.amounts;
     final List<BigInt> outamounts = destinationKeys.amounts;
     final BigInt fee = sourceKeys.total - destinationKeys.total;
+    if (fee.isNegative) {
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid transaction fee $fee: destination amounts exceed source amounts.",
+      );
+    }
     final inputs = sourceKeys.toRctInputs;
     final outs = destinationKeys.toRctOuts;
     final extra = destinationKeys.toExtraBytes();
@@ -389,7 +399,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       return RCTGeneratorUtils.genFakeRctSimple(
         message: txHash,
         inSk: inSk,
-        destinations: destinationPubKeys.map((e) => e.key).toList(),
+        destinations: destinationPubKeys.map((e) => e.toBytes()).toList(),
         inamounts: inamounts,
         outamounts: outamounts,
         txnFee: fee,
@@ -405,7 +415,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       return RCTGeneratorUtils.genRctSimple(
         message: txHash,
         inSk: inSk,
-        destinations: destinationPubKeys.map((e) => e.key).toList(),
+        destinations: destinationPubKeys.map((e) => e.toBytes()).toList(),
         inamounts: inamounts,
         outamounts: outamounts,
         txnFee: fee,
@@ -420,7 +430,7 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     return RCTGeneratorUtils.genRctSimple(
       message: txHash,
       inSk: inSk,
-      destinations: destinationPubKeys.map((e) => e.key).toList(),
+      destinations: destinationPubKeys.map((e) => e.toBytes()).toList(),
       inamounts: inamounts,
       outamounts: outamounts,
       txnFee: fee,

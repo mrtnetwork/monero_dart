@@ -20,14 +20,14 @@ class DaemonRequestGetCoinbaseTxSum
   String get method => "get_coinbase_tx_sum";
   @override
   Map<String, dynamic> get params => {
-    "height": height.toString(),
-    "count": count.toString(),
+    "height": height,
+    "count": count,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonCoinbaseTxSumResponse onResonse(Map<String, dynamic> result) {
+  DaemonCoinbaseTxSumResponse onResponse(Map<String, dynamic> result) {
     return DaemonCoinbaseTxSumResponse.fromJson(result);
   }
 }

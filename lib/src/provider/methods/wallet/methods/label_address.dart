@@ -16,5 +16,5 @@ class WalletRequestLabelAddress
   @override
   Map<String, dynamic> get params => {"index": index.toJson(), "label": label};
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

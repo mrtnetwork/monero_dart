@@ -48,5 +48,5 @@ class WalletRequestSetDaemon
   };
 
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

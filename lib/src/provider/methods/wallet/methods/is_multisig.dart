@@ -17,7 +17,7 @@ class WalletRequestIsMultisig
   Map<String, dynamic> get params => {};
 
   @override
-  WalletRPCIsMultisigResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCIsMultisigResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCIsMultisigResponse.fromJson(result);
   }
 }

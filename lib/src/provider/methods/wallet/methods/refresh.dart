@@ -18,10 +18,10 @@ class WalletRequestRefresh
   @override
   String get method => "refresh";
   @override
-  Map<String, dynamic> get params => {"start_height": startHeight?.toString()};
+  Map<String, dynamic> get params => {"start_height": startHeight};
 
   @override
-  WalletRPCRefreshResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCRefreshResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCRefreshResponse.fromJson(result);
   }
 }

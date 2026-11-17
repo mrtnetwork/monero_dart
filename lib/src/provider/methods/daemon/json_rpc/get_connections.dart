@@ -16,10 +16,10 @@ class DaemonRequestGetConnections
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonGetConnectionsResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetConnectionsResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetConnectionsResponse.fromJson(result);
   }
 }

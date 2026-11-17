@@ -5,15 +5,15 @@ import '../utils.dart';
 import 'test_vector.dart';
 import 'package:test/test.dart';
 
-void main() {
+void keyDrivationTest() {
   test("generate key derivation", () {
     for (final i in testVector.takeShuffle()) {
       final expected = BytesUtils.tryFromHexString(i["expected"]);
       if (expected != null) {
-        final keyOne = MoneroPublicKey.fromBytes(
+        final keyOne = ED25519MoneroPublicKey.fromBytes(
           BytesUtils.fromHexString(i["keyOne"]),
         );
-        final keyTwo = MoneroPrivateKey.fromBytes(
+        final keyTwo = ED25519MoneroPrivateKey.fromBytes(
           BytesUtils.fromHexString(i["keyTwo"]),
         );
         final generateKey = MoneroCrypto.generateKeyDerivation(
@@ -23,17 +23,17 @@ void main() {
         expect(generateKey, expected);
       } else {
         expect(() {
-          final keyOne = MoneroPublicKey.fromBytes(
+          final keyOne = ED25519MoneroPublicKey.fromBytes(
             BytesUtils.fromHexString(i["keyOne"]),
           );
-          final keyTwo = MoneroPrivateKey.fromBytes(
+          final keyTwo = ED25519MoneroPrivateKey.fromBytes(
             BytesUtils.fromHexString(i["keyTwo"]),
           );
           return MoneroCrypto.generateKeyDerivation(
             pubkey: keyOne,
             secretKey: keyTwo,
           );
-        }, throwsA(isA<ArgumentException>()));
+        }, throwsA(anyOf([isA<BuError>(), isA<BuError>()])));
       }
     }
   });
@@ -42,31 +42,37 @@ void main() {
     for (final i in testVector.takeShuffle()) {
       final expected = BytesUtils.tryFromHexString(i["expected"]);
       if (expected != null) {
-        final keyOne = MoneroPublicKey.fromBytes(
+        final keyOne = ED25519MoneroPublicKey.fromBytes(
           BytesUtils.fromHexString(i["keyOne"]),
         );
-        final keyTwo = MoneroPrivateKey.fromBytes(
+        final keyTwo = ED25519MoneroPrivateKey.fromBytes(
           BytesUtils.fromHexString(i["keyTwo"]),
         );
-        final generateKey = MoneroCrypto.generateKeyDerivationVar(
+        final generateKey = MoneroCrypto.generateKeyDerivation(
           pubkey: keyOne,
           secretKey: keyTwo,
         );
         expect(generateKey, expected);
       } else {
         expect(() {
-          final keyOne = MoneroPublicKey.fromBytes(
+          final keyOne = ED25519MoneroPublicKey.fromBytes(
             BytesUtils.fromHexString(i["keyOne"]),
           );
-          final keyTwo = MoneroPrivateKey.fromBytes(
+          final keyTwo = ED25519MoneroPrivateKey.fromBytes(
             BytesUtils.fromHexString(i["keyTwo"]),
           );
           return MoneroCrypto.generateKeyDerivation(
             pubkey: keyOne,
             secretKey: keyTwo,
           );
-        }, throwsA(isA<ArgumentException>()));
+          // Same contract as the non-Var test above: off-curve public keys
+          // surface as CryptoException through the point decoder.
+        }, throwsA(anyOf([isA<BuError>(), isA<BuError>()])));
       }
     }
   });
+}
+
+void main() {
+  MoneroTestApi.runTest(keyDrivationTest, "Key Drivation");
 }

@@ -29,5 +29,5 @@ class WalletRequestStartMining
   };
 
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

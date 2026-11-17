@@ -23,7 +23,7 @@ class OutKeyResponse {
       mask: BytesUtils.fromHexString(json["mask"]),
       unlocked: json["unlocked"],
       height: BigintUtils.parse(json["height"]),
-      txId: BytesUtils.fromHexString(json["txid"]),
+      txId: BytesUtils.tryFromHexString(json["txid"]),
     );
   }
 }

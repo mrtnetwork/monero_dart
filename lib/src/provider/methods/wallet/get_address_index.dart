@@ -21,7 +21,7 @@ class WalletRequestGetAddressIndex
   Map<String, dynamic> get params => {"address": address.address};
 
   @override
-  WalletRPCSubAddressIndexResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCSubAddressIndexResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCSubAddressIndexResponse.fromJson(result["index"]);
   }
 }

@@ -30,13 +30,13 @@ class DaemonRequestGetBlockHeaderByRange
   @override
   Map<String, dynamic> get params => {
     "fill_pow_hash": fillPowHash,
-    "start_height": startHeight.toString(),
-    "end_height": endHeight.toString(),
+    "start_height": startHeight,
+    "end_height": endHeight,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonBlockHeadersByRangeResponse onResonse(Map<String, dynamic> result) {
+  DaemonBlockHeadersByRangeResponse onResponse(Map<String, dynamic> result) {
     return DaemonBlockHeadersByRangeResponse.fromJson(result);
   }
 }

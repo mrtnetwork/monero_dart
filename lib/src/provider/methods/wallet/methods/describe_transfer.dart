@@ -29,7 +29,7 @@ class WalletRequestDescribeTransfer
   };
 
   @override
-  WalletRPCDescribeTransferResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCDescribeTransferResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCDescribeTransferResponse.fromJson(result);
   }
 }

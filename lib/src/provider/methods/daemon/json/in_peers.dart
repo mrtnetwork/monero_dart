@@ -16,10 +16,10 @@ class DaemonRequestInPeers
   @override
   Map<String, dynamic> get params => {"in_peers": inPeers, "set": set};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonInPeersResponse onResonse(Map<String, dynamic> result) {
+  DaemonInPeersResponse onResponse(Map<String, dynamic> result) {
     return DaemonInPeersResponse.fromJson(result);
   }
 }

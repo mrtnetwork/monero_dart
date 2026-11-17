@@ -15,7 +15,7 @@ class WalletRequestExportOutputs
   Map<String, dynamic> get params => {"all": all};
 
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["outputs_data_hex"];
   }
 }

@@ -35,10 +35,10 @@ class DaemonRequestGetTransactions
     "split": split,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  List<MoneroTxResponse> onResonse(Map<String, dynamic> result) {
+  List<MoneroTxResponse> onResponse(Map<String, dynamic> result) {
     final List? txs = result["txs"];
     if (txs?.isEmpty ?? true) return [];
     return txs!.map((e) => MoneroTxResponse.fromJson(e)).toList();

@@ -2,7 +2,9 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/monero_dart.dart';
 import 'package:test/test.dart';
 
-void main() {
+import 'utils.dart';
+
+void providerEncodableParamsTest() {
   test('encodable provider params', () {
     final param = DaemonRequestGetBlocksByHeightBin([1, 2, 3]);
     final request = param.buildRequest(0);
@@ -70,4 +72,11 @@ void main() {
     expect(deserialize.requestMethod, request.requestMethod);
     expect(deserialize.api, request.api);
   });
+}
+
+void main() {
+  MoneroTestApi.runTest(
+    providerEncodableParamsTest,
+    "Provider Encodable Params",
+  );
 }

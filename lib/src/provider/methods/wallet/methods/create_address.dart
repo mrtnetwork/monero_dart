@@ -34,7 +34,7 @@ class WalletRequestCreateAddress
   };
 
   @override
-  WalletRPCCreateAddressResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCCreateAddressResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCCreateAddressResponse.fromJson(result);
   }
 }

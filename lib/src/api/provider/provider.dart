@@ -1,8 +1,23 @@
 part of 'package:monero_dart/src/api/api.dart';
 
-class QuickMoneroProvider {
-  final MoneroProvider provider;
-  const QuickMoneroProvider(this.provider);
+/// Unified transaction status (wallet `WalletTransactionStatus` parity for
+/// the Monero cases).
+enum MoneroTxStatus {
+  /// The transaction is confirmed.
+  block,
+
+  /// The transaction is in pool or has no height yet.
+  pending,
+
+  /// The transaction double-spent.
+  failed,
+
+  /// The transaction is unknown to the daemon.
+  unknown,
+}
+
+mixin MoneroQuickClientApi {
+  IProvider<IServiceProvider, MoneroRequestDetails> get provider;
 
   Future<DaemonGetEstimateFeeResponse> baseFee() async {
     return await provider.request(
@@ -42,7 +57,7 @@ class QuickMoneroProvider {
       ),
     );
     if (result.length != 1) {
-      throw const DartMoneroPluginException("Tx not found.");
+      throw BuError(DefaultErrorType.notFound, "Tx not found.");
     }
     final tx = result[0];
     return MoneroTransactionWithOutputIndeces(
@@ -57,7 +72,8 @@ class QuickMoneroProvider {
     bool allowMempol = false,
   }) async {
     if (txHashes.isEmpty) {
-      throw const DartMoneroPluginException(
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "At least one transaction hash is required to retrieve transactions",
       );
     }
@@ -70,7 +86,8 @@ class QuickMoneroProvider {
       ),
     );
     if (validateResponse && txHashes.length != result.length) {
-      throw const DartMoneroPluginException(
+      throw BuError(
+        DefaultErrorType.notFound,
         "One or more transactions could not be found.",
       );
     }
@@ -110,8 +127,9 @@ class QuickMoneroProvider {
       ),
     }, timeout: timeout ?? const Duration(minutes: 2));
     if (distributions.distributions.length != 1) {
-      throw const DartMoneroPluginException(
-        "invalid output Distribution response.",
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid output distribution response: expected exactly one distribution.",
       );
     }
     final List<BigInt> offsets = List<BigInt>.from(
@@ -143,7 +161,8 @@ class QuickMoneroProvider {
       DaemonRequestIsKeyImageSpent(keyImages),
     );
     if (validateResponse && result.spentStatus.length != keyImages.length) {
-      throw const DartMoneroPluginException(
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid daemon response: Mismatch between the number of key images and the status response.",
       );
     }
@@ -154,12 +173,12 @@ class QuickMoneroProvider {
   List<SpendablePayment<T>> generateFakePaymentOuts<
     T extends MoneroUnLockedPayment
   >({required List<T> payments, int fakeOutsLength = 16}) {
-    final List<List<OutsEntery>> outs =
+    final List<List<OutsEntry>> outs =
         payments.map((e) {
           bool lowIndex = e.globalIndex < BigInt.from(fakeOutsLength);
           return List.generate(fakeOutsLength, (i) {
             final indexBig = BigInt.from(i);
-            return OutsEntery(
+            return OutsEntry(
               index: switch (lowIndex) {
                 true => e.globalIndex + indexBig,
                 false => e.globalIndex - indexBig,
@@ -188,11 +207,12 @@ class QuickMoneroProvider {
     T extends MoneroPayment
   >({required List<T> payments, int fakeOutsLength = 15}) async {
     if (fakeOutsLength <= 0) {
-      throw const DartMoneroPluginException(
-        "fake outs length should be greather than zero.",
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Fake outputs length should be greater than zero.",
       );
     }
-    final List<List<OutsEntery>> outs = [];
+    final List<List<OutsEntry>> outs = [];
 
     BigInt maxGlobalIndex = BigInt.zero;
     for (final i in payments) {
@@ -203,10 +223,11 @@ class QuickMoneroProvider {
     }
     final offsets = await getAbsoluteDistribution();
     if (offsets.length < MoneroNetworkConst.cryptonoteDefaultTxSpendableAge) {
-      throw const DartMoneroPluginException("Not enough rct outputs");
+      throw BuError(DefaultErrorType.invalidState, "Not enough rct outputs");
     }
     if (offsets.last < maxGlobalIndex) {
-      throw const DartMoneroPluginException(
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Daemon reports suspicious number of rct outputs",
       );
     }
@@ -231,7 +252,8 @@ class QuickMoneroProvider {
       final int start = outKeysRequests.length;
       final BigInt numOuts = gamma.numRctOuts;
       if (numOuts == BigInt.zero) {
-        throw const DartMoneroPluginException(
+        throw BuError(
+          DefaultErrorType.invalidState,
           "histogram reports no unlocked rct outputs, not even ours",
         );
       }
@@ -300,8 +322,9 @@ class QuickMoneroProvider {
       for (int i = 0; i < outChunSize; i++) {
         chunkRequest.add(outKeysRequests[offset + i]);
       }
-      offset += size;
-      final outs = await getOuts(outKeysRequests);
+      offset += outChunSize;
+
+      final outs = await getOuts(chunkRequest);
       outKeysResponse.addAll(outs.outs);
     }
     int base = 0;
@@ -310,8 +333,8 @@ class QuickMoneroProvider {
           MoneroNetworkConst.cryptonoteMinedMoneyUnlockWindow -
           MoneroNetworkConst.cryptonoteDefaultTxSpendableAge;
       final int outputsCount = baseRequestCount + defaultOutCount;
-      final List<OutsEntery> out = [];
-      final mask = RCT.commitVar(
+      final List<OutsEntry> out = [];
+      final mask = RCT.commit(
         xmrAmount: payment.output.amount,
         mask: payment.output.mask,
       );
@@ -332,12 +355,13 @@ class QuickMoneroProvider {
         }
       }
       if (!hasRealOut) {
-        throw const DartMoneroPluginException(
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Daemon response did not include the requested real output",
         );
       }
       out.add(
-        OutsEntery(
+        OutsEntry(
           index: payment.globalIndex,
           key: CtKey(dest: payment.output.outputPublicKey, mask: mask),
         ),
@@ -356,13 +380,14 @@ class QuickMoneroProvider {
           }
         }
         if (i == base + outputsCount) {
-          throw const DartMoneroPluginException(
+          throw BuError(
+            DefaultErrorType.notFound,
             "Could not find index of picked output in requested outputs",
           );
         }
         final fakeOutResponse = outKeysResponse[i];
         final fakeOutRequest = outKeysRequests[i];
-        final fakeEntry = OutsEntery(
+        final fakeEntry = OutsEntry(
           index: fakeOutRequest.index,
           key: CtKey(dest: fakeOutResponse.key, mask: fakeOutResponse.mask),
         );
@@ -375,7 +400,10 @@ class QuickMoneroProvider {
       out.sort((a, b) => a.index.compareTo(b.index));
       outs.add(out);
       if (out.length < fakeOutsLength + 1) {
-        throw const DartMoneroPluginException("not enough outs to mix.");
+        throw BuError(
+          DefaultErrorType.invalidState,
+          "Not enough outputs to mix: required ${fakeOutsLength + 1}, found ${out.length}.",
+        );
       }
 
       base += outputsCount;
@@ -389,7 +417,7 @@ class QuickMoneroProvider {
         (e) => e.index == payment.globalIndex,
       );
       if (index.isNegative) {
-        throw const DartMoneroPluginException("Index not found.");
+        throw BuError(DefaultErrorType.notFound, "Index not found.");
       }
       return SpendablePayment<T>(
         payment: payment,
@@ -414,4 +442,175 @@ class QuickMoneroProvider {
     );
     return tx.getTxHash();
   }
+
+  String? _genesis;
+
+  Future<int> getHeight() async {
+    final block = await provider.request(DaemonRequestGetLastBlockHeader());
+    return block.blockHeader.height;
+  }
+
+  Future<DaemonGetBlocksByHeightResponse> getBlockByRange(
+    int start,
+    int end,
+  ) async {
+    final List<int> heights = List.generate(end - start, (i) => start + i);
+    if (heights.isEmpty) {
+      heights.add(start);
+    }
+    final blocks = await provider.request(
+      DaemonRequestGetBlocksByHeightBin(heights),
+    );
+    if (blocks.blocks.length != heights.length) {
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Unexpected daemon response.",
+      );
+    }
+    return blocks;
+  }
+
+  Future<List<DaemonBlockHeaderResponse>> getBlockHeadersRange({
+    required int start,
+    required int end,
+    bool validateResponse = true,
+  }) async {
+    final r = await provider.request(
+      DaemonRequestGetBlockHeaderByRange(startHeight: start, endHeight: end),
+    );
+    if (validateResponse && r.headers.length != (end - start) + 1) {
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Unexpected daemon response.",
+      );
+    }
+    return r.headers;
+  }
+
+  Future<DaemonGetEstimateFeeResponse> getFeeEstimate() async {
+    return await provider.request(
+      const DaemonRequestGetFeeEstimate(
+        MoneroNetworkConst.feeEstimateGraceBlocks,
+      ),
+    );
+  }
+
+  Future<DaemonGetInfoResponse> getChainInfo() async {
+    return await provider.request(DaemonRequestGetInfo());
+  }
+
+  Future<String> getGenesisBlockHash() async {
+    _genesis ??= await provider.request(DaemonRequestOnGetBlockHash(0));
+    return _genesis!;
+  }
+
+  Future<MoneroTransaction> getTx(String txId) async {
+    final rParams = DaemonRequestGetTransactions(
+      [txId],
+      prune: false,
+      decodeAsJson: false,
+      split: false,
+    );
+    final result = await provider.request(rParams);
+    if (result.length != 1) {
+      throw BuError(DefaultErrorType.notFound, "Transaction not found.");
+    }
+    return result[0].toTx();
+  }
+
+  /// Spent hex key images of [keyImages] (empty in, empty out).
+  Future<List<String>> getSpentKeyImages(List<String> keyImages) async {
+    if (keyImages.isEmpty) return [];
+    final status = await keyImagesStatus(keyImages);
+    final spent = <String>[];
+    for (var i = 0; i < keyImages.length; i++) {
+      if (status.spentStatus[i].isSpent) spent.add(keyImages[i]);
+    }
+    return spent;
+  }
+
+  /// Submits [txHex], returning it. Rejected submissions throw.
+  Future<String> sendRawTransaction(String txHex) async {
+    final response = await provider.request(
+      DaemonRequestSendRawTransaction(txAsHex: txHex),
+    );
+    if (response.doubleSpend ||
+        response.invalidInput ||
+        response.invalidOutput ||
+        response.overspend ||
+        response.tooBig) {
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Monero transaction rejected.",
+        details: {"reason": response.reason},
+      );
+    }
+    return txHex;
+  }
+
+  /// Polls until [transactionId] confirms, throwing with double-spend
+  /// details on failure or on [timeout].
+  Future<void> trackTransaction({
+    required String transactionId,
+    Duration timeout = const Duration(minutes: 30),
+    Duration periodicTimeOut = const Duration(seconds: 15),
+  }) async {
+    Timer? timer;
+    try {
+      final Completer<void> completer = Completer<void>();
+      timer = Timer.periodic(periodicTimeOut, (_) async {
+        if (completer.isCompleted) return;
+        try {
+          final txes = await provider.request(
+            DaemonRequestGetTransactions([transactionId]),
+          );
+          final match = txes.where((e) => e.txHash == transactionId);
+          if (match.isEmpty) return;
+          final tx = match.first;
+          if (tx.doubleSpend) {
+            completer.completeError(
+              BuError(
+                DefaultErrorType.invalidArgument,
+                "Monero transaction double-spent.",
+              ),
+            );
+          } else if ((tx.confirmations ?? 0) > 0) {
+            completer.complete();
+          }
+        } catch (_) {}
+      });
+      await completer.future.timeout(timeout);
+    } on TimeoutException {
+      throw BuError(
+        DefaultErrorType.invalidState,
+        "transaction confirmation failed within the allotted timeout.",
+      );
+    } finally {
+      timer?.cancel();
+      timer = null;
+    }
+  }
+
+  /// Latest daemon height. Transport failures throw.
+  Future<BigInt> getDaemonHeight() async {
+    final info = await provider.request(const DaemonRequestGetHeight());
+    return BigInt.from(info.height);
+  }
+
+  /// Status of [transactionId]: unknown when the daemon has no such
+  /// transaction, pending while in pool or heightless, failed on
+  /// double-spend, block otherwise.
+  Future<MoneroTxStatus> getTransactionStatus(String transactionId) async {
+    final txes = await provider.request(
+      DaemonRequestGetTransactions([transactionId]),
+    );
+    if (txes.length != 1) return MoneroTxStatus.unknown;
+    final tx = txes.first;
+    if (tx.inPool || tx.height == null) return MoneroTxStatus.pending;
+    if (tx.doubleSpend) return MoneroTxStatus.failed;
+    return MoneroTxStatus.block;
+  }
+
+  /// Max 50 tx hashes per daemon call (client-side batching).
+  static const int maxTxRequestPerCall = 50;
 }

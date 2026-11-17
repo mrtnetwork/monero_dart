@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:blockchain_utils/layout/byte/byte_handler.dart';
 
 class TxExtraPaddingLayout extends Layout<List<int>> {
   TxExtraPaddingLayout({super.property}) : super(-1);
@@ -23,7 +22,12 @@ class TxExtraPaddingLayout extends Layout<List<int>> {
 
   @override
   int encode(List<int> source, LayoutByteWriter writer, {int offset = 0}) {
-    assert(source.every((e) => e == 0));
+    if (!source.every((e) => e == 0)) {
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid transaction extra padding: all bytes must be zero.",
+      );
+    }
     writer.setAll(offset, source);
     return source.length;
   }

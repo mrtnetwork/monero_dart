@@ -16,19 +16,19 @@ class MoneroAccountAddress extends MoneroAddress {
   }) {
     final decode = XmrAddrDecoder().decode(address);
     if (decode.type == XmrAddressType.integrated) {
-      throw const DartMoneroPluginException(
-        "Use `MoneroIntegratedAddress` for creating a MoneroAccount address.",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Use `MoneroIntegratedAddress` for creating an integrated address.",
       );
     }
     if (type != null && decode.type != type) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid address type.",
         details: {"expected": type.toString(), "type": decode.type.toString()},
       );
     }
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid address network.",
         details: {
           "expected": network.toString(),
@@ -52,8 +52,8 @@ class MoneroAccountAddress extends MoneroAddress {
     XmrAddressType type = XmrAddressType.primaryAddress,
   }) {
     if (type == XmrAddressType.integrated) {
-      throw const DartMoneroPluginException(
-        "Use `MoneroIntegratedAddress` for creating a MoneroAccount address.",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Use `MoneroIntegratedAddress` for creating an integrated address.",
       );
     }
     final encode = XmrAddrEncoder().encode(

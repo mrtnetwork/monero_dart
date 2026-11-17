@@ -19,7 +19,7 @@ class WalletRequestCreateAccount
   Map<String, dynamic> get params => {"label": label};
 
   @override
-  WalletRPCCreateAccountResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCCreateAccountResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCCreateAccountResponse.fromJson(result);
   }
 }

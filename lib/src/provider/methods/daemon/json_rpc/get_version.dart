@@ -16,10 +16,10 @@ class DaemonRequestGetVersion
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonGetVersionResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetVersionResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetVersionResponse.fromJson(result);
   }
 }

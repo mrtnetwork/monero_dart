@@ -13,7 +13,7 @@ class WalletRequestFrozen
   Map<String, dynamic> get params => {"key_image": keyImage};
 
   @override
-  bool onResonse(Map<String, dynamic> result) {
+  bool onResponse(Map<String, dynamic> result) {
     return result["frozen"];
   }
 }

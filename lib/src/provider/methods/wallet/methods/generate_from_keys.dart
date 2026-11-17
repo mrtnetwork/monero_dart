@@ -54,7 +54,7 @@ class WalletRequestGenerateFromKeys
   };
 
   @override
-  WalletRPCGenerateFromKeysResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCGenerateFromKeysResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCGenerateFromKeysResponse.fromJson(result);
   }
 }

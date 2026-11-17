@@ -13,12 +13,12 @@ class DaemonRequestPopBlocks
   @override
   String get method => "pop_blocks";
   @override
-  Map<String, dynamic> get params => {"nblocks": nBlocks.toString()};
+  Map<String, dynamic> get params => {"nblocks": nBlocks};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonPopBlocksResponse onResonse(Map<String, dynamic> result) {
+  DaemonPopBlocksResponse onResponse(Map<String, dynamic> result) {
     return DaemonPopBlocksResponse.fromJson(result);
   }
 }

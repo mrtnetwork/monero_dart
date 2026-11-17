@@ -32,10 +32,10 @@ class DaemonRequestGetPublicNodes
     "include_blocked": includeBlocked,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonGetPublicNodeResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetPublicNodeResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetPublicNodeResponse.fromJson(result);
   }
 }

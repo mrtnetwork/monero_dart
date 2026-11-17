@@ -1,43 +1,16 @@
-// Copyright (c) 2021-2024, The Monero Project
-// Copyright (c) 2024, MRTNETWORK (https://github.com/mrtnetwork)
-
-// All rights reserved.
-
-// This software includes portions of the Monero Project's original C/C++ implementation,
-// which have been adapted and reimplemented in Dart.
-
-// Redistribution and use in source and binary forms, with or without modification,
-// are permitted provided that the following conditions are met:
-// Redistributions of source code must retain the above copyright notice,
-// this list of conditions, and the following disclaimers.
-// Redistributions in binary form must reproduce the above copyright notice,
-// this list of conditions, and the following disclaimers in the documentation and/or other materials provided with the distribution.
-// Neither the name of the copyright holders nor the names of their contributors
-// may be used to endorse or promote products derived from this software without specific prior written permission.
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-// EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
+import 'package:monero_dart/src/error/monero_error.dart';
 import 'package:monero_dart/src/crypto/multisig/const/const.dart';
-import 'package:monero_dart/src/crypto/multisig/exception/exception.dart';
 import 'package:monero_dart/src/crypto/multisig/core/kex_message.dart';
 import 'package:monero_dart/src/crypto/ringct/const/const.dart';
 import 'package:monero_dart/src/crypto/ringct/utils/rct_crypto.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
 
 class MoneroMultisigKexUtils {
-  static List<MoneroPublicKey> getKexExcludePubkeys({
+  static List<ED25519MoneroPublicKey> getKexExcludePubkeys({
     required int kexRoundsComplete,
-    required MoneroPublicKey basePublicKey,
-    required Set<MoneroPublicKey> kexKeys,
+    required ED25519MoneroPublicKey basePublicKey,
+    required Set<ED25519MoneroPublicKey> kexKeys,
   }) {
     if (kexRoundsComplete == 0) {
       return [basePublicKey];
@@ -47,56 +20,56 @@ class MoneroMultisigKexUtils {
   }
 
   static List<int> generateMessageHash({
-    required MoneroPrivateKey? msgPrivateKey,
-    required MoneroPublicKey signingPubKey,
-    required List<MoneroPublicKey> msgPubKeys,
+    required ED25519MoneroPrivateKey? msgPrivateKey,
+    required ED25519MoneroPublicKey signingPubKey,
+    required List<ED25519MoneroPublicKey> msgPubKeys,
     required int round,
   }) {
     List<int> hashKey;
     List<int> keyBytes;
     if (round == 1) {
       hashKey = MoneroMultisigConst.multisigKexMsgV2Magic1.codeUnits;
-      keyBytes = msgPrivateKey!.key;
+      keyBytes = msgPrivateKey!.takeSecretKey();
     } else {
       hashKey = MoneroMultisigConst.multisigKexMsgV2MagicN.codeUnits;
-      keyBytes = msgPubKeys.expand((e) => e.key).toList();
+      keyBytes = msgPubKeys.expand((e) => e.toBytes()).toList();
     }
     final roundBytes = round.toU32LeBytes();
 
-    return QuickCrypto.keccack256Hash([
+    return QuickCrypto.keccak256Hash([
       ...hashKey,
       ...roundBytes,
-      ...signingPubKey.key,
+      ...signingPubKey.toBytes(),
       ...keyBytes,
     ]);
   }
 
-  static List<MoneroPublicKey> validateConfig({
+  static List<ED25519MoneroPublicKey> validateConfig({
     required int threshold,
-    required List<MoneroPublicKey> signers,
-    required MoneroPublicKey basePublicKey,
+    required List<ED25519MoneroPublicKey> signers,
+    required ED25519MoneroPublicKey basePublicKey,
   }) {
     if (threshold <= 0 || threshold > signers.length) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         'Multisig account: tried to set invalid threshold.',
       );
     }
     if (signers.length < 2 || signers.length > 10) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         'Multisig account: tried to set invalid number of signers.',
       );
     }
 
     if (!signers.contains(basePublicKey)) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.notFound, 
         'Multisig account: tried to set signers, but did not find the account\'s base pubkey in signer list.',
       );
     }
 
-    signers.sort((a, b) => BytesUtils.compareBytes(a.key, b.key));
+    signers.sort((a, b) => BytesUtils.compareBytes(a.toBytes(), b.toBytes()));
 
     if (signers.toSet().length != signers.length) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         'Multisig account: tried to set signers, but there are duplicate signers unexpectedly.',
       );
     }
@@ -105,32 +78,32 @@ class MoneroMultisigKexUtils {
 
   static void checkMultisigConfig(int round, int threshold, int numSigners) {
     if (numSigners <= 1) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Must be at least one other multisig signer.",
       );
     }
     if (numSigners > MoneroMultisigConst.multisigMaxSigners) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Too many multisig signers specified (limit = 16 to prevent dangerous combinatorial explosion during key exchange).",
       );
     }
     if (numSigners < threshold) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Multisig threshold may not be larger than number of signers.",
       );
     }
     if (threshold <= 0) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Multisig threshold must be > 0.",
       );
     }
     if (round <= 0) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Multisig kex round must be > 0.",
       );
     }
     if (round > multisigSetupRoundsRequired(numSigners, threshold)) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Trying to process multisig kex for an invalid round.",
       );
     }
@@ -138,12 +111,12 @@ class MoneroMultisigKexUtils {
 
   static int multisigKexRoundsRequired(int numSigners, int threshold) {
     if (numSigners < threshold) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "num_signers must be >= threshold",
       );
     }
     if (threshold < 1) {
-      throw const MoneroMultisigAccountException("threshold must be >= 1");
+      throw BuError(DefaultErrorType.invalidArgument, "threshold must be >= 1");
     }
     return numSigners - threshold + 1;
   }
@@ -152,42 +125,47 @@ class MoneroMultisigKexUtils {
     return multisigKexRoundsRequired(numSigners, threshold) + 1;
   }
 
-  static MoneroPrivateKey getMultisigBlindedSecretKey(RctKey key) {
-    final keyBytes = RCT.hashToScalar_([
+  static ED25519MoneroPrivateKey getMultisigBlindedSecretKey(List<int> key) {
+    final keyBytes = RCT.hashToScalar([
       ...key,
       ...MoneroMultisigConst.hashKeyMultisig,
     ]);
-    return MoneroPrivateKey.fromBytes(keyBytes);
+    return ED25519MoneroPrivateKey.fromBytes(keyBytes);
   }
 
-  static (MoneroPrivateKey, MoneroPublicKey)
-  calculateMultisigKeypairFromDerivation(RctKey derivation) {
-    final MoneroPrivateKey blindedSkey = getMultisigBlindedSecretKey(
+  static (ED25519MoneroPrivateKey, ED25519MoneroPublicKey)
+  calculateMultisigKeypairFromDerivation(List<int> derivation) {
+    final ED25519MoneroPrivateKey blindedSkey = getMultisigBlindedSecretKey(
       derivation,
     );
     final pubKey = blindedSkey.publicKey;
     return (blindedSkey, pubKey);
   }
 
-  static MoneroPrivateKey makeMultisigCommonPrivkey(
-    List<MoneroPrivateKey> participantBaseCommonPrivkeys,
+  static ED25519MoneroPrivateKey makeMultisigCommonPrivkey(
+    List<ED25519MoneroPrivateKey> participantBaseCommonPrivkeys,
   ) {
     participantBaseCommonPrivkeys.sort((key1, key2) {
-      return BytesUtils.compareBytes(key1.key, key2.key);
+      return BytesUtils.compareBytes(
+        key1.takeSecretKey(),
+        key2.takeSecretKey(),
+      );
     });
-    final keyBytes = RCT.hashToScalarKeysVar(
-      participantBaseCommonPrivkeys.map((e) => e.key).toList(),
+    final keyBytes = RCT.hashToScalarKeys(
+      participantBaseCommonPrivkeys
+          .map((e) => e.takeSecretKey().toBytes())
+          .toList(),
     );
-    return MoneroPrivateKey.fromBytes(keyBytes);
+    return ED25519MoneroPrivateKey.fromBytes(keyBytes);
   }
 
   static RctKey computeMultisigAggregationCoefficient(
-    List<MoneroPublicKey> sortedKeys,
-    MoneroPublicKey aggregationKey,
+    List<ED25519MoneroPublicKey> sortedKeys,
+    ED25519MoneroPublicKey aggregationKey,
   ) {
     // aggregation key must be in sortedKeys
     if (!sortedKeys.contains(aggregationKey)) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.notFound, 
         "Aggregation key expected to be in input keyset.",
       );
     }
@@ -197,31 +175,32 @@ class MoneroMultisigKexUtils {
     salt.setAll(0, MoneroMultisigConst.hashKeyMultisigKeyAggregation);
 
     final KeyV data = [
-      aggregationKey.key,
-      ...sortedKeys.map((e) => e.key),
+      aggregationKey.toBytes(),
+      ...sortedKeys.map((e) => e.toBytes()),
       salt,
     ];
-    return RCT.hashToScalarKeysVar(data);
+    return RCT.hashToScalarKeys(data);
   }
 
-  static (MoneroPublicKey, List<MoneroPrivateKey>) generateMultisigAggregateKey(
-    List<MoneroPublicKey> finalKeys,
-    List<MoneroPrivateKey> multisigPrivateKeys,
+  static (ED25519MoneroPublicKey, List<ED25519MoneroPrivateKey>)
+  generateMultisigAggregateKey(
+    List<ED25519MoneroPublicKey> finalKeys,
+    List<ED25519MoneroPrivateKey> multisigPrivateKeys,
   ) {
-    final Map<MoneroPublicKey, int> ownKeysMapping = {};
+    final Map<ED25519MoneroPublicKey, int> ownKeysMapping = {};
     final List<RctKey> privkeysInOut =
-        multisigPrivateKeys.map((e) => e.key.clone()).toList();
+        multisigPrivateKeys.map((e) => e.takeSecretKey().toBytes()).toList();
     for (int i = 0; i < privkeysInOut.length; i++) {
-      final MoneroPublicKey pubkey = multisigPrivateKeys[i].publicKey;
+      final ED25519MoneroPublicKey pubkey = multisigPrivateKeys[i].publicKey;
       ownKeysMapping[pubkey] = i;
       finalKeys.add(pubkey);
     }
 
     // Sort finalKeys in ascending order
-    finalKeys.sort((a, b) => BytesUtils.compareBytes(a.key, b.key));
+    finalKeys.sort((a, b) => BytesUtils.compareBytes(a.toBytes(), b.toBytes()));
     for (int i = 1; i < finalKeys.length; i++) {
       if (finalKeys[i] == finalKeys[i - 1]) {
-        throw const MoneroMultisigAccountException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Unexpected duplicate found in input list.",
         );
       }
@@ -238,42 +217,46 @@ class MoneroMultisigKexUtils {
       );
       if (ownKeysMapping[key] != null) {
         final int index = ownKeysMapping[key]!;
-        CryptoOps.scMul(privkeysInOut[index], coeff, privkeysInOut[index]);
+        privkeysInOut[index] = blockchainUtils.api.ed25519.scMul(
+          coeff,
+          privkeysInOut[index],
+        );
       }
 
       // Convert public key (pre-merge operation)
-      final RctKey convertedPubkey = RCT.scalarmultKeyVar(key.key, coeff);
+      final RctKey convertedPubkey = RCT.scalarmultKey(key.toBytes(), coeff);
 
       // Merge converted public key into aggregate key
-      aggregateKey = RCT.addKeysVar(aggregateKey, convertedPubkey);
+      aggregateKey = RCT.addKeys(aggregateKey, convertedPubkey);
     }
-    final pubKey = MoneroPublicKey.fromBytes(aggregateKey);
-    final List<MoneroPrivateKey> updatedKeys =
-        privkeysInOut.map((e) => MoneroPrivateKey.fromBytes(e)).toList();
+    final pubKey = ED25519MoneroPublicKey.fromBytes(aggregateKey);
+    final List<ED25519MoneroPrivateKey> updatedKeys =
+        privkeysInOut.map((e) => ED25519MoneroPrivateKey.fromBytes(e)).toList();
     return (pubKey, updatedKeys);
   }
 
-  static Map<MoneroPublicKey, Set<MoneroPublicKey>> multisigKexMakeRoundKeys(
-    MoneroPrivateKey basePrivateKey,
-    Map<MoneroPublicKey, Set<MoneroPublicKey>> pubkeyOriginsMap,
+  static Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+  multisigKexMakeRoundKeys(
+    ED25519MoneroPrivateKey basePrivateKey,
+    Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>> pubkeyOriginsMap,
   ) {
-    final Map<MoneroPublicKey, Set<MoneroPublicKey>> derivationOriginsMapOut =
-        {};
+    final Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+    derivationOriginsMapOut = {};
 
     for (final i in pubkeyOriginsMap.entries) {
       // D = 8 * k_base * K_pubkey
       // note: must be mul8 (cofactor), otherwise it is possible to leak to a malicious participant if the local
       //       base_privkey is a multiple of 8 or not
       // note2: avoid making temporaries that won't be memwiped
-      RctKey derivationRct = RCT.scalarmultKeyVar(
-        i.key.key,
-        basePrivateKey.key,
+      RctKey derivationRct = RCT.scalarmultKey(
+        i.key.toBytes(),
+        basePrivateKey.takeSecretKey(),
       );
-      derivationRct = RCT.scalarmultKeyVar(derivationRct, RCTConst.eight);
+      derivationRct = RCT.scalarmultKey(derivationRct, RCTConst.eight);
 
       // retain mapping between pubkey's origins and the DH derivation
       // note: if working on last kex round, then caller must know how to handle these derivations properly
-      derivationOriginsMapOut[MoneroPublicKey.fromBytes(derivationRct)] =
+      derivationOriginsMapOut[ED25519MoneroPublicKey.fromBytes(derivationRct)] =
           i.value.clone();
     }
     return derivationOriginsMapOut;
@@ -284,36 +267,37 @@ class MoneroMultisigKexUtils {
     int expectedRound,
   ) {
     if (expandedMsgs.isEmpty) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "At least one input message expected.",
       );
     }
 
     final int round = expandedMsgs[0].round;
     if (round != expectedRound) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Messages don't have the expected kex round number.",
       );
     }
 
     for (final expandedMsg in expandedMsgs) {
       if (expandedMsg.round != round) {
-        throw const MoneroMultisigAccountException(
+        throw BuError(MoneroErrorType.multisigAccount, 
           "All messages must have the same kex round number.",
         );
       }
     }
   }
 
-  static (int, Map<MoneroPublicKey, Set<MoneroPublicKey>>)
+  static (int, Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>)
   multisigKexMsgsSanitizePubkeys(
     List<MultisigKexMessage> expandedMsgs,
-    List<MoneroPublicKey> excludePubkeys,
+    List<ED25519MoneroPublicKey> excludePubkeys,
   ) {
-    final Map<MoneroPublicKey, Set<MoneroPublicKey>> sanitizedPubkeysOut = {};
+    final Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+    sanitizedPubkeysOut = {};
     // Ensure there is at least one input message
     if (expandedMsgs.isEmpty) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "At least one input message expected.",
       );
     }
@@ -343,17 +327,17 @@ class MoneroMultisigKexUtils {
     return (round, sanitizedPubkeysOut);
   }
 
-  static Map<MoneroPublicKey, Set<MoneroPublicKey>>
+  static Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
   evaluateMultisigKexRoundMsgs(
-    MoneroPublicKey basePubkey,
+    ED25519MoneroPublicKey basePubkey,
     int expectedRound,
-    List<MoneroPublicKey> signers,
+    List<ED25519MoneroPublicKey> signers,
     List<MultisigKexMessage> expandedMsgs,
-    List<MoneroPublicKey> excludePubkeys,
+    List<ED25519MoneroPublicKey> excludePubkeys,
     bool incompleteSignerSet,
   ) {
     if (excludePubkeys.toSet().length != excludePubkeys.length) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Found duplicate pubkeys for exclusion unexpectedly.",
       );
     }
@@ -361,7 +345,7 @@ class MoneroMultisigKexUtils {
     final round = r.$1;
     final pubkeyOriginsMap = r.$2;
     if (round != expectedRound) {
-      throw MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Kex messages were for round $round, but expected round is $expectedRound",
       );
     }
@@ -371,14 +355,15 @@ class MoneroMultisigKexUtils {
     });
 
     // Evaluate pubkeys collected
-    final originPubkeysMap = <MoneroPublicKey, Set<MoneroPublicKey>>{};
+    final originPubkeysMap =
+        <ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>{};
 
     // Number of recommendations per pubkey required
     final numRecommendationsPerPubkeyRequired = incompleteSignerSet ? 1 : round;
 
     for (final entry in pubkeyOriginsMap.entries) {
       if (entry.value.length < numRecommendationsPerPubkeyRequired) {
-        throw const MoneroMultisigAccountException(
+        throw BuError(MoneroErrorType.multisigAccount, 
           "A pubkey recommended by multisig kex messages had an unexpected number of recommendations.",
         );
       }
@@ -394,7 +379,7 @@ class MoneroMultisigKexUtils {
             ? signers.length - 1 - (round - 1)
             : signers.length - 1;
     if (originPubkeysMap.length < numSignersRequired) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Number of unique other signers recommending pubkeys does not equal number of required other signers",
       );
     }
@@ -413,14 +398,14 @@ class MoneroMultisigKexUtils {
     final expectedRecommendationsSelf = nChooseK(signers.length - 1, round - 1);
     if (expectedRecommendationsSelf <= 0 ||
         expectedRecommendationsOthers <= 0) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         'Bad num signers or round num (possibly numerical limits exceeded).',
       );
     }
 
     // Check that local account recommends expected number of keys
     if (excludePubkeys.length != expectedRecommendationsSelf) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         'Local account did not recommend expected number of multisig keys.',
       );
     }
@@ -428,14 +413,14 @@ class MoneroMultisigKexUtils {
     // Check that other signers recommend expected number of keys
     for (final entry in originPubkeysMap.entries) {
       if (entry.value.length != expectedRecommendationsOthers) {
-        throw const MoneroMultisigAccountException(
+        throw BuError(MoneroErrorType.multisigAccount, 
           'A multisig signer recommended an unexpected number of pubkeys.',
         );
       }
 
       // Only expected signers should be recommending keys
       if (!signers.contains(entry.key)) {
-        throw const MoneroMultisigAccountException(
+        throw BuError(MoneroErrorType.multisigAccount, 
           'Multisig key exchange message with unexpected signer encountered.',
         );
       }
@@ -444,29 +429,29 @@ class MoneroMultisigKexUtils {
     return pubkeyOriginsMap;
   }
 
-  static Map<MoneroPublicKey, Set<MoneroPublicKey>>
+  static Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
   evaluateMultisigPostKexRoundMsgs(
-    MoneroPublicKey basePubkey,
+    ED25519MoneroPublicKey basePubkey,
     int expectedRound,
-    List<MoneroPublicKey> signers,
+    List<ED25519MoneroPublicKey> signers,
     List<MultisigKexMessage> expandedMsgs,
     bool incompleteSignerSet,
   ) {
     // Sanitize input messages
-    final List<MoneroPublicKey> dummy = [];
+    final List<ED25519MoneroPublicKey> dummy = [];
 
     final r = multisigKexMsgsSanitizePubkeys(expandedMsgs, dummy);
     final pubkeyOriginsMap = r.$2;
     final round = r.$1;
     if (round != expectedRound) {
-      throw MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Kex messages were for round $round, but expected round is $expectedRound",
       );
     }
 
     // 1) There should only be two pubkeys
     if (pubkeyOriginsMap.length != 2) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Multisig post-kex round messages from other signers did not all contain two pubkeys.",
       );
     }
@@ -478,7 +463,7 @@ class MoneroMultisigKexUtils {
     pubkeySetIterator.moveNext();
     final secondSet = pubkeySetIterator.current;
     if (!CompareUtils.iterableIsEqual(firstSet, secondSet)) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Multisig post-kex round messages from other signers did not all recommend the same pubkey pair.",
       );
     }
@@ -489,7 +474,7 @@ class MoneroMultisigKexUtils {
     final numSignersRequired = incompleteSignerSet ? 1 : signers.length;
 
     if (origins.length < numSignersRequired) {
-      throw const MoneroMultisigAccountException(
+      throw BuError(MoneroErrorType.multisigAccount, 
         "Multisig post-kex round message origins don't line up with multisig signer set",
       );
     }
@@ -497,7 +482,7 @@ class MoneroMultisigKexUtils {
     for (final origin in origins) {
       // Ensure each origin is part of the signers list
       if (!signers.contains(origin)) {
-        throw const MoneroMultisigAccountException(
+        throw BuError(DefaultErrorType.notFound, 
           "An unknown origin recommended a multisig post-kex verification message.",
         );
       }
@@ -506,17 +491,19 @@ class MoneroMultisigKexUtils {
     return pubkeyOriginsMap;
   }
 
-  static Map<MoneroPublicKey, Set<MoneroPublicKey>> multisigKexProcessRoundMsgs(
-    MoneroPrivateKey basePrivkey,
-    MoneroPublicKey basePubkey,
+  static Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+  multisigKexProcessRoundMsgs(
+    ED25519MoneroPrivateKey basePrivkey,
+    ED25519MoneroPublicKey basePubkey,
     int currentRound,
     int threshold,
-    List<MoneroPublicKey> signers,
+    List<ED25519MoneroPublicKey> signers,
     List<MultisigKexMessage> expandedMsgs,
-    List<MoneroPublicKey> excludePubkeys,
+    List<ED25519MoneroPublicKey> excludePubkeys,
     bool incompleteSignerSet,
   ) {
-    Map<MoneroPublicKey, Set<MoneroPublicKey>> keysToOriginsMapOut = {};
+    Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+    keysToOriginsMapOut = {};
     checkMultisigConfig(currentRound, threshold, signers.length);
     final kexRoundsRequired = multisigKexRoundsRequired(
       signers.length,
@@ -524,7 +511,8 @@ class MoneroMultisigKexUtils {
     );
 
     // Process messages into a [pubkey : {origins}] map
-    Map<MoneroPublicKey, Set<MoneroPublicKey>> evaluatedPubkeys = {};
+    Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>> evaluatedPubkeys =
+        {};
 
     if (threshold == 1 && currentRound == kexRoundsRequired) {
       // In the last main kex round of 1-of-N, all signers share a key so the local signer

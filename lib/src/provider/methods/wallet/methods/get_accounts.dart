@@ -32,7 +32,7 @@ class WalletRequestGetAccounts
   };
 
   @override
-  WalletRPCGetAccountsResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCGetAccountsResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCGetAccountsResponse.fromJson(result);
   }
 }

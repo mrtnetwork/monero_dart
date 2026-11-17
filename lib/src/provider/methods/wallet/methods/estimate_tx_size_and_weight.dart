@@ -35,7 +35,7 @@ class WalletRequestEstimateTxSizeAndWeight
   };
 
   @override
-  WalletRPCEstimateTxSizeAndWeightResponse onResonse(
+  WalletRPCEstimateTxSizeAndWeightResponse onResponse(
     Map<String, dynamic> result,
   ) {
     return WalletRPCEstimateTxSizeAndWeightResponse.fromJson(result);

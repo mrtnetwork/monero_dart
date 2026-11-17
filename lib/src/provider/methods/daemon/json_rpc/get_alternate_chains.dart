@@ -15,10 +15,10 @@ class DaemonRequestGetAlternateChains
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonGetAlternateChainsResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetAlternateChainsResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetAlternateChainsResponse.fromJson(result);
   }
 }

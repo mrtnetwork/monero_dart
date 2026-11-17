@@ -1,6 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/network/network.dart';
-import 'package:monero_dart/src/exception/exception.dart';
 import 'package:monero_dart/src/serialization/serialization.dart';
 part 'integrated_address.dart';
 part 'account_address.dart';
@@ -12,13 +11,11 @@ abstract class MoneroAddress extends MoneroSerialization
   final List<int> pubSpendKey;
 
   /// view public key
-  late final MoneroPublicKey publicViewKey = MoneroPublicKey.fromBytes(
-    pubViewKey,
-  );
+  late final ED25519MoneroPublicKey publicViewKey =
+      ED25519MoneroPublicKey.fromBytes(pubViewKey);
 
-  late final MoneroPublicKey publicSpendKey = MoneroPublicKey.fromBytes(
-    pubSpendKey,
-  );
+  late final ED25519MoneroPublicKey publicSpendKey =
+      ED25519MoneroPublicKey.fromBytes(pubSpendKey);
 
   /// address
   @override
@@ -81,7 +78,7 @@ abstract class MoneroAddress extends MoneroSerialization
   }) {
     final decode = XmrAddrDecoder().decode(address);
     if (type != null && decode.type != type) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid address type.",
         details: {"expected": type.toString(), "type": decode.type.toString()},
       );
@@ -90,7 +87,7 @@ abstract class MoneroAddress extends MoneroSerialization
     final pvKey = decode.publicViewKey;
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid address network.",
         details: {
           "expected": network.toString(),
@@ -139,7 +136,7 @@ abstract class MoneroAddress extends MoneroSerialization
 
   T cast<T extends MoneroAddress>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "monero address casting failed.",
         details: {"expected": "$T", "type": type.name},
       );
@@ -151,7 +148,7 @@ abstract class MoneroAddress extends MoneroSerialization
   List<dynamic> get variables => [address];
 
   @override
-  List<int> encodeAsIAddress() {
+  BuBytes encodeAsIAddress() {
     return toCbor().encode();
   }
 

@@ -15,10 +15,10 @@ class DaemonRequestGetNetStats
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonGetNetStatsResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetNetStatsResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetNetStatsResponse.fromJson(result);
   }
 }

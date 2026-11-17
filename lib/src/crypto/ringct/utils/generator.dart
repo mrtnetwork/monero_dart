@@ -1,31 +1,5 @@
-// Copyright (c) 2021-2024, The Monero Project
-// Copyright (c) 2024, MRTNETWORK (https://github.com/mrtnetwork)
-
-// All rights reserved.
-
-// This software includes portions of the Monero Project's original C/C++ implementation,
-// which have been adapted and reimplemented in Dart.
-
-// Redistribution and use in source and binary forms, with or without modification,
-// are permitted provided that the following conditions are met:
-// Redistributions of source code must retain the above copyright notice,
-// this list of conditions, and the following disclaimers.
-// Redistributions in binary form must reproduce the above copyright notice,
-// this list of conditions, and the following disclaimers in the documentation and/or other materials provided with the distribution.
-// Neither the name of the copyright holders nor the names of their contributors
-// may be used to endorse or promote products derived from this software without specific prior written permission.
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-// EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
+import 'package:monero_dart/src/error/monero_error.dart';
 import 'package:monero_dart/src/crypto/monero/crypto.dart';
 import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/bulletproofs_plus.dart';
 import 'package:monero_dart/src/crypto/ringct/clsag/clsag.dart';
@@ -39,14 +13,13 @@ import 'package:monero_dart/src/network/config.dart';
 class RCTGeneratorUtils {
   static RctKey getPreMlsagHash(RCTSignature rv) {
     final KeyV hashes = [];
-    if (rv.signature.message == null ||
-        (rv.signature.mixRing?.isEmpty ?? true)) {
-      throw const MoneroCryptoException(
+    final message = rv.signature.message;
+    final mixRing = rv.signature.mixRing;
+    if (message == null || (mixRing == null || mixRing.isEmpty)) {
+      throw BuError(MoneroErrorType.crypto, 
         "message and mixRing required for generate mlsag hash.",
       );
     }
-    final message = rv.signature.message!;
-    final mixRing = rv.signature.mixRing!;
     hashes.add(message);
     final int inputs =
         rv.signature.type.isSimple ? mixRing.length : mixRing[0].length;
@@ -56,7 +29,7 @@ class RCTGeneratorUtils {
       outputLength: outputs,
       forcePrunable: true,
     ).serialize(rv.toLayoutStruct());
-    final h = QuickCrypto.keccack256Hash(ss);
+    final h = QuickCrypto.keccak256Hash(ss);
     hashes.add(h);
     final KeyV kv = [];
     if (rv.signature.type == RCTType.rctTypeBulletproof ||
@@ -114,8 +87,8 @@ class RCTGeneratorUtils {
         }
       }
     }
-    hashes.add(QuickCrypto.keccack256Hash(kv.expand((e) => e).toList()));
-    return QuickCrypto.keccack256Hash(hashes.expand((e) => e).toList());
+    hashes.add(QuickCrypto.keccak256Hash(kv.expand((e) => e).toList()));
+    return QuickCrypto.keccak256Hash(hashes.expand((e) => e).toList());
   }
 
   static const int maxOuts = 16;
@@ -125,21 +98,34 @@ class RCTGeneratorUtils {
     return CtKey(mask: mask, dest: dest);
   }
 
-  static BulletproofPlus _proveRangeBulletproofPlus(
+  static BulletproofPlus proveRangeBulletproofPlus(
     KeyV C,
     KeyV masks,
     List<BigInt> amounts,
     List<RctKey> sk,
+    bool? nativeBakend,
   ) {
     if (amounts.length != sk.length) {
-      throw const MoneroCryptoException("Invalid amounts/sk sizes");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid amounts/sk sizes");
     }
-    final proof = BulletproofsPlusGenerator.bulletproofPlusPROVEAmouts(
-      amounts,
-      masks,
-    );
+    nativeBakend ??= amounts.length > 2;
+    final proof = switch (blockchainUtils.api.monero.supported &&
+        nativeBakend) {
+      true => BulletproofPlus.fromNative(
+        blockchainUtils.api.monero.bpPlusProveAmounts(
+          amounts: amounts,
+          gamma: masks,
+          seed: QuickCrypto.generateRandom(),
+        ),
+      ),
+      false => BulletproofsPlusGenerator.bulletproofPlusPROVEAmouts(
+        amounts,
+        masks,
+      ),
+    };
+
     if (proof.v.length != amounts.length) {
-      throw const MoneroCryptoException("V does not have the expected size");
+      throw BuError(MoneroErrorType.crypto, "V does not have the expected size");
     }
     for (int i = 0; i < proof.v.length; i++) {
       C[i] = proof.v[i].clone();
@@ -180,38 +166,39 @@ class RCTGeneratorUtils {
     required CtKeyV outSk,
     KeyV? aResult,
     bool createLinkable = true,
+    bool? nativeBakend,
   }) {
     if (inamounts.isEmpty) {
-      throw const MoneroCryptoException("Empty inamounts");
+      throw BuError(MoneroErrorType.crypto, "Empty inamounts");
     }
 
     if (inamounts.length != inSk.length) {
-      throw const MoneroCryptoException("Different number of inamounts/inSk");
+      throw BuError(MoneroErrorType.crypto, "Different number of inamounts/inSk");
     }
 
     if (outamounts.length != destinations.length) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Different number of amounts/destinations",
       );
     }
 
     if (amountKeys.length != destinations.length) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Different number of amountKeys/destinations",
       );
     }
 
     if (index.length != inSk.length) {
-      throw const MoneroCryptoException("Different number of index/inSk");
+      throw BuError(MoneroErrorType.crypto, "Different number of index/inSk");
     }
 
     if (mixRing.length != inSk.length) {
-      throw const MoneroCryptoException("Different number of mixRing/inSk");
+      throw BuError(MoneroErrorType.crypto, "Different number of mixRing/inSk");
     }
 
     for (int n = 0; n < mixRing.length; n++) {
       if (index[n] >= mixRing[n].length) {
-        throw const MoneroCryptoException("Bad index into mixRing");
+        throw BuError(DefaultErrorType.invalidArgument, "Bad index into mixRing");
       }
     }
     final CtKeyV outPk = [];
@@ -228,25 +215,31 @@ class RCTGeneratorUtils {
     final keys = amountKeys.map((e) => e.clone()).toList();
     final KeyV masks = List.generate(
       outamounts.length,
-      (i) => RCT.genCommitmentMaskVar(keys[i]),
+      (i) => RCT.genCommitmentMask(keys[i]),
     );
     final KeyV C = List.generate(outamounts.length, (_) => RCT.zero());
-    final prove = _proveRangeBulletproofPlus(C, masks, outamounts, keys);
+    final prove = proveRangeBulletproofPlus(
+      C,
+      masks,
+      outamounts,
+      keys,
+      nativeBakend,
+    );
     bulletProofPlus.add(prove);
     for (i = 0; i < outamounts.length; ++i) {
-      final mask = RCT.scalarmult8PointVar(C[i]);
-      outPk[i] = outPk[i].copyWith(mask: mask.toBytes());
+      final mask = blockchainUtils.api.ed25519.mul8(C[i]);
+      outPk[i] = outPk[i].copyWith(mask: mask);
       outSk[i] = outSk[i].copyWith(mask: masks[i]);
     }
     RctKey sumout = RCT.zero();
     for (i = 0; i < outSk.length; ++i) {
-      sumout = Ed25519Utils.scAddVar(outSk[i].mask, sumout);
+      sumout = blockchainUtils.api.ed25519.scAdd(outSk[i].mask, sumout);
       final ecdhT = EcdhTuple(
-        mask: outSk[i].mask,
+        mask: outSk[i].mask.toBytes,
         amount: RCT.d2h(outamounts[i]),
         version: EcdhInfoVersion.v2,
       );
-      final EcdhInfo info = RCT.ecdhEncodeVar(ecdhT, amountKeys[i]);
+      final EcdhInfo info = RCT.ecdhEncode(ecdhT, amountKeys[i]);
       ecdh.add(info);
     }
     final KeyV pseudoOuts = List.generate(inamounts.length, (_) => RCT.zero());
@@ -255,15 +248,17 @@ class RCTGeneratorUtils {
     final KeyV a =
         aResult ?? List.generate(inamounts.length, (_) => RCT.zero());
     if (a.length != inamounts.length) {
-      throw const MoneroCryptoException("Invalid a provided.");
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid blinding factors: expected ${inamounts.length}, received ${a.length}.",
+      );
     }
     for (i = 0; i < inamounts.length - 1; i++) {
-      a[i] = RCT.skGen_();
-      sumpouts = Ed25519Utils.scAddVar(a[i], sumpouts);
-      pseudoOuts[i] = RCT.genCVar(a[i], inamounts[i]);
+      a[i] = RCT.skGen();
+      sumpouts = blockchainUtils.api.ed25519.scAdd(a[i], sumpouts);
+      pseudoOuts[i] = RCT.genC(a[i], inamounts[i]);
     }
-    a[i] = Ed25519Utils.scSubVar(sumout, sumpouts);
-    pseudoOuts[i] = RCT.genCVar(a[i], inamounts[i]);
+    a[i] = blockchainUtils.api.ed25519.scSub(sumout, sumpouts);
+    pseudoOuts[i] = RCT.genC(a[i], inamounts[i]);
     final RCTSignature<S, P> signature = buildSignature(
       type: RCTType.rctTypeBulletproofPlus,
       ecdh: ecdh,
@@ -323,41 +318,40 @@ class RCTGeneratorUtils {
     bool createLinkable = true,
   }) {
     if (inamounts.isEmpty) {
-      throw const MoneroCryptoException("Empty inamounts");
+      throw BuError(MoneroErrorType.crypto, "Empty inamounts");
     }
 
     if (inamounts.length != inSk.length) {
-      throw const MoneroCryptoException("Different number of inamounts/inSk");
+      throw BuError(MoneroErrorType.crypto, "Different number of inamounts/inSk");
     }
 
     if (outamounts.length != destinations.length) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Different number of amounts/destinations",
       );
     }
 
     if (amountKeys.length != destinations.length) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "Different number of amountKeys/destinations",
       );
     }
 
     if (index.length != inSk.length) {
-      throw const MoneroCryptoException("Different number of index/inSk");
+      throw BuError(MoneroErrorType.crypto, "Different number of index/inSk");
     }
 
     if (mixRing.length != inSk.length) {
-      throw const MoneroCryptoException("Different number of mixRing/inSk");
+      throw BuError(MoneroErrorType.crypto, "Different number of mixRing/inSk");
     }
 
     for (int n = 0; n < mixRing.length; n++) {
       if (index[n] >= mixRing[n].length) {
-        throw const MoneroCryptoException("Bad index into mixRing");
+        throw BuError(DefaultErrorType.invalidArgument, "Bad index into mixRing");
       }
     }
     final CtKeyV outPk = [];
     int i;
-    // final List<RangeSig> rangeSig = [];
     final List<BulletproofPlus> bulletProofPlus = [];
 
     for (i = 0; i < destinations.length; i++) {
@@ -367,8 +361,6 @@ class RCTGeneratorUtils {
       final CtKey pk = CtKey(dest: destinations[i].clone(), mask: mask);
       outPk.add(pk);
     }
-    // final KeyV masks = List.filled(outamounts.length, RCT.identity());
-    // final KeyV C = List.generate(outamounts.length, (_) => RCT.identity());
     final prove = _fakeProveRangeBulletproofPlus(outamounts);
     bulletProofPlus.add(prove);
     final List<EcdhInfo> ecdh = List.filled(
@@ -417,7 +409,7 @@ class RCTGeneratorUtils {
     final List<BulletproofPlus> bppProofs = [];
     for (final rv in rvv) {
       if (!rv.signature.type.isSimple) {
-        throw const MoneroCryptoException("called on non simple rctSig");
+        throw BuError(MoneroErrorType.crypto, "called on non simple rctSig");
       }
       final bool bulletproof = rv.signature.type.isBulletproof;
       final bool bulletproofPlus = rv.signature.type.isBulletproofPlus;
@@ -429,7 +421,7 @@ class RCTGeneratorUtils {
                     .cast<RctSigPrunableBulletproofPlus>()
                     .bulletproofPlus,
               )) {
-            throw const MoneroCryptoException(
+            throw BuError(DefaultErrorType.invalidArgument, 
               "Mismatched sizes of outPk and bulletproofs_plus",
             );
           }
@@ -438,7 +430,7 @@ class RCTGeneratorUtils {
               nBulletproofAmounts(
                 rv.rctSigPrunable!.cast<BulletproofPrunable>().bulletproof,
               )) {
-            throw const MoneroCryptoException(
+            throw BuError(DefaultErrorType.invalidArgument, 
               "Mismatched sizes of outPk and bulletproofs",
             );
           }
@@ -447,19 +439,19 @@ class RCTGeneratorUtils {
         if (rv.signature.type.isClsag) {
           final clsag = rv.rctSigPrunable!.cast<ClsagPrunable>();
           if (clsag.pseudoOuts.length != clsag.clsag.length) {
-            throw const MoneroCryptoException(
+            throw BuError(DefaultErrorType.invalidArgument, 
               "Mismatched sizes of pseudoOuts and CLSAGs",
             );
           }
         }
 
         if (rv.signature.pseudoOuts?.isNotEmpty ?? false) {
-          throw const MoneroCryptoException("pseudoOuts is not empty");
+          throw BuError(MoneroErrorType.crypto, "pseudoOuts is not empty");
         }
       }
 
       if (rv.signature.outPk.length != rv.signature.ecdhInfo.length) {
-        throw const MoneroCryptoException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Mismatched sizes of outPk and rv.ecdhInfo",
         );
       }
@@ -478,11 +470,11 @@ class RCTGeneratorUtils {
         (_) => RCT.zero(),
       );
       for (int i = 0; i < rv.signature.outPk.length; i++) {
-        masks[i] = rv.signature.outPk[i].mask.clone();
+        masks[i] = rv.signature.outPk[i].mask.toBytes;
       }
       RctKey sumOutpks = RCT.addKeysBatch(masks);
       final RctKey txnFeeKey = RCT.scalarmultH(RCT.d2h(rv.signature.txnFee));
-      sumOutpks = RCT.addKeys_(txnFeeKey, sumOutpks);
+      sumOutpks = RCT.addKeys(txnFeeKey, sumOutpks);
       final RctKey sumPseudoOuts = RCT.addKeysBatch(pseudoOuts);
       if (!BytesUtils.bytesEqual(sumPseudoOuts, sumOutpks)) {
         return false;
@@ -495,17 +487,33 @@ class RCTGeneratorUtils {
     return true;
   }
 
+  static bool bulletproofPlusVerify(List<BulletproofPlus> proofs) {
+    try {
+      if (blockchainUtils.api.monero.supported) {
+        return blockchainUtils.api.monero.bpPlusVerify(
+          proofs.map((e) => e.toNative()).toList(),
+        );
+      }
+      return BulletproofsPlusGenerator.bulletproofPlusVerify(proofs);
+    } catch (e) {
+      throw BuError(DefaultErrorType.cryptoVerifyFailed, 
+        "Failed to verify Bulletproof Plus.",
+        details: {"error": e.toString()},
+      );
+    }
+  }
+
   static bool verRctNonSemanticsSimple(RCTSignature rv) {
     if (!rv.signature.type.isSimple) {
-      throw const MoneroCryptoException("called on non simple rctSig");
+      throw BuError(MoneroErrorType.crypto, "called on non simple rctSig");
     }
     if (rv.signature.mixRing == null || rv.signature.message == null) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "mixRing and message required for verification.",
       );
     }
     if (rv.rctSigPrunable == null) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Prunable signature is required for verification.",
       );
     }
@@ -514,18 +522,18 @@ class RCTGeneratorUtils {
     if (bulletproof || bulletproofPlus) {
       if (rv.signature.mixRing!.length !=
           rv.rctSigPrunable!.pseudoOuts.length) {
-        throw const MoneroCryptoException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Mismatched sizes of pseudoOuts and mixRing",
         );
       }
     } else {
       if (rv.signature.pseudoOuts == null) {
-        throw const MoneroCryptoException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Signature pseudoOuts is required for verification.",
         );
       }
       if (rv.signature.mixRing!.length != rv.signature.pseudoOuts?.length) {
-        throw const MoneroCryptoException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Mismatched sizes of pseudoOuts and mixRing",
         );
       }
@@ -564,27 +572,27 @@ class RCTGeneratorUtils {
     int maxOutputs,
   ) {
     if (lSize < 6) {
-      throw const MoneroCryptoException("Invalid bulletproof L size");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof L size");
     }
     if (lSize != rSize) {
-      throw const MoneroCryptoException("Mismatched bulletproof L/R size");
+      throw BuError(DefaultErrorType.invalidArgument, "Mismatched bulletproof L/R size");
     }
 
     const int extraBits = 4;
     if ((1 << extraBits) != maxOutputs) {
-      throw const MoneroCryptoException("log2(max_outputs) is out of date");
+      throw BuError(DefaultErrorType.invalidArgument, "log2(max_outputs) is out of date");
     }
     if (lSize > 6 + extraBits) {
-      throw const MoneroCryptoException("Invalid bulletproof L size");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof L size");
     }
     if (vSize > (1 << (lSize - 6))) {
-      throw const MoneroCryptoException("Invalid bulletproof V/L");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof V/L");
     }
     if (vSize * 2 <= (1 << (lSize - 6))) {
-      throw const MoneroCryptoException("Invalid bulletproof V/L");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof V/L");
     }
     if (vSize <= 0) {
-      throw const MoneroCryptoException("Empty bulletproof");
+      throw BuError(MoneroErrorType.crypto, "Empty bulletproof");
     }
 
     return vSize;
@@ -614,7 +622,7 @@ class RCTGeneratorUtils {
     for (final Bulletproof proof in proofs) {
       final int n2 = nBulletproofAmount(proof);
       if (n2 >= BinaryOps.mask32 - n) {
-        throw const MoneroCryptoException("Invalid number of bulletproofs");
+        throw BuError(DefaultErrorType.invalidArgument, "Invalid number of bulletproofs");
       }
 
       if (n2 == 0) {
@@ -635,23 +643,23 @@ class RCTGeneratorUtils {
     const int extraBits = 4;
 
     if (lSize < 6) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid bulletproof L size: L size must be at least 6.",
       );
     }
     if (lSize != rSize) {
-      throw const MoneroCryptoException(
-        "Mismatched bulletproof L/R size: L size and R_size must be equal.",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Mismatched bulletproof L/R size: L size and R size must be equal.",
       );
     }
     if ((1 << extraBits) != maxOuts) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "log2(max_outputs) is out of date: max_outputs must be 2^extraBits.",
       );
     }
     if (lSize > 6 + extraBits) {
-      throw const MoneroCryptoException(
-        "Invalid bulletproof L size: L_size must not exceed 6 + extraBits.",
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid bulletproof L size: L size must not exceed 6 + extraBits.",
       );
     }
     return 1 << (lSize - 6);
@@ -678,7 +686,7 @@ class RCTGeneratorUtils {
     for (final proof in proofs) {
       final int n2 = _nBulletproofMaxAmounts(proof);
       if (n2 >= BinaryOps.maxUint32 - n) {
-        throw const MoneroCryptoException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.",
         );
       }
@@ -695,7 +703,7 @@ class RCTGeneratorUtils {
     for (final proof in proofs) {
       final int n2 = _nBulletproofPlusMaxAmounts(proof);
       if (n2 >= BinaryOps.maxUint32 - n) {
-        throw const MoneroCryptoException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.",
         );
       }
@@ -803,10 +811,10 @@ class RCTGeneratorUtils {
         prunable = RctSigPrunableRangeSigs(mgs: mgs, rangeSig: rangeSig);
         break;
       default:
-        throw const MoneroCryptoException("Invalid rct type.");
+        throw BuError(DefaultErrorType.invalidArgument, "Invalid rct type.");
     }
     if (base is! S || prunable is! P) {
-      throw const MoneroCryptoException("RCTSignature casting failed.");
+      throw BuError(DefaultErrorType.castFailed, "RCTSignature casting failed.");
     }
     return RCTSignature<S, P>(signature: base, rctSigPrunable: prunable);
   }
@@ -818,7 +826,7 @@ class RCTGeneratorUtils {
       final int n2 = nBulletproofPlusAmount(proof);
 
       if (n2 >= BinaryOps.mask32 - n) {
-        throw const MoneroCryptoException("Invalid number of bulletproofs");
+        throw BuError(DefaultErrorType.invalidArgument, "Invalid number of bulletproofs");
       }
 
       if (n2 == 0) {
@@ -843,6 +851,7 @@ class RCTGeneratorUtils {
     required BigInt txnFee,
     required int mixin,
     bool createLinkable = true,
+    bool? nativeBacked,
   }) {
     final List<int> index = List.filled(inPk.length, 0);
     final CtKeyM mixRing = List.generate(
@@ -871,6 +880,7 @@ class RCTGeneratorUtils {
       index: index,
       outSk: outSk,
       createLinkable: createLinkable,
+      nativeBakend: nativeBacked,
     );
   }
 
@@ -890,8 +900,8 @@ class RCTGeneratorUtils {
   static int weightClawBack(RCTSignature signature) {
     final type = signature.signature.type;
     if (signature.rctSigPrunable == null) {
-      throw const MoneroCryptoException(
-        "signature prunable required for calculate claw back.",
+      throw BuError(MoneroErrorType.crypto, 
+        "Signature prunable required to calculate clawback.",
       );
     }
     if (!type.isBulletproof && !type.isBulletproofPlus) {
@@ -929,30 +939,31 @@ class RCTGeneratorUtils {
     required int outputIndex,
   }) {
     if (outputIndex >= sig.signature.ecdhInfo.length) {
-      throw const MoneroCryptoException("Bad index");
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Bad output index $outputIndex: ECDH info holds ${sig.signature.ecdhInfo.length} entries.",
+      );
     }
     if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Mismatched sizes of publickey and ECDH",
       );
     }
     final ecdh = sig.signature.ecdhInfo[outputIndex];
-    final result = RCT.ecdhDecodeVar(ecdh: ecdh, sharedSec: secretKey);
+    final result = RCT.ecdhDecode(ecdh: ecdh, sharedSec: secretKey);
     final mask = result.mask.clone();
-    // CryptoOps.scFill(mask, result.mask);
     final RctKey amount = result.amount;
-    final RctKey c = sig.signature.outPk[outputIndex].mask;
+    final RctKey c = sig.signature.outPk[outputIndex].mask.toBytes;
     // final RctKey t = RCT.zero();
-    if (!Ed25519Utils.scCheckVar(mask)) {
-      throw const MoneroCryptoException("bad ECDH mask.");
+    if (!blockchainUtils.api.ed25519.scCheck(mask)) {
+      throw BuError(DefaultErrorType.invalidArgument, "Bad ECDH mask.");
     }
-    if (!Ed25519Utils.scCheckVar(amount)) {
-      throw const MoneroCryptoException("bad ECDH amount.");
+    if (!blockchainUtils.api.ed25519.scCheck(amount)) {
+      throw BuError(DefaultErrorType.invalidArgument, "Bad ECDH amount.");
     }
 
-    final t = RCT.addKeys2Var(mask, amount, RCTConst.h);
+    final t = RCT.addKeys2(mask, amount, RCTConst.h);
     if (!BytesUtils.bytesEqual(c, t)) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "amount decoded incorrectly, will be unable to spend",
       );
     }
@@ -971,7 +982,7 @@ class RCTGeneratorUtils {
         secretKey: secretKey,
         outputIndex: outputIndex,
       );
-    } on MoneroCryptoException {
+    } on BuError {
       return null;
     }
   }
@@ -982,30 +993,31 @@ class RCTGeneratorUtils {
     required int outputIndex,
   }) {
     if (outputIndex >= sig.signature.ecdhInfo.length) {
-      throw const MoneroCryptoException("Bad index");
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Bad output index $outputIndex: ECDH info holds ${sig.signature.ecdhInfo.length} entries.",
+      );
     }
     if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Mismatched sizes of publickey and ECDH",
       );
     }
     final ecdh = sig.signature.ecdhInfo[outputIndex];
     final result = RCT.ecdhDecode(ecdh: ecdh, sharedSec: secretKey);
     final mask = result.mask.clone();
-    // CryptoOps.scFill(mask, result.mask);
     final RctKey amount = result.amount;
     final RctKey c = sig.signature.outPk[outputIndex].mask;
     // final RctKey t = RCT.zero();
-    if (!Ed25519Utils.scCheck(mask)) {
-      throw const MoneroCryptoException("bad ECDH mask.");
+    if (!blockchainUtils.api.ed25519.scCheck(mask)) {
+      throw BuError(DefaultErrorType.invalidArgument, "Bad ECDH mask.");
     }
-    if (!Ed25519Utils.scCheck(amount)) {
-      throw const MoneroCryptoException("bad ECDH amount.");
+    if (!blockchainUtils.api.ed25519.scCheck(amount)) {
+      throw BuError(DefaultErrorType.invalidArgument, "Bad ECDH amount.");
     }
 
-    final t = RCT.addKeys2_(mask, amount, RCTConst.h);
+    final t = RCT.addKeys2(mask, amount, RCTConst.h);
     if (!BytesUtils.bytesEqual(c, t)) {
-      throw const MoneroCryptoException(
+      throw BuError(MoneroErrorType.crypto, 
         "amount decoded incorrectly, will be unable to spend",
       );
     }
@@ -1024,7 +1036,7 @@ class RCTGeneratorUtils {
         secretKey: secretKey,
         outputIndex: outputIndex,
       );
-    } on MoneroCryptoException {
+    } on BuError {
       return null;
     }
   }
@@ -1051,7 +1063,7 @@ class RCTGeneratorUtils {
     required int outputIndex,
   }) {
     // 1. derive deterministic mask (same rule wallet uses conceptually)
-    final RctKey mask = MoneroCrypto.derivationToScalarVar(
+    final RctKey mask = MoneroCrypto.derivationToScalar(
       derivation: derivation,
       outIndex: outputIndex,
     );
@@ -1060,11 +1072,12 @@ class RCTGeneratorUtils {
     final RctKey amountSc = RCT.d2h(amount);
 
     // 3. commitment: C = mask*G + amount*H
-    final RctKey commitment = RCT.addKeys2Var(mask, amountSc, RCTConst.h);
+    final RctKey commitment = RCT.addKeys2(mask, amountSc, RCTConst.h);
 
     // 4. sanity check scalar validity
-    if (!Ed25519Utils.scCheckVar(mask) || !Ed25519Utils.scCheckVar(amountSc)) {
-      throw const MoneroCryptoException("Invalid coinbase scalars");
+    if (!blockchainUtils.api.ed25519.scCheck(mask) ||
+        !blockchainUtils.api.ed25519.scCheck(amountSc)) {
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid coinbase scalars");
     }
 
     return (mask, commitment);

@@ -14,13 +14,13 @@ class MoneroIntegratedAddress extends MoneroAddress {
   factory MoneroIntegratedAddress(String address, {MoneroNetwork? network}) {
     final decode = XmrAddrDecoder().decode(address);
     if (decode.type != XmrAddressType.integrated) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Use `MoneroAccountAddress` for creating a MoneroAccount address.",
       );
     }
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Invalid address network.",
         details: {
           "expected": network.toString(),

@@ -7,7 +7,9 @@ import 'test3.dart';
 import 'test2.dart';
 import 'test1.dart';
 
-void main() {
+import '../../utils.dart';
+
+void bulletProofTest() {
   List<Function> testCases = [
     bulletproofsPlus1,
     bulletproofsPlus2,
@@ -20,4 +22,8 @@ void main() {
     i();
     QuickCrypto.setupRandom(null);
   }
+}
+
+void main() {
+  MoneroTestApi.runTest(bulletProofTest, "Bullet Proof");
 }

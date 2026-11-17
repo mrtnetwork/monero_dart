@@ -11,5 +11,5 @@ class WalletRequestStopMining
   Map<String, dynamic> get params => {};
 
   @override
-  void onResonse(Map<String, dynamic> result) {}
+  void onResponse(Map<String, dynamic> result) {}
 }

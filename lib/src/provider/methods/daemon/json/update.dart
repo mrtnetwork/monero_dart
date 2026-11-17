@@ -14,10 +14,10 @@ class DaemonRequestUpdate
   @override
   Map<String, dynamic> get params => {"command": command, "path": path};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonUpdateResponse onResonse(Map<String, dynamic> result) {
+  DaemonUpdateResponse onResponse(Map<String, dynamic> result) {
     return DaemonUpdateResponse.fromJson(result);
   }
 }

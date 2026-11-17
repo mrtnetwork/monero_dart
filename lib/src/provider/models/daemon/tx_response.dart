@@ -1,6 +1,4 @@
-import 'package:blockchain_utils/helper/helper.dart';
-import 'package:blockchain_utils/utils/utils.dart';
-import 'package:monero_dart/src/exception/exception.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/models/transaction/transaction/transaction.dart';
 
 class MoneroTxResponse {
@@ -55,7 +53,7 @@ class MoneroTxResponse {
   MoneroTransaction toTx() {
     final toBytes = BytesUtils.tryFromHexString(txHex);
     if (toBytes?.isEmpty ?? true) {
-      throw const DartMoneroPluginException("Invalid monero tx hex.");
+      throw BuError(DefaultErrorType.invalidArgument, "Invalid monero tx hex.");
     }
     return MoneroTransaction.deserialize(toBytes!);
   }

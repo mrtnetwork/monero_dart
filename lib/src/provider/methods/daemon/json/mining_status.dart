@@ -16,10 +16,10 @@ class DaemonRequestMiningStatus
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonMininStatusResponse onResonse(Map<String, dynamic> result) {
+  DaemonMininStatusResponse onResponse(Map<String, dynamic> result) {
     return DaemonMininStatusResponse.fromJson(result);
   }
 }

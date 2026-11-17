@@ -1,6 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/address/address/address.dart';
-import 'package:monero_dart/src/crypto/exception/exception.dart';
 import 'package:monero_dart/src/crypto/multisig/const/const.dart';
 import 'package:monero_dart/src/crypto/multisig/utils/utils.dart';
 import 'package:monero_dart/src/crypto/multisig/core/account.dart';
@@ -22,8 +21,8 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
     required super.baseCommonPrivateKey,
     required super.multisigPrivateKeys,
     required super.commonPrivateKey,
-    required super.multisigPubKey,
-    required super.commonPubKey,
+    super.multisigPubKey,
+    super.commonPubKey,
     required super.kexRoundsComplete,
     required super.nextRoundKexMessage,
     super.kexKeysToOriginsMap = const {},
@@ -31,19 +30,21 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
 
   factory MoneroMultisigAccount({
     required int threshold,
-    required List<MoneroPublicKey> signers,
-    required MoneroPrivateKey basePrivateKey,
-    required MoneroPrivateKey baseCommonPrivateKey,
-    required List<MoneroPrivateKey> multisigPrivateKeys,
-    required MoneroPrivateKey commonPrivateKey,
-    required MoneroPublicKey multisigPubKey,
-    required MoneroPublicKey commonPubKey,
+    required List<ED25519MoneroPublicKey> signers,
+    required ED25519MoneroPrivateKey basePrivateKey,
+    required ED25519MoneroPrivateKey baseCommonPrivateKey,
+    required List<ED25519MoneroPrivateKey> multisigPrivateKeys,
+    required ED25519MoneroPrivateKey commonPrivateKey,
+    required ED25519MoneroPublicKey multisigPubKey,
+    required ED25519MoneroPublicKey commonPubKey,
     required int kexRoundsComplete,
     required MultisigKexMessageSerializable nextRoundKexMessage,
-    Map<MoneroPublicKey, Set<MoneroPublicKey>> kexKeysToOriginsMap = const {},
+    Map<ED25519MoneroPublicKey, Set<ED25519MoneroPublicKey>>
+        kexKeysToOriginsMap =
+        const {},
   }) {
     if (kexRoundsComplete <= 0) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidState, 
         "multisig account: can't reconstruct account if its kex wasn't initialized.",
       );
     }
@@ -64,7 +65,7 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
           threshold,
         );
     if (kexRoundsComplete > roundRequired + 1) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidState, 
         "multisig account: tried to reconstruct account, but kex rounds complete counter is invalid.",
       );
     }
@@ -92,14 +93,16 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
   }
 
   factory MoneroMultisigAccount.initialize({
-    required MoneroPrivateKey privateSpendKey,
-    required MoneroPrivateKey privateViewKey,
+    required ED25519MoneroPrivateKey privateSpendKey,
+    required ED25519MoneroPrivateKey privateViewKey,
   }) {
     final basePrivateKey = MoneroMultisigKexUtils.getMultisigBlindedSecretKey(
-      privateSpendKey.key,
+      privateSpendKey.takeSecretKey(),
     );
     final baseCommonPrivateKey =
-        MoneroMultisigKexUtils.getMultisigBlindedSecretKey(privateViewKey.key);
+        MoneroMultisigKexUtils.getMultisigBlindedSecretKey(
+          privateViewKey.takeSecretKey(),
+        );
     return MoneroMultisigAccount._(
       threshold: 0,
       signers: [],
@@ -111,9 +114,8 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
       multisigPrivateKeys: [],
 
       ///
-      commonPrivateKey: MoneroPrivateKey.fromBytes(RCT.zero(clone: false)),
-      multisigPubKey: MoneroPublicKey.fromBytes(RCT.identity(clone: false)),
-      commonPubKey: MoneroPublicKey.fromBytes(RCT.identity(clone: false)),
+      commonPrivateKey: null,
+
       kexRoundsComplete: 0,
       nextRoundKexMessage:
           MultisigKexMessage.generate(
@@ -141,26 +143,26 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
       signers:
           json
               .valueEnsureAsList<List<int>>("signers")
-              .map((e) => MoneroPublicKey.fromBytes(e))
+              .map((e) => ED25519MoneroPublicKey.fromBytes(e))
               .toList(),
-      basePrivateKey: MoneroPrivateKey.fromBytes(
+      basePrivateKey: ED25519MoneroPrivateKey.fromBytes(
         json.valueAsBytes("base_private_key"),
       ),
-      baseCommonPrivateKey: MoneroPrivateKey.fromBytes(
+      baseCommonPrivateKey: ED25519MoneroPrivateKey.fromBytes(
         json.valueAsBytes("base_common_private_key"),
       ),
       multisigPrivateKeys:
           json
               .valueEnsureAsList<List<int>>("multisig_private_keys")
-              .map((e) => MoneroPrivateKey.fromBytes(e))
+              .map((e) => ED25519MoneroPrivateKey.fromBytes(e))
               .toList(),
-      commonPrivateKey: MoneroPrivateKey.fromBytes(
+      commonPrivateKey: ED25519MoneroPrivateKey.fromBytes(
         json.valueAsBytes("common_private_key"),
       ),
-      multisigPubKey: MoneroPublicKey.fromBytes(
+      multisigPubKey: ED25519MoneroPublicKey.fromBytes(
         json.valueAsBytes("multisig_pub_key"),
       ),
-      commonPubKey: MoneroPublicKey.fromBytes(
+      commonPubKey: ED25519MoneroPublicKey.fromBytes(
         json.valueAsBytes("common_pub_key"),
       ),
       kexRoundsComplete: json.valueAs("kex_rounds_complete"),
@@ -169,9 +171,9 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
       ),
       kexKeysToOriginsMap: json.valueAs<Map>("kex_keys").map((k, v) {
         return MapEntry(
-          MoneroPublicKey.fromBytes(List<int>.from(k)),
+          ED25519MoneroPublicKey.fromBytes(List<int>.from(k)),
           (v as List)
-              .map((e) => MoneroPublicKey.fromBytes((e as List).cast()))
+              .map((e) => ED25519MoneroPublicKey.fromBytes((e as List).cast()))
               .toSet(),
         );
       }),
@@ -181,13 +183,13 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
   /// get address
   MoneroAddress toAddress({MoneroNetwork network = MoneroNetwork.mainnet}) {
     if (!multisigIsReady) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidState, 
         "Unable to determine the address until the final round is completed.",
       );
     }
     return MoneroAccountAddress.fromPubKeys(
-      pubSpendKey: multisigPubKey.key,
-      pubViewKey: commonPrivateKey.publicKey.key,
+      pubSpendKey: multisigPubKey.toBytes(),
+      pubViewKey: commonPrivateKey.publicKey.toBytes(),
       network: network,
     );
   }
@@ -195,7 +197,7 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
   /// create monero account from multisig account
   MoneroAccount toAccount({MoneroNetwork network = MoneroNetwork.mainnet}) {
     if (!multisigIsReady) {
-      throw const MoneroCryptoException(
+      throw BuError(DefaultErrorType.invalidState, 
         "Unable to determine account until the final round is completed.",
       );
     }
@@ -213,7 +215,7 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
     for (final i in multisigPrivateKeys) {
       final partialKeyImage = MoneroMultisigUtils.generateMultisigKeyImageBytes(
         outputPubKey: out.outputPublicKey,
-        multisigKey: i.key,
+        multisigKey: i.toBytes(),
       );
       keyImages.add(partialKeyImage);
     }
@@ -224,13 +226,13 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
     );
     nlr = nlr * MoneroMultisigConst.kAlphaComponents;
     final List<MultisigLR> lr = [];
-    final List<MoneroPrivateKey> nonces = [];
+    final List<ED25519MoneroPrivateKey> nonces = [];
     for (int i = 0; i < nlr; i++) {
-      final sK = MoneroPrivateKey.fromBytes(RCT.skGen_());
+      final sK = ED25519MoneroPrivateKey.fromBytes(RCT.skGen());
       nonces.add(sK);
       final r = MoneroMultisigUtils.getMultisigKLRki(
         outPybKey: out.outputPublicKey,
-        secretKey: sK.key,
+        secretKey: sK.toBytes(),
         keyImage: out.keyImage.keyImage,
       );
       lr.add(MultisigLR(l: r.L, r: r.R));

@@ -18,9 +18,9 @@ class DaemonRequestFlushCache
     "bad_blocks": badBlocks,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonBaseResponse onResonse(Map<String, dynamic> result) {
+  DaemonBaseResponse onResponse(Map<String, dynamic> result) {
     return DaemonBaseResponse.fromJson(result);
   }
 }

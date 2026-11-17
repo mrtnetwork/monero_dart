@@ -36,7 +36,7 @@ class WalletRequestGetBalance
   };
 
   @override
-  WalletRPCGetBalanceResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCGetBalanceResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCGetBalanceResponse.fromJson(result);
   }
 }

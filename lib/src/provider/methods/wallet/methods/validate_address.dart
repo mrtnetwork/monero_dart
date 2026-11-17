@@ -36,7 +36,7 @@ class WalletRequestValidateAddress
     "allow_openalias": allowOpenAlias,
   };
   @override
-  WalletRPCValidateAddressResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCValidateAddressResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCValidateAddressResponse.fromJson(result);
   }
 }

@@ -18,10 +18,10 @@ class DaemonRequestSetLogCategories
   @override
   Map<String, dynamic> get params => {"categories": categories};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonSetLogCategoriesResponse onResonse(Map<String, dynamic> result) {
+  DaemonSetLogCategoriesResponse onResponse(Map<String, dynamic> result) {
     return DaemonSetLogCategoriesResponse.fromJson(result);
   }
 }

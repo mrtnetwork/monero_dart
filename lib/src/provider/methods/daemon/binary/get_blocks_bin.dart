@@ -43,9 +43,9 @@ class DaemonRequestGetBlocksBin
     "pool_info_since": poolInfoSince ?? BigInt.zero,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.binary;
+  DaemonRequestType get encodingType => DaemonRequestType.binary;
   @override
-  DaemonGetBlockBinResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetBlockBinResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetBlockBinResponse.fromJson(result);
   }
 }

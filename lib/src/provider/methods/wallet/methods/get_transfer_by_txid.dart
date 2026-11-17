@@ -25,7 +25,7 @@ class WalletRequestGetTransferByTxID
   };
 
   @override
-  WalletRPCTransferByTxIdResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCTransferByTxIdResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCTransferByTxIdResponse.fromJson(result);
   }
 }

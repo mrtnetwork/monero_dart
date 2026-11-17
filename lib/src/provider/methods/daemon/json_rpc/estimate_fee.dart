@@ -14,12 +14,12 @@ class DaemonRequestGetFeeEstimate
   @override
   String get method => "get_fee_estimate";
   @override
-  Map<String, dynamic> get params => {"graceBlocks": graceBlocks.toString()};
+  Map<String, dynamic> get params => {"graceBlocks": graceBlocks};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonGetEstimateFeeResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetEstimateFeeResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetEstimateFeeResponse.fromJson(result);
   }
 }

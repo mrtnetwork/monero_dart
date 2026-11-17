@@ -19,9 +19,9 @@ class DaemonRequestPruneBlockchain
   @override
   Map<String, dynamic> get params => {"check": check};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonPruneBlockchainResponse onResonse(Map<String, dynamic> result) {
+  DaemonPruneBlockchainResponse onResponse(Map<String, dynamic> result) {
     return DaemonPruneBlockchainResponse.fromJson(result);
   }
 }

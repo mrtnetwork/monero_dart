@@ -36,9 +36,9 @@ class DaemonRequestGenerateBlocks
     "starting_nonce": startingNonce,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonGenerateBlockResponse onResonse(Map<String, dynamic> result) {
+  DaemonGenerateBlockResponse onResponse(Map<String, dynamic> result) {
     return DaemonGenerateBlockResponse.fromJson(result);
   }
 }

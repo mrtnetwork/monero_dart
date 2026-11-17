@@ -1,5 +1,4 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/block_processor/exception/exception.dart';
 import 'package:monero_dart/src/block_processor/types/types.dart';
 import 'package:monero_dart/src/models/models.dart';
 import 'package:monero_dart/src/provider/provider.dart';
@@ -62,7 +61,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
     final toJson = MoneroStorageSerializer.deserialize(binary);
     final response = DaemonBaseResponse.fromJson(toJson);
     if (!response.isOk) {
-      throw MoneroBlockScannerException.failed(
+      throw MoneroErrors.scannerFailed(
         "getBlocks",
         reason: "getBlocks failed at $start: ${response.status}",
       );
@@ -78,7 +77,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
     int maxRetries = 1,
   }) async* {
     if (endHeight < startHeight) {
-      throw MoneroBlockScannerException.failed(
+      throw MoneroErrors.scannerFailed(
         "scanBlock",
         reason: "Invalid block range.",
       );
@@ -98,7 +97,6 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
         continue;
       }
       VerifyBlockStrategy? staregy = VerifyBlockStrategy.always;
-
       for (final block in blocks.blocks.indexed) {
         if (currentHeight > endHeight) break;
 
@@ -138,7 +136,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
   }) {
     final blockEntry = blocks.blocks.elementAtOrNull(index);
     if (blockEntry == null) {
-      throw MoneroBlockScannerException.failed(
+      throw MoneroErrors.scannerFailed(
         "buildBlockState",
         reason: "Block not found at response index.",
         details: {
@@ -154,7 +152,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
           try {
             return blockEntry.toBlock();
           } catch (e) {
-            throw MoneroBlockScannerException.failed(
+            throw MoneroErrors.scannerFailed(
               "buildBlockState",
               reason: "Failed to deserialize block from daemon response.",
               details: {"index": index.toString(), "error": e.toString()},
@@ -167,7 +165,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
           try {
             return blockEntry.txs.map((e) => e.toTx()).toList();
           } catch (e) {
-            throw MoneroBlockScannerException.failed(
+            throw MoneroErrors.scannerFailed(
               "buildBlockState",
               reason: "Failed to parse transactions inside block.",
               details: {"index": index.toString(), "error": e.toString()},
@@ -177,7 +175,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
 
     final outputIndexEntry = blocks.outputIndices.elementAtOrNull(index);
     if (outputIndexEntry == null) {
-      throw MoneroBlockScannerException.failed(
+      throw MoneroErrors.scannerFailed(
         "buildBlockState",
         reason: "Missing output indices for block.",
         details: {
@@ -203,7 +201,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
     final expectedTxGroups = (block.txHashes.length + 1);
 
     if (totalOutputs != totalIndexedOutputs) {
-      throw MoneroBlockScannerException.failed(
+      throw MoneroErrors.scannerFailed(
         "buildBlockState",
         reason:
             "Output count mismatch between parsed block and daemon indices.",
@@ -218,7 +216,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
     }
 
     if (outputIndexEntry.indices.length != expectedTxGroups) {
-      throw MoneroBlockScannerException.failed(
+      throw MoneroErrors.scannerFailed(
         "buildBlockState",
         reason: "Transaction group count mismatch in output indices.",
         details: {
@@ -230,7 +228,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
     }
     final blockHeight = blocks.startHeight + index;
     if (previousState != null && blockHeight != previousState.blockId + 1) {
-      throw MoneroBlockScannerException.failed(
+      throw MoneroErrors.scannerFailed(
         "buildBlockState.invalid_block_height",
         reason: "Block height sequence mismatch detected.",
         details: {
@@ -245,7 +243,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
 
     final state = MoneroBlockStateInfo(
       blockId: blockHeight,
-      timestamp: block.timestamp.toIntOrThrow,
+      timestamp: block.timestamp.asSafeInt,
       block: block,
       outputIndices: outputIndexEntry,
       transactions: txs,
@@ -254,7 +252,7 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
           previousState: previousState,
           strategy: staregy ?? config.strategy,
         ) ??
-        (throw MoneroBlockScannerException.failed(
+        (throw MoneroErrors.scannerFailed(
           "buildBlockState.chain_verification_failed",
           reason: "Block failed chain continuity verification.",
           details: {
@@ -268,19 +266,18 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
   Future<DefaultMoneroScannedBlock> scanBlockInner(
     MoneroBlockStateInfo state,
   ) async {
-    List<DefaultMoneroScannedTx> txes = [];
     MoneroBlock moneroBlock = state.block;
     final blockTxes = [state.block.minerTx, ...state.transactions];
+    final txHashes = <String>[];
+    final indices = <List<BigInt>>[];
     for (final txIndex in blockTxes.indexed) {
-      final txHash = switch (txIndex.$1) {
+      txHashes.add(switch (txIndex.$1) {
         0 => moneroBlock.minerTx.getTxHash(),
         _ => BytesUtils.toHexString(moneroBlock.txHashes[txIndex.$1 - 1]),
-      };
-      await Future.delayed(Duration.zero);
-
+      });
       final indice = state.outputIndices.indices.elementAtOrNull(txIndex.$1);
       if (indice == null) {
-        throw MoneroBlockScannerException.failed(
+        throw MoneroErrors.scannerFailed(
           "buildBlockState",
           reason: "Missing transaction output indices.",
           details: {
@@ -289,25 +286,28 @@ class DefaultMoneroBlockProcessor extends MoneroBlockProcessor {
           },
         );
       }
-      final transaction = txIndex.$2;
-      final unlock = config.unlocker.moneroUnlockOutput(
-        transaction: transaction,
-        outputIndices: indice.indices,
-        txHash: txHash,
-      );
-      final keyImages = transaction.getInputsKeyImages();
-      txes.add(
-        DefaultMoneroScannedTx(
-          txHash: txHash,
-          unlockedOutputs: unlock,
-          keyImages: keyImages,
-        ),
-      );
+      indices.add(indice.indices);
     }
+    await Future.delayed(Duration.zero);
+
+    // One native batch for the whole block (all txs x all accounts).
+    final unlocked = config.unlocker.moneroUnlockOutputs(
+      transactions: blockTxes,
+      txHashes: txHashes,
+      outputIndices: indices,
+    );
+    final txes = <DefaultMoneroScannedTx>[
+      for (var i = 0; i < blockTxes.length; i++)
+        DefaultMoneroScannedTx(
+          txHash: txHashes[i],
+          unlockedOutputs: unlocked[i],
+          keyImages: blockTxes[i].getInputsKeyImages(),
+        ),
+    ];
     return DefaultMoneroScannedBlock(
       blockHash: moneroBlock.previousBlockHash(),
       blockHeight: state.blockId,
-      blocktime: moneroBlock.timestamp.toIntOrThrow,
+      blocktime: moneroBlock.timestamp.asSafeInt,
       block: moneroBlock,
       txes: txes,
     );

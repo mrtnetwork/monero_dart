@@ -1,9 +1,7 @@
-import 'package:blockchain_utils/layout/byte/byte_handler.dart';
-import 'package:blockchain_utils/layout/layout.dart';
+import 'package:blockchain_utils/blockchain_utils.dart';
 
 class MoneroBigIntVarInt extends Layout<BigInt> {
-  MoneroBigIntVarInt(this.layout, {String? property})
-    : super(-1, property: property);
+  MoneroBigIntVarInt(this.layout, {super.property}) : super(-1);
   final BigIntLayout layout;
   static BigInt readVarintBig(List<int> bytes) {
     BigInt result = BigInt.zero;
@@ -36,7 +34,14 @@ class MoneroBigIntVarInt extends Layout<BigInt> {
 
   int _getSpan(LayoutByteReader bytes, int offset) {
     int span = 0;
-    while ((bytes.at(offset + span) & 0x80) != 0) {
+    while (true) {
+      if (offset + span >= bytes.length) {
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Truncated varint: missing terminating byte.",
+        );
+      }
+      if ((bytes.at(offset + span) & 0x80) == 0) break;
       span++;
     }
     return span + 1;
@@ -65,8 +70,7 @@ class MoneroBigIntVarInt extends Layout<BigInt> {
 }
 
 class MoneroIntVarInt extends Layout<int> {
-  MoneroIntVarInt(this.layout, {String? property})
-    : super(-1, property: property);
+  MoneroIntVarInt(this.layout, {super.property}) : super(-1);
   final IntegerLayout layout;
   int readVarint(List<int> bytes, {int startIndex = 0}) {
     int result = 0;
@@ -95,7 +99,14 @@ class MoneroIntVarInt extends Layout<int> {
 
   int _getSpan(LayoutByteReader bytes, int offset) {
     int span = 0;
-    while ((bytes.at(offset + span) & 0x80) != 0) {
+    while (true) {
+      if (offset + span >= bytes.length) {
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Truncated varint: missing terminating byte.",
+        );
+      }
+      if ((bytes.at(offset + span) & 0x80) == 0) break;
       span++;
     }
     return span + 1;

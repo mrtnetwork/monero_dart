@@ -12,6 +12,6 @@ import 'package:monero_dart/monero_dart.dart';
   final bh = RCT.scalarmultH(am);
   final sk = _skpkGen();
   final pk = _skpkGen();
-  final mask = RCT.addKeys_(pk.$2, bh);
+  final mask = RCT.addKeys(pk.$2, bh);
   return (CtKey(dest: sk.$1, mask: pk.$1), CtKey(dest: sk.$2, mask: mask));
 }

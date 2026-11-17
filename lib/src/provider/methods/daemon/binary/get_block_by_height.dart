@@ -18,9 +18,9 @@ class DaemonRequestGetBlocksByHeightBin
   @override
   Map<String, dynamic> get params => {"heights": heights};
   @override
-  DemonRequestType get encodingType => DemonRequestType.binary;
+  DaemonRequestType get encodingType => DaemonRequestType.binary;
   @override
-  DaemonGetBlocksByHeightResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetBlocksByHeightResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetBlocksByHeightResponse.fromJson(result);
   }
 }

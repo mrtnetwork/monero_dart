@@ -22,13 +22,13 @@ class DaemonRequestGetOuts
   @override
   Map<String, dynamic> get params => {
     "outputs": outputs.map((e) => e.toJson()).toList(),
-    "get_txid ": getTxId,
+    "get_txid": getTxId,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.binary;
+  DaemonRequestType get encodingType => DaemonRequestType.binary;
 
   @override
-  GetOutResponse onResonse(Map<String, dynamic> result) {
+  GetOutResponse onResponse(Map<String, dynamic> result) {
     return GetOutResponse.fromJson(result);
   }
 }

@@ -24,10 +24,10 @@ class DaemonRequestGetPeerList
     "include_blocked": includeBlock,
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonGetPeerListResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetPeerListResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetPeerListResponse.fromJson(result);
   }
 }

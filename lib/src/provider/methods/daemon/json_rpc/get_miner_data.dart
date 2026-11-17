@@ -15,9 +15,9 @@ class DaemonRequestGetMinerData
   String get method => "get_miner_data";
 
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonGetMinerDataResponse onResonse(Map<String, dynamic> result) {
+  DaemonGetMinerDataResponse onResponse(Map<String, dynamic> result) {
     return DaemonGetMinerDataResponse.fromJson(result);
   }
 }

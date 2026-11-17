@@ -13,7 +13,7 @@ class WalletRequestGetLanguages
 
   /// List of available languages
   @override
-  List<String> onResonse(Map<String, dynamic> result) {
+  List<String> onResponse(Map<String, dynamic> result) {
     return (result["languages"] as List).cast();
   }
 }

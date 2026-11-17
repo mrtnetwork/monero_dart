@@ -29,7 +29,7 @@ class WalletRequestAddAddressBook
 
   /// The index of the address book entry.
   @override
-  int onResonse(Map<String, dynamic> result) {
+  int onResponse(Map<String, dynamic> result) {
     return IntUtils.parse(result["index"]);
   }
 }

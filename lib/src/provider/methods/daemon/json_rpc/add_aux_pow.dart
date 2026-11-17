@@ -26,9 +26,9 @@ class DaemonRequestAddAuxPow
     "aux_pow": auxPow.map((e) => e.toJson()).toList(),
   };
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
   @override
-  DaemonAddAuxPowResponse onResonse(Map<String, dynamic> result) {
+  DaemonAddAuxPowResponse onResponse(Map<String, dynamic> result) {
     return DaemonAddAuxPowResponse.fromJson(result);
   }
 }

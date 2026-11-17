@@ -40,7 +40,7 @@ class WalletRequestCheckTxProof
   };
 
   @override
-  WalletRPCCheckTxProofResponse onResonse(Map<String, dynamic> result) {
+  WalletRPCCheckTxProofResponse onResponse(Map<String, dynamic> result) {
     return WalletRPCCheckTxProofResponse.fromJson(result);
   }
 }

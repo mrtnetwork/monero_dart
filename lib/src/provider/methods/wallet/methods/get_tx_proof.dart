@@ -29,7 +29,7 @@ class WalletRequestGetTxProof
   };
 
   @override
-  String onResonse(Map<String, dynamic> result) {
+  String onResponse(Map<String, dynamic> result) {
     return result["signature"];
   }
 }

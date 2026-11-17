@@ -4,10 +4,10 @@ class MoneroMultisigTxBuilder
     extends MoneroTxBuilder<SpendablePayment<MoneroUnlockedMultisigPayment>> {
   final KeyV _cachedW;
   final List<CLSAGContext> contexts;
-  final List<MoneroPublicKey> signers;
+  final List<ED25519MoneroPublicKey> signers;
   final int threshold;
   final MoneroMultisigSignedInfo _multisigInfo;
-  List<MoneroPublicKey> _currentSigners;
+  List<ED25519MoneroPublicKey> _currentSigners;
   bool get isReady => _currentSigners.length == threshold;
 
   MoneroMultisigTxBuilder._({
@@ -17,11 +17,11 @@ class MoneroMultisigTxBuilder
     required super.destinations,
     required super.sources,
     required super.change,
-    required List<MoneroPublicKey> signers,
+    required List<ED25519MoneroPublicKey> signers,
     required this.contexts,
     required KeyV cachedW,
     required this.threshold,
-    required List<MoneroPublicKey> currentSigner,
+    required List<ED25519MoneroPublicKey> currentSigner,
     required MoneroMultisigSignedInfo multisigInfo,
   }) : _cachedW = cachedW.map((e) => e.asImmutableBytes).toImutableList,
        signers = signers.immutable,
@@ -67,22 +67,26 @@ class MoneroMultisigTxBuilder
               >.deserializeJson(e),
             )
             .toList();
-    final List<MoneroPublicKey> signers =
+    final List<ED25519MoneroPublicKey> signers =
         json
             .valueEnsureAsList<List<int>>("signers")
-            .map((e) => MoneroPublicKey.fromBytes(e))
+            .map((e) => ED25519MoneroPublicKey.fromBytes(e))
             .toList();
-    final List<MoneroPublicKey> currentSigners =
+    final List<ED25519MoneroPublicKey> currentSigners =
         json
             .valueEnsureAsList<List<int>>("currentSigners")
-            .map((e) => MoneroPublicKey.fromBytes(e))
+            .map((e) => ED25519MoneroPublicKey.fromBytes(e))
             .toList();
     final MoneroMultisigSignedInfo multisigInfo =
         MoneroMultisigSignedInfo.deserializeJson(
           json.valueEnsureAsMap<String, dynamic>("multisigInfo"),
         );
     final int threshold = json.valueAs("threshold");
-    final KeyV cachedW = json.valueEnsureAsList<List<int>>("cachedW");
+    final KeyV cachedW =
+        json
+            .valueEnsureAsList<List<int>>("cachedW")
+            .map((e) => e.asImmutableBytes)
+            .toList();
     final newTx = reConstroctTx(
       destinationKeys: destinationKeys,
       sourceKeys: sourceKeys,
@@ -91,7 +95,7 @@ class MoneroMultisigTxBuilder
       signature: tx.signature.cast<RCTSignature>(),
     );
     if (newTx.$1.getTxHash() != tx.getTxHash()) {
-      throw const MoneroCryptoException("transaction verification failed.");
+      throw BuError(DefaultErrorType.cryptoVerifyFailed, "transaction verification failed.");
     }
     return MoneroMultisigTxBuilder._(
       sourceKeys: sourceKeys,
@@ -157,9 +161,9 @@ class MoneroMultisigTxBuilder
       "sources": sources.map((e) => e.toLayoutStruct()).toList(),
       "change": change?.toLayoutStruct(),
       "cachedW": _cachedW,
-      "signers": signers.map((e) => e.key).toList(),
+      "signers": signers.map((e) => e.toBytes()).toList(),
       "threshold": threshold,
-      "currentSigners": _currentSigners.map((e) => e.key).toList(),
+      "currentSigners": _currentSigners.map((e) => e.toBytes()).toList(),
       "multisigInfo": _multisigInfo.toLayoutStruct(),
     };
   }
@@ -197,7 +201,7 @@ class MoneroMultisigTxBuilder
       final int l = sources[i].realOutIndex;
       final KeyV s = List.generate(ringSize, (i) {
         if (i == l) return RCT.zero();
-        return RCT.skGen_();
+        return RCT.skGen();
       });
       final RctKey cOffset = signature.rctSigPrunable!.pseudoOuts[i];
       final KeyV p = List.generate(ringSize, (j) {
@@ -208,7 +212,10 @@ class MoneroMultisigTxBuilder
       });
       RctKey D = RCT.zero();
       final RctKey z = RCT.zero();
-      CryptoOps.scSub(z, sources[i].payment.output.mask, a[i]);
+      z.setAll(
+        0,
+        blockchainUtils.api.ed25519.scSub(sources[i].payment.output.mask, a[i]),
+      );
       final RctKey hL = RCT.hashToP3Bytes(
         signature.signature.mixRing![i][l].dest,
       );
@@ -233,8 +240,11 @@ class MoneroMultisigTxBuilder
       );
       clsagContext.add(context);
       final mu = context.getMu();
-      CryptoOps.scMul(cachedW[i], mu.$1, sourceKeys.inputSecretKeys[i]);
-      CryptoOps.scMulAdd(cachedW[i], mu.$2, z, cachedW[i]);
+      cachedW[i] = blockchainUtils.api.ed25519.scMul(
+        mu.$1,
+        sourceKeys.inputSecretKeys[i],
+      );
+      cachedW[i] = blockchainUtils.api.ed25519.scMulAdd(mu.$2, z, cachedW[i]);
     }
     ClsagPrunable pronable = signature.rctSigPrunable!.cast<ClsagPrunable>();
     pronable = pronable.copyWith(clsag: clsags);
@@ -253,7 +263,7 @@ class MoneroMultisigTxBuilder
     required MoneroMultisigAccountKeys account,
     required List<MoneroTxDestination> destinations,
     required List<SpendablePayment<MoneroUnlockedMultisigPayment>> sources,
-    required List<MoneroPublicKey> signers,
+    required List<ED25519MoneroPublicKey> signers,
     List<TxExtraNonce> extraNonces = const [],
     required BigInt fee,
     bool fakeTx = false,
@@ -270,18 +280,18 @@ class MoneroMultisigTxBuilder
     sources = sources.immutable;
     final multisigAccount = account.multisigAccount;
     if (signers.contains(multisigAccount.multisigSignerPubKey)) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "Signer list must exclude the owner's public key.",
       );
     }
     if (signers.length + 1 != multisigAccount.threshold) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidArgument, 
         "The combined total of signers and the owner must equal the required threshold.",
       );
     }
     for (final i in signers) {
       if (!multisigAccount.signers.contains(i)) {
-        throw const DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid signer: The specified signer is not recognized in the multisig account.",
         );
       }
@@ -291,7 +301,7 @@ class MoneroMultisigTxBuilder
           .where((e) => e.signer != multisigAccount.multisigSignerPubKey)
           .where((e) => signers.contains(e.signer));
       if (multisigInfos.length + 1 != multisigAccount.threshold) {
-        throw const DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Some multisig details are missing to meet the required threshold.",
         );
       }
@@ -380,6 +390,11 @@ class MoneroMultisigTxBuilder
     final List<BigInt> outAmounts = destinationKeys.amounts;
     final BigInt outAmout = destinationKeys.total;
     final BigInt fee = inAmout - outAmout;
+    if (fee.isNegative) {
+      throw BuError(DefaultErrorType.invalidArgument, 
+        "Invalid transaction fee $fee: destination amounts exceed source amounts.",
+      );
+    }
     final inputs = sourceKeys.toRctInputs;
     final outs = destinationKeys.toRctOuts;
     final extra = destinationKeys.toExtraBytes();
@@ -398,7 +413,7 @@ class MoneroMultisigTxBuilder
           RCT.genCommitmentMask(destinationKeys.amountKeys[i]).asImmutableBytes;
       amountMasks.add(amountMask);
       final amountBytes = RCT.d2h(outAmounts[i]);
-      final RctKey outMask = RCT.addKeys2_(amountMask, amountBytes, RCTConst.h);
+      final RctKey outMask = RCT.addKeys2(amountMask, amountBytes, RCTConst.h);
       final ecdh = RCT.ecdhEncode(
         EcdhTuple(
           mask: RCT.zero(),
@@ -408,7 +423,7 @@ class MoneroMultisigTxBuilder
         destinationKeys.amountKeys[i],
       );
       ecdhInfos.add(ecdh);
-      outPk.add(CtKey(dest: destination.key, mask: outMask));
+      outPk.add(CtKey(dest: destination.toBytes(), mask: outMask));
     }
     final List<BulletproofPlus> bpp = [];
     final List<Bulletproof> bp = [];
@@ -505,9 +520,9 @@ class MoneroMultisigTxBuilder
       );
       final mu = sContext.getMu();
       final RctKey w = RCT.zero();
-      CryptoOps.scMul(w, mu.$1, x);
-      CryptoOps.scAdd(s[i], s[i], alphaCombined);
-      CryptoOps.scMulSub(s[i], c, w, s[i]);
+      w.setAll(0, blockchainUtils.api.ed25519.scMul(mu.$1, x));
+      s[i] = blockchainUtils.api.ed25519.scAdd(s[i], alphaCombined);
+      s[i] = blockchainUtils.api.ed25519.scMulSub(c, w, s[i]);
     }
   }
 
@@ -551,7 +566,10 @@ class MoneroMultisigTxBuilder
       c0R: c0,
       cR: c,
     );
-    CryptoOps.scMulSub(s, c, _cachedW[index], alphaCombined);
+    s.setAll(
+      0,
+      blockchainUtils.api.ed25519.scMulSub(c, _cachedW[index], alphaCombined),
+    );
   }
 
   void _init() {
@@ -591,19 +609,21 @@ class MoneroMultisigTxBuilder
 
   void sign({
     required MoneroMultisigAccountKeys account,
-    required List<MoneroPrivateKey> multisigNonces,
+    required List<ED25519MoneroPrivateKey> multisigNonces,
   }) {
     final MoneroMultisigAccount multisigAccount = account.multisigAccount;
     if (isReady) {
-      throw const DartMoneroPluginException("transaction is ready.");
+      throw BuError(DefaultErrorType.invalidState, 
+        "Transaction is already ready: cannot sign a completed transaction.",
+      );
     }
     if (!signers.contains(multisigAccount.multisigSignerPubKey)) {
-      throw const DartMoneroPluginException(
-        "Transaction does not contains your account signer.",
+      throw BuError(DefaultErrorType.notFound, 
+        "Transaction does not contain your account signer.",
       );
     }
     if (_currentSigners.contains(multisigAccount.multisigSignerPubKey)) {
-      throw const DartMoneroPluginException(
+      throw BuError(DefaultErrorType.invalidState, 
         "Account already signed the transaction.",
       );
     }
@@ -612,15 +632,15 @@ class MoneroMultisigTxBuilder
       sources.length,
       (_) => List.generate(kAlphaComponents, (_) => RCT.zero()),
     );
-    final List<MoneroPrivateKey> usedNonces = [];
+    final List<ED25519MoneroPrivateKey> usedNonces = [];
     for (int s = 0; s < nonces.length; s++) {
       for (int j = 0; j < kAlphaComponents; j++) {
-        MoneroPrivateKey? nonce;
+        ED25519MoneroPrivateKey? nonce;
         for (final n in multisigNonces) {
           if (usedNonces.contains(n)) continue;
           if (BytesUtils.isContains(
             _multisigInfo.l[s],
-            n.publicKey.compressed,
+            n.publicKey.toBytes(),
           )) {
             nonce = n;
             usedNonces.add(nonce);
@@ -628,16 +648,21 @@ class MoneroMultisigTxBuilder
           }
         }
         if (nonce != null) {
-          nonces[s][j] = nonce.key.clone();
+          nonces[s][j] = nonce.takeSecretKey().toBytes();
         } else {
-          throw const DartMoneroPluginException("Miss match nonces.");
+          throw BuError(DefaultErrorType.invalidArgument, 
+            "Mismatched nonces for output $s: no unused multisig nonce matches.",
+          );
         }
       }
     }
     for (final signer in multisigAccount.multisigPrivateKeys) {
       final pubKey = signer.publicKey;
       if (!_multisigInfo.signingKeys.contains(pubKey)) {
-        CryptoOps.scAdd(secretKey, secretKey, signer.key);
+        secretKey.setAll(
+          0,
+          blockchainUtils.api.ed25519.scAdd(secretKey, signer.takeSecretKey()),
+        );
         _multisigInfo.signingKeys.add(pubKey);
       }
     }
@@ -658,8 +683,8 @@ class MoneroMultisigTxBuilder
   @override
   MoneroTransaction getFinalTx() {
     if (!isReady) {
-      throw const DartMoneroPluginException(
-        "Transaction is not ready. some signature missing.",
+      throw BuError(DefaultErrorType.invalidState, 
+        "Transaction is not ready: some signatures are missing.",
       );
     }
     return _finalizeTx(s: _multisigInfo.s, c0: _multisigInfo.c0);

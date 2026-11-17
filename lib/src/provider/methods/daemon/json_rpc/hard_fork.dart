@@ -13,10 +13,10 @@ class DaemonRequestHardForkInfo
   @override
   Map<String, dynamic> get params => {};
   @override
-  DemonRequestType get encodingType => DemonRequestType.jsonRPC;
+  DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 
   @override
-  DaemonHardForkResponse onResonse(Map<String, dynamic> result) {
+  DaemonHardForkResponse onResponse(Map<String, dynamic> result) {
     return DaemonHardForkResponse.fromJson(result);
   }
 }

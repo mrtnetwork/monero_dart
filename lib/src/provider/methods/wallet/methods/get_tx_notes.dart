@@ -14,7 +14,7 @@ class WalletRequestGetTxNotes
   Map<String, dynamic> get params => {"txids": txIds};
 
   @override
-  List<String> onResonse(Map<String, dynamic> result) {
+  List<String> onResponse(Map<String, dynamic> result) {
     return (result["notes"] as List).cast();
   }
 }

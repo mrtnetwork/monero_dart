@@ -2,8 +2,14 @@ import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/monero_dart.dart';
 import 'package:test/test.dart';
 
-void main() {
+import '../../utils.dart';
+
+void cslagFastTest() {
   _test();
+}
+
+void main() {
+  MoneroTestApi.runTest(cslagFastTest, "Cslag Fast");
 }
 
 void _test() {
@@ -75,15 +81,15 @@ void _test() {
   RCT.skpkGen(p, sI);
 
   // Set C[idx]
-  t = RCT.skGen_();
-  u = RCT.skGen_();
+  t = RCT.skGen();
+  u = RCT.skGen();
   // final sp = pubs[idx].mask.clone();
-  final sp = RCT.addKeys2_(t, u, RCTConst.h);
+  final sp = RCT.addKeys2(t, u, RCTConst.h);
   pubs[idx] = CtKey(dest: sI, mask: sp);
   // Set commitment offset
   // final RctKey cout = RCT.zero();
-  t2 = RCT.skGen_();
-  final RctKey cout = RCT.addKeys2_(t2, u, RCTConst.h);
+  t2 = RCT.skGen();
+  final RctKey cout = RCT.addKeys2(t2, u, RCTConst.h);
 
   // Prepare generation inputs
   final CtKey insk = CtKey(dest: p, mask: t);
@@ -172,7 +178,7 @@ void _test() {
 
   test("bad C", () {
     pubs[idx] = CtKey(
-      dest: RCT.scalarmultBase(RCT.skGen_()),
+      dest: RCT.scalarmultBase(RCT.skGen()),
       mask: pubs[idx].mask,
     );
     final prove = CLSAGUtils.prove(

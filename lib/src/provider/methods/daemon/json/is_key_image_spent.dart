@@ -20,10 +20,10 @@ class DaemonRequestIsKeyImageSpent
   @override
   Map<String, dynamic> get params => {"key_images": keyImages};
   @override
-  DemonRequestType get encodingType => DemonRequestType.json;
+  DaemonRequestType get encodingType => DaemonRequestType.json;
 
   @override
-  DaemonIsKeyImageSpentResponse onResonse(Map<String, dynamic> result) {
+  DaemonIsKeyImageSpentResponse onResponse(Map<String, dynamic> result) {
     return DaemonIsKeyImageSpentResponse.fromJson(result);
   }
 }

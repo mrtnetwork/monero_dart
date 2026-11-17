@@ -59,8 +59,7 @@ class WalletRPCCreateAccountResponse {
 }
 
 class WalletRPCCreateAddressResponse {
-  /// Index of the new address under the input account.
-  final int accountIndex;
+  final int addressIndex;
 
   /// Newly created address. Base58 representation of the public keys.
   final MoneroAddress address;
@@ -72,7 +71,7 @@ class WalletRPCCreateAddressResponse {
   final List<MoneroAddress> addresses;
 
   WalletRPCCreateAddressResponse.fromJson(Map<String, dynamic> json)
-    : accountIndex = IntUtils.parse(json["account_index"]),
+    : addressIndex = IntUtils.parse(json["address_index"]),
       address = MoneroAddress(json["address"]),
       addressIndices =
           (json["address_indices"] as List)
@@ -189,11 +188,14 @@ class WalletRPCEstimateTxSizeAndWeightResponse {
 }
 
 class WalletRPCExchangeMultisigKeysResponse {
-  final MoneroAddress address;
+  final MoneroAddress? address;
   final String multisigInfo;
 
   WalletRPCExchangeMultisigKeysResponse.fromJson(Map<String, dynamic> json)
-    : address = MoneroAddress(json["address"]),
+    : address =
+          (json["address"] as String?)?.isEmpty ?? true
+              ? null
+              : MoneroAddress(json["address"]),
       multisigInfo = json["multisig_info"];
 }
 
@@ -212,7 +214,7 @@ class WalletRPCExportKeyImagesResponse {
 
   WalletRPCExportKeyImagesResponse.fromJson(Map<String, dynamic> json)
     : signedKeyImages =
-          (json["signed_key_images"] as List)
+          ((json["signed_key_images"] as List?) ?? [])
               .map((e) => WalletRPCExportKeyImageResponse.fromJson(e))
               .toList(),
       offset = IntUtils.parse(json["offset"]);
@@ -321,7 +323,7 @@ class WalletRPCAddressBookResponse {
 
   final int index;
 
-  final String paymentId;
+  final String? paymentId;
   WalletRPCAddressBookResponse.fromJson(Map<String, dynamic> json)
     : address = MoneroAddress(json["address"]),
       description = json["description"],
@@ -412,7 +414,7 @@ class WalletRPCGetBalanceResponse {
       timeToUnlock = IntUtils.parse(json["time_to_unlock"]),
       blocksToUnlock = IntUtils.parse(json["blocks_to_unlock"]),
       perSubAddress =
-          (json["per_subaddress"] as List)
+          ((json["per_subaddress"] as List?) ?? [])
               .map(
                 (e) =>
                     WalletRPCSubAddressBalanceInformationResponse.fromJson(e),
@@ -821,7 +823,7 @@ class WalletRPCSplitIntegratedAddressResponse {
   WalletRPCSplitIntegratedAddressResponse.fromJson(Map<String, dynamic> json)
     : isSubAddress = json["is_subaddress"],
       standardAddress = MoneroAddress(json["standard_address"]),
-      payment = json["payment"];
+      payment = json["payment_id"];
 }
 
 class WalletRPCSweepResponse {
@@ -1015,7 +1017,7 @@ class WalletRPCTransferDestinationParam {
     required this.amount,
   });
   Map<String, dynamic> toJson() {
-    return {"address": address.address, "amount": amount.toString()};
+    return {"address": address.address, "amount": amount};
   }
 }
 

@@ -1,5 +1,5 @@
 import 'package:blockchain_utils/blockchain_utils.dart';
-import 'package:monero_dart/src/exception/exception.dart';
+import 'package:blockchain_utils/crypto/crypto/monero/api/src/proof.dart';
 import 'package:monero_dart/src/serialization/layout/constant/const.dart';
 import 'package:monero_dart/src/serialization/layout/serialization/serialization.dart';
 import 'package:monero_dart/src/crypto/types/types.dart';
@@ -26,7 +26,7 @@ abstract class RctSigPrunable extends MoneroSerialization {
       case RCTType.rctTypeFull:
         return RctSigPrunableRangeSigs.deserializeJson(json);
       default:
-        throw DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid RCT type.",
           details: {"type": type.toString()},
         );
@@ -76,7 +76,7 @@ abstract class RctSigPrunable extends MoneroSerialization {
           property: property,
         );
       default:
-        throw DartMoneroPluginException(
+        throw BuError(DefaultErrorType.invalidArgument, 
           "Invalid RCT type.",
           details: {"type": type.toString()},
         );
@@ -85,7 +85,7 @@ abstract class RctSigPrunable extends MoneroSerialization {
 
   T cast<T extends RctSigPrunable>() {
     if (this is! T) {
-      throw DartMoneroPluginException(
+      throw BuError(DefaultErrorType.castFailed, 
         "RctSigPrunable casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -147,6 +147,19 @@ class BulletproofPlus extends MoneroSerialization {
     };
   }
 
+  factory BulletproofPlus.fromNative(MoneroBpPlusProof proof) {
+    return BulletproofPlus(
+      a: proof.a,
+      a1: proof.a1,
+      b: proof.b,
+      r1: proof.r1,
+      s1: proof.s1,
+      d1: proof.d1,
+      l: proof.l,
+      r: proof.r,
+      v: proof.v,
+    );
+  }
   factory BulletproofPlus.fromJson(Map<String, dynamic> json) {
     return BulletproofPlus(
       a: BytesUtils.fromHexString(json.valueAs<String>("a")),
@@ -174,64 +187,88 @@ class BulletproofPlus extends MoneroSerialization {
   }
 
   BulletproofPlus({
-    required RctKey a,
-    required RctKey a1,
-    required RctKey b,
-    required RctKey r1,
-    required RctKey s1,
-    required RctKey d1,
-    required List<RctKey> l,
-    required List<RctKey> r,
+    required List<int> a,
+    required List<int> a1,
+    required List<int> b,
+    required List<int> r1,
+    required List<int> s1,
+    required List<int> d1,
+    required List<List<int>> l,
+    required List<List<int>> r,
     this.v = const [],
-  }) : a = a.asImmutableBytes.exc(
-         length: 32,
-         operation: "BulletproofPlus",
-         reason: "Invalid a bytes length.",
-       ),
-       a1 = a1.asImmutableBytes.exc(
-         length: 32,
-         operation: "BulletproofPlus",
-         reason: "Invalid a1 bytes length.",
-       ),
-       b = b.asImmutableBytes.exc(
-         length: 32,
-         operation: "BulletproofPlus",
-         reason: "Invalid b bytes length.",
-       ),
-       r1 = r1.asImmutableBytes.exc(
-         length: 32,
-         operation: "BulletproofPlus",
-         reason: "Invalid r1 bytes length.",
-       ),
-       s1 = s1.asImmutableBytes.exc(
-         length: 32,
-         operation: "BulletproofPlus",
-         reason: "Invalid s1 bytes length.",
-       ),
-       d1 = d1.asImmutableBytes.exc(
-         length: 32,
-         operation: "BulletproofPlus",
-         reason: "Invalid d1 bytes length.",
-       ),
+  }) : a =
+           a
+               .exc(
+                 length: 32,
+                 operation: "BulletproofPlus",
+                 reason: "Invalid a bytes length.",
+               )
+               .asImmutableBytes,
+       a1 =
+           a1
+               .exc(
+                 length: 32,
+                 operation: "BulletproofPlus",
+                 reason: "Invalid a1 bytes length.",
+               )
+               .asImmutableBytes,
+       b =
+           b
+               .exc(
+                 length: 32,
+                 operation: "BulletproofPlus",
+                 reason: "Invalid b bytes length.",
+               )
+               .asImmutableBytes,
+       r1 =
+           r1
+               .exc(
+                 length: 32,
+                 operation: "BulletproofPlus",
+                 reason: "Invalid r1 bytes length.",
+               )
+               .asImmutableBytes,
+       s1 =
+           s1
+               .exc(
+                 length: 32,
+                 operation: "BulletproofPlus",
+                 reason: "Invalid s1 bytes length.",
+               )
+               .asImmutableBytes,
+       d1 =
+           d1
+               .exc(
+                 length: 32,
+                 operation: "BulletproofPlus",
+                 reason: "Invalid d1 bytes length.",
+               )
+               .asImmutableBytes,
        l =
            l
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "BulletproofPlus",
-                   reason: "Invalid l bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "BulletproofPlus",
+                           reason: "Invalid l bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toList()
                .immutable,
        r =
            r
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "BulletproofPlus",
-                   reason: "Invalid r bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "BulletproofPlus",
+                           reason: "Invalid r bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toList()
                .immutable;
@@ -311,6 +348,18 @@ class BulletproofPlus extends MoneroSerialization {
   Layout<Map<String, dynamic>> createLayout({String? property}) {
     return layout(property: property);
   }
+
+  MoneroBpPlusProof toNative() => MoneroBpPlusProof(
+    v: v,
+    a: a,
+    a1: a1,
+    b: b,
+    r1: r1,
+    s1: s1,
+    d1: d1,
+    l: l,
+    r: r,
+  );
 }
 
 class Bulletproof extends MoneroSerialization {
@@ -327,93 +376,129 @@ class Bulletproof extends MoneroSerialization {
   final RctKey b;
   final RctKey t;
   Bulletproof({
-    required RctKey a,
-    required RctKey s,
-    required RctKey t1,
-    required RctKey t2,
-    required RctKey taux,
-    required RctKey mu,
-    required List<RctKey> l,
-    required List<RctKey> r,
-    required RctKey a_,
-    required RctKey b,
-    required RctKey t,
+    required List<int> a,
+    required List<int> s,
+    required List<int> t1,
+    required List<int> t2,
+    required List<int> taux,
+    required List<int> mu,
+    required List<List<int>> l,
+    required List<List<int>> r,
+    required List<int> a_,
+    required List<int> b,
+    required List<int> t,
     List<RctKey> v = const [],
-  }) : a = a.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid a bytes length.",
-       ),
-       s = s.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid s bytes length.",
-       ),
-       t1 = t1.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid t1 bytes length.",
-       ),
-       t2 = t2.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid t2 bytes length.",
-       ),
-       taux = taux.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid taux bytes length.",
-       ),
-       mu = mu.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid mu bytes length.",
-       ),
+  }) : a =
+           a
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid a bytes length.",
+               )
+               .asImmutableBytes,
+       s =
+           s
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid s bytes length.",
+               )
+               .asImmutableBytes,
+       t1 =
+           t1
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid t1 bytes length.",
+               )
+               .asImmutableBytes,
+       t2 =
+           t2
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid t2 bytes length.",
+               )
+               .asImmutableBytes,
+       taux =
+           taux
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid taux bytes length.",
+               )
+               .asImmutableBytes,
+       mu =
+           mu
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid mu bytes length.",
+               )
+               .asImmutableBytes,
        l =
            l
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "Bulletproof",
-                   reason: "Invalid l bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "Bulletproof",
+                           reason: "Invalid l bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toList()
                .immutable,
        r =
            r
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "Bulletproof",
-                   reason: "Invalid r bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "Bulletproof",
+                           reason: "Invalid r bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toList()
                .immutable,
-       a_ = a_.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid a_ bytes length.",
-       ),
-       b = b.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid b bytes length.",
-       ),
-       t = t.asImmutableBytes.exc(
-         length: 32,
-         operation: "Bulletproof",
-         reason: "Invalid t bytes length.",
-       ),
+       a_ =
+           a_
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid a_ bytes length.",
+               )
+               .asImmutableBytes,
+       b =
+           b
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid b bytes length.",
+               )
+               .asImmutableBytes,
+       t =
+           t
+               .exc(
+                 length: 32,
+                 operation: "Bulletproof",
+                 reason: "Invalid t bytes length.",
+               )
+               .asImmutableBytes,
        v =
            v
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "Bulletproof",
-                   reason: "Invalid v bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "Bulletproof",
+                           reason: "Invalid v bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toList()
                .immutable;
@@ -516,18 +601,21 @@ class Clsag extends MoneroSerialization {
   final RctKey d;
   final RctKey? i;
   Clsag({
-    required List<RctKey> s,
-    required RctKey c1,
-    required RctKey d,
-    RctKey? i,
+    required List<List<int>> s,
+    required List<int> c1,
+    required List<int> d,
+    List<int>? i,
   }) : s =
            s
                .map(
-                 (e) => e.asImmutableBytes.exc(
-                   length: 32,
-                   operation: "Clsag",
-                   reason: "Invalid s bytes length.",
-                 ),
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "Clsag",
+                           reason: "Invalid s bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toList()
                .immutable,
@@ -580,7 +668,7 @@ class RctSigPrunableBulletproofPlus extends ClsagPrunable {
   RctSigPrunableBulletproofPlus({
     required List<BulletproofPlus> bulletproofPlus,
     required List<Clsag> clsag,
-    required List<RctKey> pseudoOuts,
+    required List<List<int>> pseudoOuts,
   }) : bulletproofPlus = bulletproofPlus.immutable,
        pseudoOuts =
            pseudoOuts.map((e) => e.asImmutableBytes).toList().immutable,
@@ -664,20 +752,23 @@ class MgSig extends MoneroSerialization {
   final RctKey cc;
   final KeyV ii;
   MgSig({
-    required List<List<RctKey>> ss,
-    required RctKey cc,
-    KeyV ii = const [],
+    required List<List<List<int>>> ss,
+    required List<int> cc,
+    List<List<int>> ii = const [],
   }) : ss =
            ss
                .map(
                  (e) =>
                      e
                          .map(
-                           (d) => d.asImmutableBytes.exc(
-                             length: 32,
-                             operation: "MgSig",
-                             reason: "Invalid ss bytes length.",
-                           ),
+                           (d) =>
+                               d
+                                   .exc(
+                                     length: 32,
+                                     operation: "MgSig",
+                                     reason: "Invalid ss bytes length.",
+                                   )
+                                   .asImmutableBytes,
                          )
                          .toList()
                          .immutable,
@@ -763,7 +854,7 @@ class RctSigPrunableCLSAG extends BulletproofPrunable implements ClsagPrunable {
   RctSigPrunableCLSAG({
     required List<Bulletproof> bulletproof,
     required List<Clsag> clsag,
-    required List<RctKey> pseudoOuts,
+    required List<List<int>> pseudoOuts,
   }) : bulletproof = bulletproof.immutable,
        pseudoOuts =
            pseudoOuts.map((e) => e.asImmutableBytes).toList().immutable,
@@ -841,7 +932,7 @@ class RctSigPrunableBulletproof2 extends BulletproofPrunable
   final List<RctKey> pseudoOuts;
   RctSigPrunableBulletproof2({
     required List<Bulletproof> bulletproof,
-    required List<RctKey> pseudoOuts,
+    required List<List<int>> pseudoOuts,
     required List<MgSig> mgs,
   }) : bulletproof = bulletproof.immutable,
        mgs = mgs.immutable,
@@ -926,7 +1017,7 @@ class RctSigPrunableBulletproof extends BulletproofPrunable
   final List<MgSig> mgs;
   RctSigPrunableBulletproof({
     required List<Bulletproof> bulletproof,
-    required List<RctKey> pseudoOuts,
+    required List<List<int>> pseudoOuts,
     required List<MgSig> mgs,
   }) : bulletproof = bulletproof.immutable,
        mgs = mgs.immutable,
@@ -1001,36 +1092,45 @@ class BoroSig extends MoneroSerialization {
   final List<RctKey> s1;
   final RctKey ee;
   BoroSig({
-    required List<RctKey> s0,
-    required List<RctKey> s1,
-    required RctKey ee,
+    required List<List<int>> s0,
+    required List<List<int>> s1,
+    required List<int> ee,
   }) : s0 = s0
            .map(
-             (e) => e.asImmutableBytes.exc(
-               length: 32,
-               operation: "BoroSig",
-               reason: "Invalid s0 bytes length.",
-             ),
+             (e) =>
+                 e
+                     .exc(
+                       length: 32,
+                       operation: "BoroSig",
+                       reason: "Invalid s0 bytes length.",
+                     )
+                     .asImmutableBytes,
            )
            .toList()
            .immutable
            .exc(length: 64, operation: "BoroSig", reason: "Invalid s0 length."),
        s1 = s1
            .map(
-             (e) => e.asImmutableBytes.exc(
-               length: 32,
-               operation: "BoroSig",
-               reason: "Invalid s1 bytes length.",
-             ),
+             (e) =>
+                 e
+                     .exc(
+                       length: 32,
+                       operation: "BoroSig",
+                       reason: "Invalid s1 bytes length.",
+                     )
+                     .asImmutableBytes,
            )
            .toList()
            .immutable
            .exc(length: 64, operation: "BoroSig", reason: "Invalid s1 length."),
-       ee = ee.asImmutableBytes.exc(
-         length: 32,
-         operation: "BoroSig",
-         reason: "Invalid ee bytes length.",
-       );
+       ee =
+           ee
+               .exc(
+                 length: 32,
+                 operation: "BoroSig",
+                 reason: "Invalid ee bytes length.",
+               )
+               .asImmutableBytes;
   factory BoroSig.deserializeJson(Map<String, dynamic> json) {
     return BoroSig(
       s0: json.valueEnsureAsList<List<int>>("s0"),
@@ -1068,14 +1168,17 @@ class BoroSig extends MoneroSerialization {
 class RangeSig extends MoneroSerialization {
   final BoroSig asig;
   final List<RctKey> ci;
-  RangeSig({required this.asig, required List<RctKey> ci})
+  RangeSig({required this.asig, required List<List<int>> ci})
     : ci = ci
           .map(
-            (e) => e.asImmutableBytes.exc(
-              length: 32,
-              operation: "RangeSig",
-              reason: "Invalid ci bytes length.",
-            ),
+            (e) =>
+                e
+                    .exc(
+                      length: 32,
+                      operation: "RangeSig",
+                      reason: "Invalid ci bytes length.",
+                    )
+                    .asImmutableBytes,
           )
           .toList()
           .exc(length: 64, operation: "RangeSig", reason: "Invalid ci length.");
