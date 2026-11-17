@@ -156,7 +156,8 @@ class MoneroTransactionPrefix extends MoneroSerialization {
             ?.cast<TxExtraPublicKey>();
 
     if (pubKeyExtra == null && !isCoinbase()) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Missing transaction public key in extra.",
       );
     }

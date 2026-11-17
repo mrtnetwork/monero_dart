@@ -20,7 +20,10 @@ class _StubMoneroService with MoneroServiceProvider {
   }) async => respond(params);
 }
 
-BaseServiceResponse _ok(MoneroRequestDetails params, Map<String, dynamic> payload) {
+BaseServiceResponse _ok(
+  MoneroRequestDetails params,
+  Map<String, dynamic> payload,
+) {
   final withStatus = {'status': 'OK', ...payload};
   final Object bodyPayload =
       params.requestType == DaemonRequestType.jsonRPC
@@ -97,9 +100,7 @@ void moneroQuickClientApiTest() {
   group('MoneroQuickClientApi (offline)', () {
     test('getHeight reads last block height', () async {
       final quick = _quick(
-        (p) => _ok(p, {
-          'block_header': _header(height: 100),
-        }),
+        (p) => _ok(p, {'block_header': _header(height: 100)}),
       );
       expect(await quick.getHeight(), 100);
     });
@@ -119,7 +120,16 @@ void moneroQuickClientApiTest() {
     test('getTxes maps by input order', () async {
       final quick = _quick(
         (p) => _ok(p, {
-          'txs': [_txJson(txHash: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), _txJson(txHash: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb')],
+          'txs': [
+            _txJson(
+              txHash:
+                  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            ),
+            _txJson(
+              txHash:
+                  'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+            ),
+          ],
         }),
       );
       final txes = await quick.getTxes(
@@ -134,19 +144,16 @@ void moneroQuickClientApiTest() {
 
     test('getSpentKeyImages filters spent', () async {
       final quick = _quick(
-        (p) => _ok(p, {'spent_status': [1, 0]}),
+        (p) => _ok(p, {
+          'spent_status': [1, 0],
+        }),
       );
-      expect(
-        await quick.getSpentKeyImages(['k1', 'k2']),
-        ['k1'],
-      );
+      expect(await quick.getSpentKeyImages(['k1', 'k2']), ['k1']);
       expect(await quick.getSpentKeyImages([]), isEmpty);
     });
 
     test('sendRawTransaction accepts and rejects', () async {
-      final quick = _quick(
-        (p) => _ok(p, {'reason': '', 'status': 'OK'}),
-      );
+      final quick = _quick((p) => _ok(p, {'reason': '', 'status': 'OK'}));
       expect(await quick.sendRawTransaction('deadbeef'), 'deadbeef');
 
       final rejected = _quick(
@@ -161,20 +168,26 @@ void moneroQuickClientApiTest() {
     test('trackTransaction completes, times out otherwise', () async {
       final quick = _quick(
         (p) => _ok(p, {
-          'txs': [_txJson(txHash: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', confirmations: 3)],
+          'txs': [
+            _txJson(
+              txHash:
+                  'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+              confirmations: 3,
+            ),
+          ],
         }),
       );
       await quick.trackTransaction(
-        transactionId: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        transactionId:
+            'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
         periodicTimeOut: const Duration(milliseconds: 10),
       );
 
-      final never = _quick(
-        (p) => _ok(p, {'txs': []}),
-      );
+      final never = _quick((p) => _ok(p, {'txs': []}));
       expect(
         () => never.trackTransaction(
-          transactionId: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+          transactionId:
+              'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
           timeout: const Duration(milliseconds: 50),
           periodicTimeOut: const Duration(milliseconds: 10),
         ),
@@ -185,37 +198,63 @@ void moneroQuickClientApiTest() {
     test('getTransactionStatus maps states', () async {
       final block = _quick(
         (p) => _ok(p, {
-          'txs': [_txJson(txHash: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', confirmations: 3)],
+          'txs': [
+            _txJson(
+              txHash:
+                  'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+              confirmations: 3,
+            ),
+          ],
         }),
       );
       expect(
-        await block.getTransactionStatus('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'),
+        await block.getTransactionStatus(
+          'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        ),
         MoneroTxStatus.block,
       );
 
       final pending = _quick(
         (p) => _ok(p, {
-          'txs': [_txJson(txHash: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', inPool: true)],
+          'txs': [
+            _txJson(
+              txHash:
+                  'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+              inPool: true,
+            ),
+          ],
         }),
       );
       expect(
-        await pending.getTransactionStatus('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'),
+        await pending.getTransactionStatus(
+          'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        ),
         MoneroTxStatus.pending,
       );
 
       final failed = _quick(
         (p) => _ok(p, {
-          'txs': [_txJson(txHash: 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc', doubleSpend: true)],
+          'txs': [
+            _txJson(
+              txHash:
+                  'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+              doubleSpend: true,
+            ),
+          ],
         }),
       );
       expect(
-        await failed.getTransactionStatus('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'),
+        await failed.getTransactionStatus(
+          'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        ),
         MoneroTxStatus.failed,
       );
 
       final missing = _quick((p) => _ok(p, {'txs': []}));
       expect(
-        await missing.getTransactionStatus('cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'),
+        await missing.getTransactionStatus(
+          'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        ),
         MoneroTxStatus.unknown,
       );
     });

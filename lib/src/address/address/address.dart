@@ -78,7 +78,8 @@ abstract class MoneroAddress extends MoneroSerialization
   }) {
     final decode = XmrAddrDecoder().decode(address);
     if (type != null && decode.type != type) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid address type.",
         details: {"expected": type.toString(), "type": decode.type.toString()},
       );
@@ -87,7 +88,8 @@ abstract class MoneroAddress extends MoneroSerialization
     final pvKey = decode.publicViewKey;
     final addrNetwork = MoneroNetwork.fromNetVersion(decode.netVersion);
     if (network != null && addrNetwork != network) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid address network.",
         details: {
           "expected": network.toString(),
@@ -136,7 +138,8 @@ abstract class MoneroAddress extends MoneroSerialization
 
   T cast<T extends MoneroAddress>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "monero address casting failed.",
         details: {"expected": "$T", "type": type.name},
       );

@@ -16,7 +16,8 @@ class MoneroStorageTypes {
 
   int get flag {
     if (this == MoneroStorageTypes.unknown) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Unknown type: No associated flag found.",
       );
     }
@@ -84,7 +85,8 @@ class MoneroStorageTypes {
       (e) => e.flag == flag,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 "Invalid storage type: Unable to determine the correct type from the provided flag.",
                 details: {"flag": flag.toString()},
               ),

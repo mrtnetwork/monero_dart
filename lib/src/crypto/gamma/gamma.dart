@@ -87,7 +87,10 @@ class Gamma {
     final BigInt firstRct = index == 0 ? BigInt.zero : _rctOffsets[index - 1];
     final int nrct = (_rctOffsets[index] - firstRct).toInt();
     if (nrct == 0) {
-      throw BuError(DefaultErrorType.notFound, "No RCT values found in the range");
+      throw BuError(
+        DefaultErrorType.notFound,
+        "No RCT values found in the range",
+      );
     }
     return firstRct + BigInt.from(gammaDistribution.randomIndex(nrct));
   }

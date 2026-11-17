@@ -140,7 +140,8 @@ Future<void> main() async {
   /// its own info.
   const creator = 0;
   const coSigner = 1;
-  final recipient = moneroAccountKeys(24, indexes: const [MoneroSubIndex.primary]);
+  final recipient =
+      moneroAccountKeys(24, indexes: const [MoneroSubIndex.primary]);
   final recipientAddress = recipient.primaryAddress();
 
   /// The co-signer exports its info for the output the creator will spend.
@@ -169,7 +170,8 @@ Future<void> main() async {
     account: keys[creator],
     payments: spendable,
     destinations: [
-      MoneroTxDestination.fromXMR(amount: spendAmount, address: recipientAddress),
+      MoneroTxDestination.fromXMR(
+          amount: spendAmount, address: recipientAddress),
     ],
     changeAddress: keys[creator].primaryAddress(),
     signers: [coInfo[0].info.signer],

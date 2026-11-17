@@ -54,7 +54,8 @@ class MultisigKexMessage {
         pubKeys = message.msgPubKeys;
         break;
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid monero multisig type.",
           details: {"type": msg.type.name},
         );
@@ -79,7 +80,8 @@ class MultisigKexMessage {
       signature: msg.signature,
     );
     if (!verify) {
-      throw BuError(DefaultErrorType.cryptoVerifyFailed, 
+      throw BuError(
+        DefaultErrorType.cryptoVerifyFailed,
         "Multisig kex message verification failed.",
       );
     }
@@ -103,7 +105,8 @@ class MultisigKexMessage {
     }
     if (round == 1) {
       if (msgPrivateKey == null) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "message private key must not be null in first round.",
         );
       }
@@ -160,7 +163,8 @@ class MoneroMultisigType {
     if (message.startsWith(MoneroMultisigConst.multisigKexMsgV2MagicN)) {
       return MoneroMultisigType.general;
     }
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "Unsupported multisig type.",
       details: {"message": message},
     );
@@ -178,7 +182,8 @@ class MoneroMultisigType {
       case MoneroMultisigType.general:
         return MoneroMultisigConst.multisigKexMsgV2MagicN;
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid monero multisig type.",
         );
     }
@@ -205,7 +210,8 @@ abstract class MultisigKexMessageSerializable extends MoneroSerialization {
   factory MultisigKexMessageSerializable.fromBase58(String data) {
     final type = MoneroMultisigType.fromBase58(data);
     if (data.length < MoneroMultisigConst.prefixLength) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid multisig message: shorter than prefix length ${MoneroMultisigConst.prefixLength}.",
       );
     }
@@ -217,7 +223,8 @@ abstract class MultisigKexMessageSerializable extends MoneroSerialization {
       case MoneroMultisigType.general:
         return MultisigKexMessageSerializableRoundN.deserialize(bytes);
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid monero multisig type.",
           details: {"type": type.name},
         );
@@ -226,7 +233,8 @@ abstract class MultisigKexMessageSerializable extends MoneroSerialization {
 
   T cast<T extends MultisigKexMessageSerializable>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "MultisigKexMessageSerializable casting failed.",
         details: {"expected": "$T", "type": type.name},
       );

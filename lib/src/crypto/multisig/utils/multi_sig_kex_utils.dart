@@ -50,18 +50,21 @@ class MoneroMultisigKexUtils {
     required ED25519MoneroPublicKey basePublicKey,
   }) {
     if (threshold <= 0 || threshold > signers.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         'Multisig account: tried to set invalid threshold.',
       );
     }
     if (signers.length < 2 || signers.length > 10) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         'Multisig account: tried to set invalid number of signers.',
       );
     }
 
     if (!signers.contains(basePublicKey)) {
-      throw BuError(DefaultErrorType.notFound, 
+      throw BuError(
+        DefaultErrorType.notFound,
         'Multisig account: tried to set signers, but did not find the account\'s base pubkey in signer list.',
       );
     }
@@ -69,7 +72,8 @@ class MoneroMultisigKexUtils {
     signers.sort((a, b) => BytesUtils.compareBytes(a.toBytes(), b.toBytes()));
 
     if (signers.toSet().length != signers.length) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         'Multisig account: tried to set signers, but there are duplicate signers unexpectedly.',
       );
     }
@@ -78,32 +82,38 @@ class MoneroMultisigKexUtils {
 
   static void checkMultisigConfig(int round, int threshold, int numSigners) {
     if (numSigners <= 1) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Must be at least one other multisig signer.",
       );
     }
     if (numSigners > MoneroMultisigConst.multisigMaxSigners) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Too many multisig signers specified (limit = 16 to prevent dangerous combinatorial explosion during key exchange).",
       );
     }
     if (numSigners < threshold) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Multisig threshold may not be larger than number of signers.",
       );
     }
     if (threshold <= 0) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Multisig threshold must be > 0.",
       );
     }
     if (round <= 0) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Multisig kex round must be > 0.",
       );
     }
     if (round > multisigSetupRoundsRequired(numSigners, threshold)) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Trying to process multisig kex for an invalid round.",
       );
     }
@@ -111,7 +121,8 @@ class MoneroMultisigKexUtils {
 
   static int multisigKexRoundsRequired(int numSigners, int threshold) {
     if (numSigners < threshold) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "num_signers must be >= threshold",
       );
     }
@@ -165,7 +176,8 @@ class MoneroMultisigKexUtils {
   ) {
     // aggregation key must be in sortedKeys
     if (!sortedKeys.contains(aggregationKey)) {
-      throw BuError(DefaultErrorType.notFound, 
+      throw BuError(
+        DefaultErrorType.notFound,
         "Aggregation key expected to be in input keyset.",
       );
     }
@@ -200,7 +212,8 @@ class MoneroMultisigKexUtils {
     finalKeys.sort((a, b) => BytesUtils.compareBytes(a.toBytes(), b.toBytes()));
     for (int i = 1; i < finalKeys.length; i++) {
       if (finalKeys[i] == finalKeys[i - 1]) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Unexpected duplicate found in input list.",
         );
       }
@@ -267,21 +280,24 @@ class MoneroMultisigKexUtils {
     int expectedRound,
   ) {
     if (expandedMsgs.isEmpty) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "At least one input message expected.",
       );
     }
 
     final int round = expandedMsgs[0].round;
     if (round != expectedRound) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Messages don't have the expected kex round number.",
       );
     }
 
     for (final expandedMsg in expandedMsgs) {
       if (expandedMsg.round != round) {
-        throw BuError(MoneroErrorType.multisigAccount, 
+        throw BuError(
+          MoneroErrorType.multisigAccount,
           "All messages must have the same kex round number.",
         );
       }
@@ -297,7 +313,8 @@ class MoneroMultisigKexUtils {
     sanitizedPubkeysOut = {};
     // Ensure there is at least one input message
     if (expandedMsgs.isEmpty) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "At least one input message expected.",
       );
     }
@@ -337,7 +354,8 @@ class MoneroMultisigKexUtils {
     bool incompleteSignerSet,
   ) {
     if (excludePubkeys.toSet().length != excludePubkeys.length) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Found duplicate pubkeys for exclusion unexpectedly.",
       );
     }
@@ -345,7 +363,8 @@ class MoneroMultisigKexUtils {
     final round = r.$1;
     final pubkeyOriginsMap = r.$2;
     if (round != expectedRound) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Kex messages were for round $round, but expected round is $expectedRound",
       );
     }
@@ -363,7 +382,8 @@ class MoneroMultisigKexUtils {
 
     for (final entry in pubkeyOriginsMap.entries) {
       if (entry.value.length < numRecommendationsPerPubkeyRequired) {
-        throw BuError(MoneroErrorType.multisigAccount, 
+        throw BuError(
+          MoneroErrorType.multisigAccount,
           "A pubkey recommended by multisig kex messages had an unexpected number of recommendations.",
         );
       }
@@ -379,7 +399,8 @@ class MoneroMultisigKexUtils {
             ? signers.length - 1 - (round - 1)
             : signers.length - 1;
     if (originPubkeysMap.length < numSignersRequired) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Number of unique other signers recommending pubkeys does not equal number of required other signers",
       );
     }
@@ -398,14 +419,16 @@ class MoneroMultisigKexUtils {
     final expectedRecommendationsSelf = nChooseK(signers.length - 1, round - 1);
     if (expectedRecommendationsSelf <= 0 ||
         expectedRecommendationsOthers <= 0) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         'Bad num signers or round num (possibly numerical limits exceeded).',
       );
     }
 
     // Check that local account recommends expected number of keys
     if (excludePubkeys.length != expectedRecommendationsSelf) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         'Local account did not recommend expected number of multisig keys.',
       );
     }
@@ -413,14 +436,16 @@ class MoneroMultisigKexUtils {
     // Check that other signers recommend expected number of keys
     for (final entry in originPubkeysMap.entries) {
       if (entry.value.length != expectedRecommendationsOthers) {
-        throw BuError(MoneroErrorType.multisigAccount, 
+        throw BuError(
+          MoneroErrorType.multisigAccount,
           'A multisig signer recommended an unexpected number of pubkeys.',
         );
       }
 
       // Only expected signers should be recommending keys
       if (!signers.contains(entry.key)) {
-        throw BuError(MoneroErrorType.multisigAccount, 
+        throw BuError(
+          MoneroErrorType.multisigAccount,
           'Multisig key exchange message with unexpected signer encountered.',
         );
       }
@@ -444,14 +469,16 @@ class MoneroMultisigKexUtils {
     final pubkeyOriginsMap = r.$2;
     final round = r.$1;
     if (round != expectedRound) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Kex messages were for round $round, but expected round is $expectedRound",
       );
     }
 
     // 1) There should only be two pubkeys
     if (pubkeyOriginsMap.length != 2) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Multisig post-kex round messages from other signers did not all contain two pubkeys.",
       );
     }
@@ -463,7 +490,8 @@ class MoneroMultisigKexUtils {
     pubkeySetIterator.moveNext();
     final secondSet = pubkeySetIterator.current;
     if (!CompareUtils.iterableIsEqual(firstSet, secondSet)) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Multisig post-kex round messages from other signers did not all recommend the same pubkey pair.",
       );
     }
@@ -474,7 +502,8 @@ class MoneroMultisigKexUtils {
     final numSignersRequired = incompleteSignerSet ? 1 : signers.length;
 
     if (origins.length < numSignersRequired) {
-      throw BuError(MoneroErrorType.multisigAccount, 
+      throw BuError(
+        MoneroErrorType.multisigAccount,
         "Multisig post-kex round message origins don't line up with multisig signer set",
       );
     }
@@ -482,7 +511,8 @@ class MoneroMultisigKexUtils {
     for (final origin in origins) {
       // Ensure each origin is part of the signers list
       if (!signers.contains(origin)) {
-        throw BuError(DefaultErrorType.notFound, 
+        throw BuError(
+          DefaultErrorType.notFound,
           "An unknown origin recommended a multisig post-kex verification message.",
         );
       }

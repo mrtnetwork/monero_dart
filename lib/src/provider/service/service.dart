@@ -25,21 +25,24 @@ mixin MoneroServiceProvider
     request,
     Duration? timeout,
   }) {
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "Subscription requests are not supported by this service.",
     );
   }
 
   @override
   Future<List<int>> doGrpcRequest(params, {Duration? timeout}) {
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "gRPC requests are not supported by this service.",
     );
   }
 
   @override
   Stream<List<int>> doGrpcRequestStream(params, {Duration? timeout}) {
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "gRPC requests are not supported by this service.",
     );
   }
@@ -49,7 +52,8 @@ mixin MoneroServiceProvider
     params, {
     Duration? timeout,
   }) {
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "gRPC requests are not supported by this service.",
     );
   }

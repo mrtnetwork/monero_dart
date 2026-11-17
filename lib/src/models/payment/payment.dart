@@ -18,7 +18,11 @@ enum MoneroOutputType {
     return values.firstWhere(
       (e) => e.name == name,
       orElse:
-          () => throw BuError(DefaultErrorType.invalidArgument, 'Unknown output type "$name".'),
+          () =>
+              throw BuError(
+                DefaultErrorType.invalidArgument,
+                'Unknown output type "$name".',
+              ),
     );
   }
 
@@ -42,7 +46,10 @@ enum MoneroPaymentType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 'Unknown payment type "$name".'),
+              throw BuError(
+                DefaultErrorType.invalidArgument,
+                'Unknown payment type "$name".',
+              ),
     );
   }
 
@@ -161,7 +168,8 @@ abstract class MoneroOutput extends MoneroVariantSerialization with Equality {
 
   T cast<T extends MoneroOutput>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "Monero output casting failed.",
         details: {"expected": "$T", "type": type.name},
       );
@@ -172,7 +180,8 @@ abstract class MoneroOutput extends MoneroVariantSerialization with Equality {
   MoneroOutputUnlockTime getUnlockTime() {
     final unlocktime = unlockTime.tryAsSafeInt;
     if (unlocktime == null) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid output unlock time. value is too large.",
         details: {"value": unlockTime.toString()},
       );
@@ -573,7 +582,8 @@ abstract class MoneroPayment<T extends MoneroOutput>
         break;
     }
     if (payment is! MoneroPayment<T>) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "Monero payment casting failed.",
         details: {"expected": "$T", "type": type.name},
       );
@@ -610,7 +620,8 @@ abstract class MoneroPayment<T extends MoneroOutput>
 
   E cast<E extends MoneroPayment>() {
     if (this is! E) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "Payment casting failed.",
         details: {"expected": "$E", "type": type.name},
       );
@@ -951,7 +962,8 @@ class MoneroTransactionWithOutputIndeces {
   }) {
     if (outputIndices != null &&
         transaction.vout.length != outputIndices.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
         details: {
           "out_indices": outputIndices.join(","),
@@ -970,7 +982,8 @@ class MoneroTransactionWithOutputIndeces {
   }) {
     if (outputIndices == null ||
         transaction.vout.length != outputIndices.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid output indices length: the number of transaction outputs must match the number of output indices.",
         details: {
           "out_indices": outputIndices?.join(","),
@@ -1060,12 +1073,14 @@ class MoneroSubIndex extends MoneroSerialization
   }
   factory MoneroSubIndex({int major = 0, int minor = 0}) {
     if (minor < 0 || minor > MoneroSubaddressConst.subaddrMaxIdx) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid minor subaddress index $minor: expected 0..${MoneroSubaddressConst.subaddrMaxIdx}.",
       );
     }
     if (major < 0 || major > MoneroSubaddressConst.subaddrMaxIdx) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid major subaddress index $major: expected 0..${MoneroSubaddressConst.subaddrMaxIdx}.",
       );
     }
@@ -1199,7 +1214,8 @@ enum MoneroFeePrority {
     if (index == 0) return baseFee.fee;
     final fees = baseFee.fees;
     if (fees == null || index >= fees.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Failed to determine base fee based on your priority.",
       );
     }

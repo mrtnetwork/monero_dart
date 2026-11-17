@@ -241,7 +241,8 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     }
     final addresses = currentDestinations.map((e) => e.address).toList();
     if (addresses.toSet().length != addresses.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid transaction: multiple outputs cannot be sent to the same address.",
       );
     }
@@ -251,7 +252,8 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
       (p, c) => p + c.amount,
     );
     if (inAmounts != outAmounts + fee) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Transaction validation failed: The sum of input amounts does not match the sum of output amounts plus the transaction fee. Ensure the inputs cover all outputs and the required fee.",
         details: {
           "inAmounts": inAmounts.toString(),
@@ -294,7 +296,8 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     } else if (currentDestinations.any(
       (e) => e.address.type == XmrAddressType.integrated,
     )) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Integrated address detected in multi-transfer transaction.",
       );
     }
@@ -381,7 +384,8 @@ abstract class MoneroTxBuilder<T extends SpendablePayment>
     final List<BigInt> outamounts = destinationKeys.amounts;
     final BigInt fee = sourceKeys.total - destinationKeys.total;
     if (fee.isNegative) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid transaction fee $fee: destination amounts exceed source amounts.",
       );
     }

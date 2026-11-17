@@ -19,7 +19,8 @@ class MoneroCrypto {
           publicKey.toBytes(),
           RCT.identity(clone: false),
         )) {
-      throw BuError(DefaultErrorType.badPublicKey, 
+      throw BuError(
+        DefaultErrorType.badPublicKey,
         "Public key was not in prime subgroup.",
       );
     }
@@ -160,10 +161,7 @@ class MoneroCrypto {
     required ED25519MoneroPrivateKey secretKey,
   }) {
     return secretKey.takeSecretKey().useValue(
-      (k) => generateKeyDerivationBytes(
-        pubkey: pubkey.toBytes(),
-        secretKey: k,
-      ),
+      (k) => generateKeyDerivationBytes(pubkey: pubkey.toBytes(), secretKey: k),
     );
   }
 
@@ -290,13 +288,22 @@ class MoneroCrypto {
       throw BuError(DefaultErrorType.badPublicKey, "tx pubkey is invalid");
     }
     if (!BaseEd25519PublicKey.isValidBytes(A)) {
-      throw BuError(DefaultErrorType.badPublicKey, "recipient view pubkey is invalid");
+      throw BuError(
+        DefaultErrorType.badPublicKey,
+        "recipient view pubkey is invalid",
+      );
     }
     if (B != null && !BaseEd25519PublicKey.isValidBytes(B)) {
-      throw BuError(DefaultErrorType.badPublicKey, "recipient spend pubkey is invalid");
+      throw BuError(
+        DefaultErrorType.badPublicKey,
+        "recipient spend pubkey is invalid",
+      );
     }
     if (!BaseEd25519PublicKey.isValidBytes(d)) {
-      throw BuError(DefaultErrorType.badPrivateKey, "key derivation is invalid");
+      throw BuError(
+        DefaultErrorType.badPrivateKey,
+        "key derivation is invalid",
+      );
     }
 
     final k = RCT.skGen();
@@ -403,7 +410,8 @@ class MoneroCrypto {
         ...B ?? RCT.zero(clone: false),
       ]);
     } else {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid tx proof version",
         details: {"version": version.toString()},
       );

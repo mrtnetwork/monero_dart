@@ -91,13 +91,17 @@ class CLSAGContext {
     }
     final int n = P.length;
     if (cNonzero.length != n) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid cNonzero length.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid cNonzero length.",
+      );
     }
     if (s.length != n) {
       throw BuError(DefaultErrorType.invalidArgument, "Invalid s length.");
     }
     if (l < 0 || l >= n) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid signing index l: expected 0 <= l < $n, received $l.",
       );
     }
@@ -217,10 +221,16 @@ class CLSAGContext {
     RctKey c = RCT.zero();
     RctKey c0 = RCT.zero();
     if (numAlphaComponents != totalAlphaG.length) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid alpha G length.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid alpha G length.",
+      );
     }
     if (numAlphaComponents != totalAlphaH.length) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid alpha H length.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid alpha H length.",
+      );
     }
     if (numAlphaComponents != alpha.length) {
       throw BuError(DefaultErrorType.invalidArgument, "Invalid alpha length.");

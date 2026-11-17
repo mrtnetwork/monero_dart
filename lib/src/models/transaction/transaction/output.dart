@@ -33,7 +33,8 @@ class TxOutTargetType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 'Unknown transaction output target type "$name".',
               ),
     );
@@ -56,7 +57,8 @@ abstract class TxoutTarget extends MoneroVariantSerialization {
       case TxOutTargetType.txoutToTaggedKey:
         return TxoutToTaggedKey.deserializeJson(decode.value);
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid txout target.",
           details: {"type": type.name},
         );
@@ -98,7 +100,8 @@ abstract class TxoutTarget extends MoneroVariantSerialization {
 
   T cast<T extends TxoutTarget>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "TxoutTarget casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );

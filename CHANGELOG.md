@@ -1,4 +1,5 @@
 ## 2.0.0
+- BREAKING: all legacy exception classes removed; every error is now `BuError` with a `MoneroErrorType` taxonomy value.
 - Cryptography now routes through the `blockchain_utils` dual backend (pure Dart default, optional Rust FFI/WASM). For faster Bulletproofs+ / RingCT proof generation, call `blockchainUtils.setRustApi()`.
 
 ## 1.7.0

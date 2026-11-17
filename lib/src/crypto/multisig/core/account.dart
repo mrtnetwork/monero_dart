@@ -44,7 +44,12 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
   ED25519MoneroPrivateKey? _commonPrivateKey;
   ED25519MoneroPrivateKey get commonPrivateKey {
     final p = _commonPrivateKey;
-    if (p == null) throw BuError(DefaultErrorType.invalidArgument, "Missing commonPrivateKey");
+    if (p == null) {
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Missing commonPrivateKey",
+      );
+    }
     return p;
   }
 
@@ -53,7 +58,9 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
   /// Joint multisig public key shared by all participants once key exchange completes.
   ED25519MoneroPublicKey get multisigPubKey {
     final p = _multisigPubKey;
-    if (p == null) throw BuError(DefaultErrorType.invalidArgument, "Missing multisigPubKey");
+    if (p == null) {
+      throw BuError(DefaultErrorType.invalidArgument, "Missing multisigPubKey");
+    }
     return p;
   }
 
@@ -61,7 +68,9 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
   ED25519MoneroPublicKey? _commonPubKey;
   ED25519MoneroPublicKey get commonPubKey {
     final p = _commonPubKey;
-    if (p == null) throw BuError(DefaultErrorType.invalidArgument, "Missing commonPubKey");
+    if (p == null) {
+      throw BuError(DefaultErrorType.invalidArgument, "Missing commonPubKey");
+    }
     return p;
   }
 
@@ -203,13 +212,15 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       final commonPubKey = _commonPubKey;
       if (multisigPubKey == null ||
           !resultKeysToOriginsMap.containsKey(multisigPubKey)) {
-        throw BuError(DefaultErrorType.notFound, 
+        throw BuError(
+          DefaultErrorType.notFound,
           "Multisig post-kex round: expected multisig pubkey not found.",
         );
       }
       if (commonPubKey == null ||
           !resultKeysToOriginsMap.containsKey(commonPubKey)) {
-        throw BuError(DefaultErrorType.notFound, 
+        throw BuError(
+          DefaultErrorType.notFound,
           "Multisig post-kex round: expected common pubkey not found.",
         );
       }
@@ -232,7 +243,8 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
       nextMsgKeys.add(_multisigPubKey!);
       final commonPubKey = _commonPubKey;
       if (commonPubKey == null) {
-        throw BuError(DefaultErrorType.notFound, 
+        throw BuError(
+          DefaultErrorType.notFound,
           "Multisig post-kex round: expected common pubkey not found.",
         );
       }
@@ -291,13 +303,15 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
         );
 
     if (kexRoundsRequired <= 0) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         'Multisig kex rounds required unexpectedly 0.',
       );
     }
 
     if (_kexRoundsComplete >= kexRoundsRequired + 1) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         'Multisig kex has already completed all required rounds (including post-kex verification).',
       );
     }
@@ -360,7 +374,8 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     List<MultisigKexMessage> messages,
   ) {
     if (accountIsActive) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "multisig account: tried to initialize kex, but already initialized.",
       );
     }
@@ -378,12 +393,14 @@ abstract class MoneroMultisigAccountCore extends MoneroSerialization {
     bool forceUpdate = false,
   }) {
     if (!accountIsActive) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "multisig account: tried to update kex, but kex isn't initialized yet.",
       );
     }
     if (multisigIsReady) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "multisig account: tried to update kex, but kex is already complete.",
       );
     }

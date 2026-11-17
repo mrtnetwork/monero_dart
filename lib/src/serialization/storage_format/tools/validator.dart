@@ -9,7 +9,8 @@ class MoneroStorageFormatValidator {
   /// must not be greater than 255 characters.
   static String asValidName(String name) {
     if (name.isEmpty || name.length > 255) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "The entry name must be between 1 and 255 characters.",
       );
     }
@@ -21,7 +22,8 @@ class MoneroStorageFormatValidator {
     try {
       return value as T;
     } catch (_) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "Failed to cast to type $T.",
         details: {"value": value.toString()},
       );
@@ -33,7 +35,8 @@ class MoneroStorageFormatValidator {
     try {
       return (value as Map).cast<String, dynamic>();
     } catch (_) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid map: Object must be a Map<String, dynamic>.",
       );
     }
@@ -49,7 +52,8 @@ class MoneroStorageFormatValidator {
     if (toBig == null ||
         toBig.bitLength > typeData.$1 ||
         toBig.isNegative && !typeData.$2) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid numeric for type ${type.name}",
         details: {"type": type.name, "value": value.toString()},
       );
@@ -62,12 +66,14 @@ class MoneroStorageFormatValidator {
     try {
       final toList = (value as List).cast<Object?>();
       if (toList.isEmpty && !allowEmpty) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid array values: Array must not be empty.",
         );
       }
       if (toList.any((e) => e == null)) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid array values: Array cannot contain null elements.",
           details: {"elements": toList.map((e) => e.toString()).join(", ")},
         );
@@ -77,7 +83,8 @@ class MoneroStorageFormatValidator {
     } on BuError {
       rethrow;
     } catch (_) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid array of $T.",
         details: {"value": value.toString()},
       );
@@ -94,7 +101,8 @@ class MoneroStorageFormatValidator {
             asList.map((e) => asPrimitiveType<Object>(e)).toList();
         final MoneroStorageTypes type = toPrimitive[0].$2;
         if (toPrimitive.any((e) => e.$2 != type)) {
-          throw BuError(DefaultErrorType.invalidArgument, 
+          throw BuError(
+            DefaultErrorType.invalidArgument,
             "Invalid array values: All elements in the array must be of the same type.",
             details: {
               "type": type.name,
@@ -114,14 +122,16 @@ class MoneroStorageFormatValidator {
           );
         } catch (_) {}
       }
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid array values: Unable to determine the element type.",
         details: {"value": value.toString()},
       );
     } on BuError {
       rethrow;
     } catch (e) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid array of type $T",
         details: {"value": value.toString()},
       );
@@ -151,7 +161,8 @@ class MoneroStorageFormatValidator {
     } else if (value is Map) {
       return MoneroStorageTypes.object;
     }
-    throw BuError(DefaultErrorType.invalidArgument, 
+    throw BuError(
+      DefaultErrorType.invalidArgument,
       "Unknown storage format: Unable to determine the correct type for the provided value.",
       details: {"value": value?.toString()},
     );
@@ -163,14 +174,16 @@ class MoneroStorageFormatValidator {
     if (type.isPrimitive) {
       final currentValue = validatePrimitiveObjects(value: value, type: type);
       if (currentValue is! T) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Incorrect primitive $T value.",
           details: {"value": value?.toString()},
         );
       }
       return (currentValue as T, type);
     }
-    throw BuError(DefaultErrorType.invalidArgument, 
+    throw BuError(
+      DefaultErrorType.invalidArgument,
       "Invalid primitive value.",
       details: {"value": value?.toString()},
     );
@@ -204,7 +217,8 @@ class MoneroStorageFormatValidator {
       default:
         break;
     }
-    throw BuError(DefaultErrorType.invalidArgument, 
+    throw BuError(
+      DefaultErrorType.invalidArgument,
       "Invalid value for type ${type.name}",
       details: {"type": type.name, "value": value.toString()},
     );

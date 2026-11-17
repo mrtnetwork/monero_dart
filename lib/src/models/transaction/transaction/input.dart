@@ -18,7 +18,8 @@ enum MoneroTxinType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 'Unknown transaction input type "$name".',
               ),
     );
@@ -77,7 +78,8 @@ abstract class MoneroTxin extends MoneroVariantSerialization {
   String get variantName => type.name;
   T cast<T extends MoneroTxin>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "MoneroTxin casting failed.",
         details: {"expected": "$T", "type": type.name},
       );

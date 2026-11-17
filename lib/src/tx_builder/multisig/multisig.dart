@@ -95,7 +95,10 @@ class MoneroMultisigTxBuilder
       signature: tx.signature.cast<RCTSignature>(),
     );
     if (newTx.$1.getTxHash() != tx.getTxHash()) {
-      throw BuError(DefaultErrorType.cryptoVerifyFailed, "transaction verification failed.");
+      throw BuError(
+        DefaultErrorType.cryptoVerifyFailed,
+        "transaction verification failed.",
+      );
     }
     return MoneroMultisigTxBuilder._(
       sourceKeys: sourceKeys,
@@ -280,18 +283,21 @@ class MoneroMultisigTxBuilder
     sources = sources.immutable;
     final multisigAccount = account.multisigAccount;
     if (signers.contains(multisigAccount.multisigSignerPubKey)) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Signer list must exclude the owner's public key.",
       );
     }
     if (signers.length + 1 != multisigAccount.threshold) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "The combined total of signers and the owner must equal the required threshold.",
       );
     }
     for (final i in signers) {
       if (!multisigAccount.signers.contains(i)) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid signer: The specified signer is not recognized in the multisig account.",
         );
       }
@@ -301,7 +307,8 @@ class MoneroMultisigTxBuilder
           .where((e) => e.signer != multisigAccount.multisigSignerPubKey)
           .where((e) => signers.contains(e.signer));
       if (multisigInfos.length + 1 != multisigAccount.threshold) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Some multisig details are missing to meet the required threshold.",
         );
       }
@@ -391,7 +398,8 @@ class MoneroMultisigTxBuilder
     final BigInt outAmout = destinationKeys.total;
     final BigInt fee = inAmout - outAmout;
     if (fee.isNegative) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid transaction fee $fee: destination amounts exceed source amounts.",
       );
     }
@@ -613,17 +621,20 @@ class MoneroMultisigTxBuilder
   }) {
     final MoneroMultisigAccount multisigAccount = account.multisigAccount;
     if (isReady) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "Transaction is already ready: cannot sign a completed transaction.",
       );
     }
     if (!signers.contains(multisigAccount.multisigSignerPubKey)) {
-      throw BuError(DefaultErrorType.notFound, 
+      throw BuError(
+        DefaultErrorType.notFound,
         "Transaction does not contain your account signer.",
       );
     }
     if (_currentSigners.contains(multisigAccount.multisigSignerPubKey)) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "Account already signed the transaction.",
       );
     }
@@ -650,7 +661,8 @@ class MoneroMultisigTxBuilder
         if (nonce != null) {
           nonces[s][j] = nonce.takeSecretKey().toBytes();
         } else {
-          throw BuError(DefaultErrorType.invalidArgument, 
+          throw BuError(
+            DefaultErrorType.invalidArgument,
             "Mismatched nonces for output $s: no unused multisig nonce matches.",
           );
         }
@@ -683,7 +695,8 @@ class MoneroMultisigTxBuilder
   @override
   MoneroTransaction getFinalTx() {
     if (!isReady) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "Transaction is not ready: some signatures are missing.",
       );
     }

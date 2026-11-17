@@ -25,7 +25,8 @@ class MoneroAccountKeysType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 'Unknown account keys type "$name".',
               ),
     );
@@ -82,7 +83,10 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
       case MoneroAccountKeysType.simple:
         return MoneroAccountKeys.deserializeJson(decode.value);
       default:
-        throw BuError(DefaultErrorType.invalidArgument, "Invalid account info type.");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Invalid account info type.",
+        );
     }
   }
 
@@ -110,7 +114,10 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   MoneroBaseAccountKeys addIndex({int minor = 1, int major = 0}) {
     final index = MoneroSubIndex(major: major, minor: minor);
     if (indexes.contains(index)) {
-      throw BuError(DefaultErrorType.invalidArgument, "Account index already exists.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Account index already exists.",
+      );
     }
     return MoneroAccountKeys(
       account: account,
@@ -122,7 +129,8 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   /// get private spend key
   RctKey getPrivateSpendKey() {
     if (isWatchOnly) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "Watch only account does not have a private spend key",
       );
     }
@@ -190,7 +198,8 @@ abstract class MoneroBaseAccountKeys extends MoneroVariantSerialization {
   /// index must already exist in [indexes]
   MoneroAddress subAddress(MoneroSubIndex index) {
     if (!index.isSubaddress) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Use primary address for non-subaddress index.",
       );
     }
@@ -248,10 +257,16 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
     required MoneroNetwork network,
   }) {
     if (indexes.isEmpty) {
-      throw BuError(DefaultErrorType.invalidArgument, "Indexes must not be empty");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Indexes must not be empty",
+      );
     }
     if (indexes.toSet().length != indexes.length) {
-      throw BuError(DefaultErrorType.invalidArgument, "Duplicate indexes found.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Duplicate indexes found.",
+      );
     }
     return MoneroAccountKeys._(
       account: account,
@@ -277,7 +292,10 @@ class MoneroAccountKeys extends MoneroBaseAccountKeys {
       );
     }
     if (account.privVkey != privVkey || account.pubSkey != pubSkey) {
-      throw BuError(DefaultErrorType.cryptoVerifyFailed, "Account verification failed.");
+      throw BuError(
+        DefaultErrorType.cryptoVerifyFailed,
+        "Account verification failed.",
+      );
     }
     return MoneroAccountKeys(
       account: account,
@@ -338,10 +356,16 @@ class MoneroMultisigAccountKeys extends MoneroBaseAccountKeys {
     MoneroNetwork network = MoneroNetwork.mainnet,
   }) {
     if (indexes.isEmpty) {
-      throw BuError(DefaultErrorType.invalidArgument, "Indexes must not be empty");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Indexes must not be empty",
+      );
     }
     if (indexes.toSet().length != indexes.length) {
-      throw BuError(DefaultErrorType.invalidArgument, "Duplicate indexes found.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Duplicate indexes found.",
+      );
     }
     return MoneroMultisigAccountKeys._(
       multisigAccount: multisigAccount,

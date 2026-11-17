@@ -12,7 +12,8 @@ class MoneroStorageSerializer {
   /// remain at [offset] instead of leaking a Dart [RangeError].
   static void _checkRemaining(List<int> bytes, int offset, int need) {
     if (need < 0 || offset < 0 || offset + need > bytes.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Truncated monero storage bytes: need $need bytes at offset $offset, only ${bytes.length - offset} remain.",
       );
     }
@@ -27,7 +28,8 @@ class MoneroStorageSerializer {
     if (withSignature) {
       if (bytes.length <
           MoneroSerializationConst.signaturePartBAndVersionVersion.length) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Missing or invalid signature and version information.",
         );
       }
@@ -39,7 +41,8 @@ class MoneroStorageSerializer {
         signature,
         MoneroSerializationConst.signaturePartBAndVersionVersion,
       )) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Missing or invalid signature and version information.",
         );
       }
@@ -84,7 +87,8 @@ class MoneroStorageSerializer {
       o++;
       final type = MoneroStorageTypes.fromFlag(flag);
       if (type == MoneroStorageTypes.array) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid array element type: Unable to decode untyped element.",
         );
       }
@@ -142,7 +146,8 @@ class MoneroStorageSerializer {
         return _decodeDouble(bytes: bytes, offset: offset);
       default:
     }
-    throw BuError(DefaultErrorType.invalidArgument, 
+    throw BuError(
+      DefaultErrorType.invalidArgument,
       "Invalid primitive type.",
       details: {"type": type.name},
     );
@@ -165,7 +170,8 @@ class MoneroStorageSerializer {
           len += decode.length;
           break;
         case MoneroStorageTypes.array:
-          throw BuError(DefaultErrorType.invalidArgument, 
+          throw BuError(
+            DefaultErrorType.invalidArgument,
             "Invalid array element type: Unable to decode untyped element.",
           );
         default:
@@ -190,7 +196,8 @@ class MoneroStorageSerializer {
     _checkRemaining(bytes, offset, 1);
     final int byte = bytes[offset];
     if (byte != 1 && byte != 0) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid boolean byte.",
         details: {"byte": byte.toString()},
       );
@@ -281,7 +288,8 @@ class MoneroStorageSerializer {
     if (value.isValidInt) {
       return DecodeStorageResult(length: length, value: value.toInt());
     }
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "Your environment cannot fully decode 62-bit varint.",
     );
   }
@@ -305,7 +313,8 @@ class MoneroStorageSerializer {
   /// return number type information like sign, bitlength
   static (int, bool) getNumericTypesBitLength(MoneroStorageTypes type) {
     if (!type.isInteger) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "The provided type is not integer type.",
         details: {"type": type.name},
       );
@@ -350,7 +359,8 @@ class MoneroStorageSerializer {
         final asDouble = MoneroStorageFormatValidator.asA<double>(value);
         return DoubleCoder.toBytes(asDouble, byteOrder: Endian.little);
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid primitive type.",
           details: {"type": type.name, "value": value.toString()},
         );
@@ -381,7 +391,8 @@ class MoneroStorageSerializer {
   /// encode integer as variant bytes.
   static List<int> encodeVarintInt(int val) {
     if (val.isNegative) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Negative values are not allowed for varints.",
         details: {"varint": val.toString()},
       );
@@ -399,7 +410,8 @@ class MoneroStorageSerializer {
       v |= MoneroSerializationConst.portableRawSizeMarkDword;
       return v.toLeBytes(length: 4);
     }
-    throw BuError(DefaultErrorType.invalidArgument, 
+    throw BuError(
+      DefaultErrorType.invalidArgument,
       "Varint is too large to be encoded as bytes. use `encodeVarintBigInt` instead `encodeVarintInt`",
       details: {"varint": val.toString()},
     );
@@ -408,7 +420,8 @@ class MoneroStorageSerializer {
   /// encode BigInteger as variant bytes.
   static List<int> encodeVarintBigInt(BigInt val) {
     if (val.isNegative) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Negative values are not allowed for varints.",
         details: {"varint": val.toString()},
       );
@@ -431,7 +444,8 @@ class MoneroStorageSerializer {
       v |= BigInt.from(3);
       return v.toLeBytes(length: 8);
     }
-    throw BuError(DefaultErrorType.invalidArgument, 
+    throw BuError(
+      DefaultErrorType.invalidArgument,
       "Varint is too large to be encoded as bytes.",
       details: {"varint": val.toString()},
     );

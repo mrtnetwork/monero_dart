@@ -53,7 +53,10 @@ class MoneroTxProof {
     required MoneroTxVersion version,
   }) {
     if (sharedSecret.isEmpty || sharedSecret.length != signatures.length) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid proof data provided.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid proof data provided.",
+      );
     }
     return MoneroTxProof._(
       sharedSecret: sharedSecret,
@@ -101,7 +104,8 @@ class MoneroTxProof {
         (e) => proof.startsWith(e.name),
       );
       if (version == null) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid proof data.",
           details: {"proof": proof},
         );
@@ -112,7 +116,8 @@ class MoneroTxProof {
 
       final decodeProof = _decodeProof(proofBytes, version);
       if (decodeProof == null) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid proof data.",
           details: {"proof": proof},
         );
@@ -121,7 +126,8 @@ class MoneroTxProof {
     } on BuError {
       rethrow;
     } catch (e) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid proof data.",
         details: {"proof": proof},
       );

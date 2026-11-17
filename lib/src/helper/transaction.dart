@@ -31,7 +31,8 @@ class MoneroTransactionHelper {
         exteras.add(r);
       } catch (e) {
         if (errorOnFailedParsingExtras) {
-          throw BuError(DefaultErrorType.invalidArgument, 
+          throw BuError(
+            DefaultErrorType.invalidArgument,
             "Some transaction extras parsing failed.",
           );
         }
@@ -195,7 +196,8 @@ class MoneroTransactionHelper {
     required MoneroBaseAccountKeys account,
   }) {
     if (realIndex >= tx.vout.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid transaction output index.",
       );
     }
@@ -331,14 +333,16 @@ class MoneroTransactionHelper {
     final multisigAccount = account.multisigAccount;
     if (multisigInfos.map((e) => e.signer).toSet().length !=
         multisigInfos.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Duplicate multisig info provided.",
       );
     }
     final signer = multisigAccount.multisigSignerPubKey;
     for (final i in multisigInfos) {
       if (!multisigAccount.signers.contains(i.signer)) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid multisig info. signer does not exist.",
         );
       }
@@ -351,7 +355,8 @@ class MoneroTransactionHelper {
         multisigInfos.where((e) => e.signer != signer).toList();
 
     if (otherSigners.length + 1 < account.multisigAccount.threshold) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Some multisig output info missing.",
       );
     }
@@ -481,7 +486,8 @@ class MoneroTransactionHelper {
   }) {
     final txPubKey = transaction.txPublicKey;
     if (txPubKey == null) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Missing transaction public key in extra.",
       );
     }
@@ -811,7 +817,8 @@ class MoneroTransactionHelper {
     final additional = transaction.additionalPubKeys?.asPublicKeys();
     final proof = MoneroTxProof.fromBase58(proofStr);
     if ((additional?.length ?? 0) + 1 != proof.signatures.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Mismatched length of proof and transaction public keys (${proof.signatures.length} != ${(additional?.length ?? 0) + 1}).",
       );
     }
@@ -855,7 +862,8 @@ class MoneroTransactionHelper {
     final additional = transaction.additionalPubKeys?.asPublicKeys();
     final proof = MoneroTxProof.fromBase58(proofStr);
     if ((additional?.length ?? 0) + 1 != proof.signatures.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Mismatched length of proof and transaction public keys (${proof.signatures.length} != ${(additional?.length ?? 0) + 1}).",
       );
     }

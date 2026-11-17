@@ -8,7 +8,10 @@ import 'package:monero_dart/src/models/transaction/transaction/input.dart';
 class MoneroMultisigUtils {
   static int combinationsCount(int k, int n) {
     if (k > n) {
-      throw BuError(DefaultErrorType.invalidArgument, "k must not be greater than n");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "k must not be greater than n",
+      );
     }
 
     int c = 1;
@@ -112,7 +115,8 @@ class MoneroMultisigUtils {
       }
     }
     if (signers < threshHold) {
-      throw BuError(DefaultErrorType.notFound, 
+      throw BuError(
+        DefaultErrorType.notFound,
         "LR not found for enough participants",
       );
     }

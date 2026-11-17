@@ -52,7 +52,8 @@ abstract class MoneroVariantSerialization extends MoneroSerialization {
     Map<String, dynamic> json,
   ) {
     if (json["key"] is! String || !json.containsKey("value")) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.",
       );
     }
@@ -66,7 +67,8 @@ abstract class MoneroVariantSerialization extends MoneroSerialization {
   }) {
     final json = layout.deserialize(bytes).value;
     if (json["key"] is! String || !json.containsKey("value")) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid variant layout. only use enum layout to deserialize with `MoneroVariantSerialization.deserialize` method.",
       );
     }

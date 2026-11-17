@@ -36,7 +36,8 @@ enum MoneroNetwork {
       (e) => e.name == name,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 'Unknown monero network "$name".',
               ),
     );
@@ -48,7 +49,8 @@ enum MoneroNetwork {
       (e) => e.index == index,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 "Unknown monero network index $index.",
               ),
     );
@@ -61,7 +63,8 @@ enum MoneroNetwork {
         return n;
       }
     }
-    throw BuError(DefaultErrorType.invalidArgument, 
+    throw BuError(
+      DefaultErrorType.invalidArgument,
       "Invalid prefix: no related network found for the provided prefix.",
     );
   }

@@ -17,7 +17,10 @@ abstract class MoneroTxSignatures extends MoneroSerialization {
     } else if (json.containsKey("v2")) {
       return RCTSignature.deserializeJson(json);
     }
-    throw BuError(DefaultErrorType.invalidArgument, "Invalid MoneroTxSignatures json struct.");
+    throw BuError(
+      DefaultErrorType.invalidArgument,
+      "Invalid MoneroTxSignatures json struct.",
+    );
   }
 
   static Layout<Map<String, dynamic>> layout({
@@ -44,12 +47,16 @@ abstract class MoneroTxSignatures extends MoneroSerialization {
         forcePrunable: forcePrunable,
       );
     }
-    throw BuError(DefaultErrorType.invalidArgument, "Invalid monero tx version.");
+    throw BuError(
+      DefaultErrorType.invalidArgument,
+      "Invalid monero tx version.",
+    );
   }
 
   T cast<T extends MoneroTxSignatures>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "MoneroTxSignatures casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -83,7 +90,10 @@ class RCTSignature<S extends RCTSignatureBase, P extends RctSigPrunable>
       },
     );
     if (sig is! S) {
-      throw BuError(DefaultErrorType.castFailed, "RCTSignature casting failed.");
+      throw BuError(
+        DefaultErrorType.castFailed,
+        "RCTSignature casting failed.",
+      );
     }
     return RCTSignature(signature: sig, rctSigPrunable: p as P?);
   }
@@ -280,7 +290,8 @@ class RCTType {
       (e) => e.name == name,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 'Unknown range proof type "$name".',
               ),
     );
@@ -373,7 +384,8 @@ abstract class EcdhInfo extends MoneroSerialization {
   abstract final EcdhInfoVersion version;
   T cast<T extends EcdhInfo>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "EcdhInfo casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -443,7 +455,8 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
       case RCTType.rctTypeBulletproofPlus:
         return RCTBulletproofPlus.deserializeJson(decode.value);
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid RCTSignature.",
           details: {"type": type.name},
         );
@@ -524,7 +537,8 @@ abstract class RCTSignatureBase extends MoneroVariantSerialization {
 
   T cast<T extends RCTSignatureBase>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "RCTSignatureBase casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );
@@ -624,7 +638,10 @@ class RCTNull extends RCTSignatureBase {
 
   factory RCTNull.deserializeJson(Map<String, dynamic> json) {
     if (json.isNotEmpty) {
-      throw BuError(DefaultErrorType.invalidArgument, "Unexpected data in RCTNull json.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Unexpected data in RCTNull json.",
+      );
     }
     return RCTNull();
   }
@@ -640,17 +657,20 @@ class RCTNull extends RCTSignatureBase {
 
   @override
   List<EcdhInfoV2> get ecdhInfo =>
-      throw BuError(DefaultErrorType.unsupported, 
+      throw BuError(
+        DefaultErrorType.unsupported,
         "RCTNULL does not support ECDH information.",
       );
   @override
   List<CtKey> get outPk =>
-      throw BuError(DefaultErrorType.unsupported, 
+      throw BuError(
+        DefaultErrorType.unsupported,
         "RCTNULL does not support public key information.",
       );
   @override
   BigInt get txnFee =>
-      throw BuError(DefaultErrorType.unsupported, 
+      throw BuError(
+        DefaultErrorType.unsupported,
         "RCTNULL does not support txnFee information.",
       );
 }

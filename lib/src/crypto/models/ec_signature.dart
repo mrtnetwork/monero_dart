@@ -24,7 +24,8 @@ class MECSignature extends MoneroSerialization {
               .asImmutableBytes;
   factory MECSignature.fromBytes(List<int> bytes) {
     if (bytes.length != 64) {
-      throw BuError(DefaultErrorType.invalidLength, 
+      throw BuError(
+        DefaultErrorType.invalidLength,
         "Invalid EcSignature bytes length.",
         details: {"expected": 64.toString(), "length": bytes.length.toString()},
       );

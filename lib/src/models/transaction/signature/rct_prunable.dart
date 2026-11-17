@@ -26,7 +26,8 @@ abstract class RctSigPrunable extends MoneroSerialization {
       case RCTType.rctTypeFull:
         return RctSigPrunableRangeSigs.deserializeJson(json);
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid RCT type.",
           details: {"type": type.toString()},
         );
@@ -76,7 +77,8 @@ abstract class RctSigPrunable extends MoneroSerialization {
           property: property,
         );
       default:
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid RCT type.",
           details: {"type": type.toString()},
         );
@@ -85,7 +87,8 @@ abstract class RctSigPrunable extends MoneroSerialization {
 
   T cast<T extends RctSigPrunable>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "RctSigPrunable casting failed.",
         details: {"expected": "$T", "type": runtimeType.toString()},
       );

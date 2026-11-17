@@ -19,10 +19,7 @@ class DaemonRequestGetCoinbaseTxSum
   @override
   String get method => "get_coinbase_tx_sum";
   @override
-  Map<String, dynamic> get params => {
-    "height": height,
-    "count": count,
-  };
+  Map<String, dynamic> get params => {"height": height, "count": count};
   @override
   DaemonRequestType get encodingType => DaemonRequestType.jsonRPC;
 

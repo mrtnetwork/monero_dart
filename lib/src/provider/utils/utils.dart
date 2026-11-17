@@ -8,7 +8,8 @@ class ProviderUtils {
       throw BuError(DefaultErrorType.invalidArgument, "Invalid hex string.");
     }
     if (hex.length % blockLengthHex != 0) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid block ids response bytes.",
       );
     }

@@ -231,7 +231,8 @@ class MoneroTransaction extends MoneroTransactionPrefix {
       final sig = signature.cast<RCTSignature>();
       if (sig.rctSigPrunable == null) {
         if (!isCoinbase()) {
-          throw BuError(DefaultErrorType.invalidArgument, 
+          throw BuError(
+            DefaultErrorType.invalidArgument,
             "Signature prunable required to determine transaction hash.",
           );
         }

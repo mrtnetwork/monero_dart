@@ -16,7 +16,8 @@ class RCTGeneratorUtils {
     final message = rv.signature.message;
     final mixRing = rv.signature.mixRing;
     if (message == null || (mixRing == null || mixRing.isEmpty)) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "message and mixRing required for generate mlsag hash.",
       );
     }
@@ -106,7 +107,10 @@ class RCTGeneratorUtils {
     bool? nativeBakend,
   ) {
     if (amounts.length != sk.length) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid amounts/sk sizes");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid amounts/sk sizes",
+      );
     }
     nativeBakend ??= amounts.length > 2;
     final proof = switch (blockchainUtils.api.monero.supported &&
@@ -125,7 +129,10 @@ class RCTGeneratorUtils {
     };
 
     if (proof.v.length != amounts.length) {
-      throw BuError(MoneroErrorType.crypto, "V does not have the expected size");
+      throw BuError(
+        MoneroErrorType.crypto,
+        "V does not have the expected size",
+      );
     }
     for (int i = 0; i < proof.v.length; i++) {
       C[i] = proof.v[i].clone();
@@ -173,17 +180,22 @@ class RCTGeneratorUtils {
     }
 
     if (inamounts.length != inSk.length) {
-      throw BuError(MoneroErrorType.crypto, "Different number of inamounts/inSk");
+      throw BuError(
+        MoneroErrorType.crypto,
+        "Different number of inamounts/inSk",
+      );
     }
 
     if (outamounts.length != destinations.length) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Different number of amounts/destinations",
       );
     }
 
     if (amountKeys.length != destinations.length) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Different number of amountKeys/destinations",
       );
     }
@@ -198,7 +210,10 @@ class RCTGeneratorUtils {
 
     for (int n = 0; n < mixRing.length; n++) {
       if (index[n] >= mixRing[n].length) {
-        throw BuError(DefaultErrorType.invalidArgument, "Bad index into mixRing");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Bad index into mixRing",
+        );
       }
     }
     final CtKeyV outPk = [];
@@ -248,7 +263,8 @@ class RCTGeneratorUtils {
     final KeyV a =
         aResult ?? List.generate(inamounts.length, (_) => RCT.zero());
     if (a.length != inamounts.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid blinding factors: expected ${inamounts.length}, received ${a.length}.",
       );
     }
@@ -322,17 +338,22 @@ class RCTGeneratorUtils {
     }
 
     if (inamounts.length != inSk.length) {
-      throw BuError(MoneroErrorType.crypto, "Different number of inamounts/inSk");
+      throw BuError(
+        MoneroErrorType.crypto,
+        "Different number of inamounts/inSk",
+      );
     }
 
     if (outamounts.length != destinations.length) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Different number of amounts/destinations",
       );
     }
 
     if (amountKeys.length != destinations.length) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Different number of amountKeys/destinations",
       );
     }
@@ -347,7 +368,10 @@ class RCTGeneratorUtils {
 
     for (int n = 0; n < mixRing.length; n++) {
       if (index[n] >= mixRing[n].length) {
-        throw BuError(DefaultErrorType.invalidArgument, "Bad index into mixRing");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Bad index into mixRing",
+        );
       }
     }
     final CtKeyV outPk = [];
@@ -421,7 +445,8 @@ class RCTGeneratorUtils {
                     .cast<RctSigPrunableBulletproofPlus>()
                     .bulletproofPlus,
               )) {
-            throw BuError(DefaultErrorType.invalidArgument, 
+            throw BuError(
+              DefaultErrorType.invalidArgument,
               "Mismatched sizes of outPk and bulletproofs_plus",
             );
           }
@@ -430,7 +455,8 @@ class RCTGeneratorUtils {
               nBulletproofAmounts(
                 rv.rctSigPrunable!.cast<BulletproofPrunable>().bulletproof,
               )) {
-            throw BuError(DefaultErrorType.invalidArgument, 
+            throw BuError(
+              DefaultErrorType.invalidArgument,
               "Mismatched sizes of outPk and bulletproofs",
             );
           }
@@ -439,7 +465,8 @@ class RCTGeneratorUtils {
         if (rv.signature.type.isClsag) {
           final clsag = rv.rctSigPrunable!.cast<ClsagPrunable>();
           if (clsag.pseudoOuts.length != clsag.clsag.length) {
-            throw BuError(DefaultErrorType.invalidArgument, 
+            throw BuError(
+              DefaultErrorType.invalidArgument,
               "Mismatched sizes of pseudoOuts and CLSAGs",
             );
           }
@@ -451,7 +478,8 @@ class RCTGeneratorUtils {
       }
 
       if (rv.signature.outPk.length != rv.signature.ecdhInfo.length) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Mismatched sizes of outPk and rv.ecdhInfo",
         );
       }
@@ -496,7 +524,8 @@ class RCTGeneratorUtils {
       }
       return BulletproofsPlusGenerator.bulletproofPlusVerify(proofs);
     } catch (e) {
-      throw BuError(DefaultErrorType.cryptoVerifyFailed, 
+      throw BuError(
+        DefaultErrorType.cryptoVerifyFailed,
         "Failed to verify Bulletproof Plus.",
         details: {"error": e.toString()},
       );
@@ -508,12 +537,14 @@ class RCTGeneratorUtils {
       throw BuError(MoneroErrorType.crypto, "called on non simple rctSig");
     }
     if (rv.signature.mixRing == null || rv.signature.message == null) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "mixRing and message required for verification.",
       );
     }
     if (rv.rctSigPrunable == null) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Prunable signature is required for verification.",
       );
     }
@@ -522,18 +553,21 @@ class RCTGeneratorUtils {
     if (bulletproof || bulletproofPlus) {
       if (rv.signature.mixRing!.length !=
           rv.rctSigPrunable!.pseudoOuts.length) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Mismatched sizes of pseudoOuts and mixRing",
         );
       }
     } else {
       if (rv.signature.pseudoOuts == null) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Signature pseudoOuts is required for verification.",
         );
       }
       if (rv.signature.mixRing!.length != rv.signature.pseudoOuts?.length) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Mismatched sizes of pseudoOuts and mixRing",
         );
       }
@@ -572,24 +606,42 @@ class RCTGeneratorUtils {
     int maxOutputs,
   ) {
     if (lSize < 6) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof L size");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid bulletproof L size",
+      );
     }
     if (lSize != rSize) {
-      throw BuError(DefaultErrorType.invalidArgument, "Mismatched bulletproof L/R size");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Mismatched bulletproof L/R size",
+      );
     }
 
     const int extraBits = 4;
     if ((1 << extraBits) != maxOutputs) {
-      throw BuError(DefaultErrorType.invalidArgument, "log2(max_outputs) is out of date");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "log2(max_outputs) is out of date",
+      );
     }
     if (lSize > 6 + extraBits) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof L size");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid bulletproof L size",
+      );
     }
     if (vSize > (1 << (lSize - 6))) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof V/L");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid bulletproof V/L",
+      );
     }
     if (vSize * 2 <= (1 << (lSize - 6))) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid bulletproof V/L");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid bulletproof V/L",
+      );
     }
     if (vSize <= 0) {
       throw BuError(MoneroErrorType.crypto, "Empty bulletproof");
@@ -622,7 +674,10 @@ class RCTGeneratorUtils {
     for (final Bulletproof proof in proofs) {
       final int n2 = nBulletproofAmount(proof);
       if (n2 >= BinaryOps.mask32 - n) {
-        throw BuError(DefaultErrorType.invalidArgument, "Invalid number of bulletproofs");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Invalid number of bulletproofs",
+        );
       }
 
       if (n2 == 0) {
@@ -643,22 +698,26 @@ class RCTGeneratorUtils {
     const int extraBits = 4;
 
     if (lSize < 6) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid bulletproof L size: L size must be at least 6.",
       );
     }
     if (lSize != rSize) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Mismatched bulletproof L/R size: L size and R size must be equal.",
       );
     }
     if ((1 << extraBits) != maxOuts) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "log2(max_outputs) is out of date: max_outputs must be 2^extraBits.",
       );
     }
     if (lSize > 6 + extraBits) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid bulletproof L size: L size must not exceed 6 + extraBits.",
       );
     }
@@ -686,7 +745,8 @@ class RCTGeneratorUtils {
     for (final proof in proofs) {
       final int n2 = _nBulletproofMaxAmounts(proof);
       if (n2 >= BinaryOps.maxUint32 - n) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.",
         );
       }
@@ -703,7 +763,8 @@ class RCTGeneratorUtils {
     for (final proof in proofs) {
       final int n2 = _nBulletproofPlusMaxAmounts(proof);
       if (n2 >= BinaryOps.maxUint32 - n) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid number of bulletproofs: sum of amounts exceeds uint32 max value.",
         );
       }
@@ -814,7 +875,10 @@ class RCTGeneratorUtils {
         throw BuError(DefaultErrorType.invalidArgument, "Invalid rct type.");
     }
     if (base is! S || prunable is! P) {
-      throw BuError(DefaultErrorType.castFailed, "RCTSignature casting failed.");
+      throw BuError(
+        DefaultErrorType.castFailed,
+        "RCTSignature casting failed.",
+      );
     }
     return RCTSignature<S, P>(signature: base, rctSigPrunable: prunable);
   }
@@ -826,7 +890,10 @@ class RCTGeneratorUtils {
       final int n2 = nBulletproofPlusAmount(proof);
 
       if (n2 >= BinaryOps.mask32 - n) {
-        throw BuError(DefaultErrorType.invalidArgument, "Invalid number of bulletproofs");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Invalid number of bulletproofs",
+        );
       }
 
       if (n2 == 0) {
@@ -900,7 +967,8 @@ class RCTGeneratorUtils {
   static int weightClawBack(RCTSignature signature) {
     final type = signature.signature.type;
     if (signature.rctSigPrunable == null) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Signature prunable required to calculate clawback.",
       );
     }
@@ -939,12 +1007,14 @@ class RCTGeneratorUtils {
     required int outputIndex,
   }) {
     if (outputIndex >= sig.signature.ecdhInfo.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Bad output index $outputIndex: ECDH info holds ${sig.signature.ecdhInfo.length} entries.",
       );
     }
     if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Mismatched sizes of publickey and ECDH",
       );
     }
@@ -963,7 +1033,8 @@ class RCTGeneratorUtils {
 
     final t = RCT.addKeys2(mask, amount, RCTConst.h);
     if (!BytesUtils.bytesEqual(c, t)) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "amount decoded incorrectly, will be unable to spend",
       );
     }
@@ -993,12 +1064,14 @@ class RCTGeneratorUtils {
     required int outputIndex,
   }) {
     if (outputIndex >= sig.signature.ecdhInfo.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Bad output index $outputIndex: ECDH info holds ${sig.signature.ecdhInfo.length} entries.",
       );
     }
     if (sig.signature.outPk.length != sig.signature.ecdhInfo.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Mismatched sizes of publickey and ECDH",
       );
     }
@@ -1017,7 +1090,8 @@ class RCTGeneratorUtils {
 
     final t = RCT.addKeys2(mask, amount, RCTConst.h);
     if (!BytesUtils.bytesEqual(c, t)) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "amount decoded incorrectly, will be unable to spend",
       );
     }
@@ -1077,7 +1151,10 @@ class RCTGeneratorUtils {
     // 4. sanity check scalar validity
     if (!blockchainUtils.api.ed25519.scCheck(mask) ||
         !blockchainUtils.api.ed25519.scCheck(amountSc)) {
-      throw BuError(DefaultErrorType.invalidArgument, "Invalid coinbase scalars");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Invalid coinbase scalars",
+      );
     }
 
     return (mask, commitment);

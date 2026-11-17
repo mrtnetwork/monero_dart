@@ -44,7 +44,8 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
         const {},
   }) {
     if (kexRoundsComplete <= 0) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "multisig account: can't reconstruct account if its kex wasn't initialized.",
       );
     }
@@ -65,7 +66,8 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
           threshold,
         );
     if (kexRoundsComplete > roundRequired + 1) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "multisig account: tried to reconstruct account, but kex rounds complete counter is invalid.",
       );
     }
@@ -183,7 +185,8 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
   /// get address
   MoneroAddress toAddress({MoneroNetwork network = MoneroNetwork.mainnet}) {
     if (!multisigIsReady) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "Unable to determine the address until the final round is completed.",
       );
     }
@@ -197,7 +200,8 @@ class MoneroMultisigAccount extends MoneroMultisigAccountCore {
   /// create monero account from multisig account
   MoneroAccount toAccount({MoneroNetwork network = MoneroNetwork.mainnet}) {
     if (!multisigIsReady) {
-      throw BuError(DefaultErrorType.invalidState, 
+      throw BuError(
+        DefaultErrorType.invalidState,
         "Unable to determine account until the final round is completed.",
       );
     }

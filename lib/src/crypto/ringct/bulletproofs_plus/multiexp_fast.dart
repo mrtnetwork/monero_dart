@@ -18,7 +18,8 @@ class _StrausData {
       n = data.length;
     }
     if (n > data.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Bad straus cache data: requested $n entries but cache holds ${data.length}.",
       );
     }
@@ -62,7 +63,8 @@ class Multiexp {
 
   static List<int> _pow2(int n) {
     if (n >= 256) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid power-of-two index $n: expected 0 <= n < 256.",
       );
     }
@@ -77,7 +79,8 @@ class Multiexp {
     int? N,
   }) {
     if (startOffset > data.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Bad pippenger cache data: start offset $startOffset exceeds cache length ${data.length}.",
       );
     }
@@ -86,7 +89,8 @@ class Multiexp {
     }
 
     if (N > data.length - startOffset) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Bad pippenger cache data: requested $N entries from offset $startOffset but cache holds ${data.length}.",
       );
     }
@@ -267,7 +271,10 @@ class Multiexp {
         if (bucket == 0) continue;
 
         if (bucket >= (1 << c)) {
-          throw BuError(DefaultErrorType.invalidArgument, "Multiexp bucket overflow.");
+          throw BuError(
+            DefaultErrorType.invalidArgument,
+            "Multiexp bucket overflow.",
+          );
         }
 
         if (bucketsInit[bucket]) {

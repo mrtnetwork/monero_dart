@@ -24,7 +24,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 // EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// import 'dart:math';
 import 'package:blockchain_utils/blockchain_utils.dart';
 import 'package:monero_dart/src/crypto/models/bullet_proof_data.dart';
 import 'package:monero_dart/src/crypto/ringct/bulletproofs_plus/cached/cached_exponet.dart';

@@ -200,7 +200,8 @@ class RCT {
   static EcdhInfo ecdhEncode(EcdhTuple unmasked, List<int> sharedSec) {
     if (unmasked.version == EcdhInfoVersion.v2) {
       if (unmasked.amount.length != 32) {
-        throw BuError(DefaultErrorType.invalidLength, 
+        throw BuError(
+          DefaultErrorType.invalidLength,
           "Invalid unmasked amount length ${unmasked.amount.length}: expected 32 bytes.",
         );
       }
@@ -223,7 +224,8 @@ class RCT {
     List<int> toBytes = data.codeUnits;
 
     if (toBytes.length > 32) {
-      throw BuError(DefaultErrorType.invalidLength, 
+      throw BuError(
+        DefaultErrorType.invalidLength,
         "Invalid key string: length ${toBytes.length} exceeds 32 bytes.",
       );
     }

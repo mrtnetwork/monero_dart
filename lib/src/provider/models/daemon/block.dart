@@ -175,7 +175,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
         final int e when e >= 0 && e < PoolInfoExtent.values.length =>
           PoolInfoExtent.values[e],
         _ =>
-          throw BuError(DefaultErrorType.invalidArgument, 
+          throw BuError(
+            DefaultErrorType.invalidArgument,
             'Invalid pool info extent ${json["pool_info_extent"]}.',
           ),
       },
@@ -202,7 +203,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
 
   List<TxPrefixWithTxHashResponse> toPrefixTxes() {
     if (blocks.length != outputIndices.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid response: mismatched blocks and output indices (${blocks.length} != ${outputIndices.length}).",
       );
     }
@@ -211,7 +213,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
       final txes = block.getPrefixTxes();
       final txIds = block.txIds();
       if (txes.length != txIds.length) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid response: mismatched transactions and block transaction hashes (${txes.length} != ${txIds.length}).",
         );
       }
@@ -228,7 +231,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
 
   List<TxWithTxHashResponse> toTxes() {
     if (blocks.length != outputIndices.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Invalid response: mismatched blocks and output indices (${blocks.length} != ${outputIndices.length}).",
       );
     }
@@ -237,7 +241,8 @@ class DaemonGetBlockBinResponse extends DaemonBaseResponse {
       final txes = block.getTxes();
       final txIds = block.txIds();
       if (txes.length != txIds.length) {
-        throw BuError(DefaultErrorType.invalidArgument, 
+        throw BuError(
+          DefaultErrorType.invalidArgument,
           "Invalid response: mismatched transactions and block transaction hashes (${txes.length} != ${txIds.length}).",
         );
       }

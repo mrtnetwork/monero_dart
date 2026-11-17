@@ -15,7 +15,8 @@ class MoneroApi extends MoneroApiInterface with MoneroQuickClientApi {
     MoneroFeePrority priority = MoneroFeePrority.defaultPriority,
   }) async {
     if (payments.toSet().length != payments.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Multiple payment with same keyimage detected.",
       );
     }
@@ -28,15 +29,20 @@ class MoneroApi extends MoneroApiInterface with MoneroQuickClientApi {
       (p, c) => p + c.output.amount,
     );
     if (outAmounts >= inAmounts) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "output amounts exceed the total input amount and the fee.",
       );
     }
     if (!account.type.isMultisig) {
-      throw BuError(DefaultErrorType.invalidArgument, "Account is not a valid multisig.");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Account is not a valid multisig.",
+      );
     }
     if (payments.isEmpty) {
-      throw BuError(DefaultErrorType.notFound, 
+      throw BuError(
+        DefaultErrorType.notFound,
         "No payment details were provided.",
       );
     }
@@ -90,7 +96,8 @@ class MoneroApi extends MoneroApiInterface with MoneroQuickClientApi {
     bool fast = true,
   }) async {
     if (payments.toSet().length != payments.length) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "Multiple payment with same keyimage detected.",
       );
     }
@@ -106,7 +113,8 @@ class MoneroApi extends MoneroApiInterface with MoneroQuickClientApi {
       (p, c) => p + c.output.amount,
     );
     if (outAmounts >= inAmounts) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "output amounts exceed the total input amount and the fee.",
       );
     }
@@ -373,7 +381,8 @@ class MoneroApi extends MoneroApiInterface with MoneroQuickClientApi {
 
     final changeAmount = inamount - outAmounts;
     if (changeAmount.isNegative) {
-      throw BuError(DefaultErrorType.invalidArgument, 
+      throw BuError(
+        DefaultErrorType.invalidArgument,
         "output amounts exceed the total input amount and the fee.",
       );
     }

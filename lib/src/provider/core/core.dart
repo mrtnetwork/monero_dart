@@ -13,7 +13,8 @@ enum DaemonRequestType {
       (e) => e.value == value,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 "Unknown daemon request type $value.",
               ),
     );
@@ -135,7 +136,8 @@ enum MoneroProviderApi {
       (e) => e.value == value,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 "Unknown monero provider api $value.",
               ),
     );

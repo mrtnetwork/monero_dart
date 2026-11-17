@@ -74,17 +74,22 @@ class CLSAGUtils {
   ) {
     final int n = P.length;
     if (n != C.length) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Signing and commitment key vector sizes must match!",
       );
     }
     if (n != cNonZero.length) {
-      throw BuError(MoneroErrorType.crypto, 
+      throw BuError(
+        MoneroErrorType.crypto,
         "Signing and commitment key vector sizes must match!",
       );
     }
     if (l >= n) {
-      throw BuError(DefaultErrorType.invalidArgument, "Signing index out of range!");
+      throw BuError(
+        DefaultErrorType.invalidArgument,
+        "Signing index out of range!",
+      );
     }
     final RctKey H = RCT.hashToP3Bytes(P[l]);
 
@@ -177,19 +182,26 @@ class CLSAGUtils {
         throw BuError(MoneroErrorType.crypto, "Empty pubs");
       }
       if (n != sig.s.length) {
-        throw BuError(MoneroErrorType.crypto, 
+        throw BuError(
+          MoneroErrorType.crypto,
           "Signature scalar vector is the wrong size!",
         );
       }
 
       for (int i = 0; i < n; i++) {
         if (!ed25519.scCheck(sig.s[i])) {
-          throw BuError(DefaultErrorType.invalidArgument, "Bad signature scalar!");
+          throw BuError(
+            DefaultErrorType.invalidArgument,
+            "Bad signature scalar!",
+          );
         }
       }
 
       if (!ed25519.scCheck(sig.c1)) {
-        throw BuError(DefaultErrorType.invalidArgument, "Bad signature commitment!");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Bad signature commitment!",
+        );
       }
 
       if (sig.i == null ||
@@ -199,10 +211,16 @@ class CLSAGUtils {
       RctKey c = sig.c1.clone();
       final d8 = ed25519.mul8(sig.d);
       if (BytesUtils.bytesEqual(d8, ed25519.identity())) {
-        throw BuError(DefaultErrorType.invalidArgument, "Bad auxiliary key image!");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "Bad auxiliary key image!",
+        );
       }
       if (sig.i == null) {
-        throw BuError(DefaultErrorType.invalidArgument, "I is required for verification.");
+        throw BuError(
+          DefaultErrorType.invalidArgument,
+          "I is required for verification.",
+        );
       }
       final KeyV muPtoHash = List.generate(2 * n + 4, (_) => RCT.zero());
       final KeyV muCtoHash = List.generate(2 * n + 4, (_) => RCT.zero());

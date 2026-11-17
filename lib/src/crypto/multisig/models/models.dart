@@ -92,13 +92,14 @@ class MoneroMultisigOutputInfo extends MoneroSerialization with Equality {
        partialKeyImages =
            partialKeyImages
                .map(
-                 (e) => e
-                     .exc(
-                       length: 32,
-                       operation: "MoneroMultisigOutputInfo",
-                       reason: "Invalid key image bytes length.",
-                     )
-                     .asImmutableBytes,
+                 (e) =>
+                     e
+                         .exc(
+                           length: 32,
+                           operation: "MoneroMultisigOutputInfo",
+                           reason: "Invalid key image bytes length.",
+                         )
+                         .asImmutableBytes,
                )
                .toImutableList;
   factory MoneroMultisigOutputInfo.deserializeJson(Map<String, dynamic> json) {

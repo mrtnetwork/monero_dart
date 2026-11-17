@@ -1,7 +1,6 @@
 part of 'package:monero_dart/src/api/api.dart';
 
 abstract class MoneroApiInterface {
-
   /// Observes and decodes transaction outputs for a watch-only wallet.
   ///
   /// This method processes a list of transactions to identify and extract

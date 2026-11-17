@@ -28,7 +28,8 @@ enum TxExtraTypes {
       (e) => e.name == name,
       orElse:
           () =>
-              throw BuError(DefaultErrorType.invalidArgument, 
+              throw BuError(
+                DefaultErrorType.invalidArgument,
                 'Unknown transaction extra type "$name".',
               ),
     );
@@ -106,14 +107,16 @@ abstract class TxExtra extends MoneroVariantSerialization {
 
   @override
   Map<String, dynamic> toLayoutStruct() {
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "Unsupported feature: TxExtra base class cannot be serialized directly; use a concrete extra type.",
     );
   }
 
   @override
   Layout<Map<String, dynamic>> createLayout({String? property}) {
-    throw BuError(DefaultErrorType.unsupported, 
+    throw BuError(
+      DefaultErrorType.unsupported,
       "Unsupported feature: TxExtra base class has no layout; use a concrete extra type.",
     );
   }
@@ -122,7 +125,8 @@ abstract class TxExtra extends MoneroVariantSerialization {
   String get variantName => type.name;
   T cast<T extends TxExtra>() {
     if (this is! T) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "Casting tx extra failed.",
         details: {"expected": "$T", "type": type.name},
       );

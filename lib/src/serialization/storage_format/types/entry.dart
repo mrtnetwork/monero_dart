@@ -111,7 +111,8 @@ abstract class MoneroStorageEntry<T> {
       }
     }
     if (entry is! MoneroStorageEntry<T>) {
-      throw BuError(DefaultErrorType.castFailed, 
+      throw BuError(
+        DefaultErrorType.castFailed,
         "Incorrect MoneroStorageEntry<$T> type",
         details: {"expected": "$T", "entry": entry.runtimeType.toString()},
       );
